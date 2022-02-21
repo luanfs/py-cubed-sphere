@@ -1,0 +1,15 @@
+#Grid parameters 
+#Number of cells N along a coordinates axis (total number of cells is 6*N*N) 
+24
+#Transformation? 1-equiangular; 2-equidistant
+1
+#Show ongoing process details on screen? 0-No; 1-Yes
+1
+#Test case to be done
+2
+# Map projection (for plotting): 1-mercator; 2-sphere 
+1
+#-----------Description of parameters -------------------------------------
+#Possible test cases
+#  case(1) - Cubed-sphere generation and plotting
+#  case(2) - Grid quality testing
