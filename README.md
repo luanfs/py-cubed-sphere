@@ -15,9 +15,9 @@ Requires:
 
 -------------------------------------------------------
 
-1) Configurations parameters must be set in par/configurations.par
+1) Configuration parameters must be set in par/configuration.par
 
-2) Choose the simulation to be run in configurations.par (1, 2...)
+2) Choose the simulation to be run in configuration.par (1, 2...)
 
 3) Run using "python3 main.py" in terminal. 
 
