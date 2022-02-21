@@ -9,9 +9,9 @@
 # Imports
 import numpy as np
 from cs_datastruct import scalar_field, latlon_grid
-from plot          import plot_scalar_field, save_netcdf4
+from plot          import plot_scalar_field, open_netcdf4
 from interpolation import ll2cs, nearest_neighbour
-from constants     import erad, pio2, rad2deg
+from constants     import erad, pio2, rad2deg, datadir
 
 ####################################################################################
 # This routine compute grid quality measures and save it as a netcdf file
@@ -41,13 +41,19 @@ def grid_quality(cs_grid, ll_grid, map_projection):
    # Create list of fields
    fields_ll = [angle_ll , area_ll, mean_length_ll, distortion_ll, alignment_ll]
    fields_cs = [angle    , area   , mean_length   , distortion   , alignment   ]
-   
+  
+   # Netcdf file
+   netcdf_name = cs_grid.name+'_grid_quality'
+   netcdf_data = open_netcdf4(fields_cs, [0], netcdf_name)
+ 
    # Plot the fields
    for l in range(0,len(fields_ll)):
       plot_scalar_field(fields_ll[l], fields_cs[l].name, cs_grid, ll_grid, map_projection)
-   
-   # Save as netcdf file
-   save_netcdf4(fields_ll, fields_cs, cs_grid.name+'_grid_quality')
+      netcdf_data[fields_cs[l].name][:,:,0] = fields_ll[l][:,:]
+
+   #Close netcdf file
+   netcdf_data.close()
+   print("A netcdf file has been created in ", datadir+netcdf_name+'.nc')
    print("--------------------------------------------------------\n")
 
 ####################################################################################

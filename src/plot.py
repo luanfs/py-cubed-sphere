@@ -138,61 +138,65 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
       plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
 
    ax.coastlines()
-   
+
    if map_projection == 'mercator':
       ax.gridlines(draw_labels=True)
-   
+
    # Plot the scalar field
    plt.contourf(latlon_grid.lon*rad2deg,latlon_grid.lat*rad2deg,field,cmap='jet', transform=ccrs.PlateCarree())
-   
+
    # Plot colorbar
    if map_projection == 'mercator':
       plt.colorbar(orientation='horizontal',fraction=0.046, pad=0.04)
    elif map_projection == 'sphere':
       plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)   
-   
+
    # Save the figure
    plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)   
-   
+
    print('Figure has been saved in '+graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format+"\n")
    plt.close()  
 
 ####################################################################################
 # Create a netcdf file using the fields given in the list fields_ll
 ####################################################################################  
-def save_netcdf4(fields_ll, fields_cs, name):
+def open_netcdf4(fields_cs, ts, name):
    # Open a netcdf file
-   print("Saving netcdf file "+datadir+name+".nc")
+   print("Creating netcdf file "+datadir+name+".nc")
    data = nc.Dataset(datadir+name+".nc", mode='w', format='NETCDF4_CLASSIC')
 
    # Name
    data.title = name
    
    # Size of lat-lon grid
-   m, n = np.shape(fields_ll[0])
+   m, n = Nlon, Nlat
+
+   # Number of time steps
+   nt = len(ts)
 
    # Create dimensions (horizontal, time,...)   
-   #time = ds.createDimension('time', None)
-   lat = data.createDimension('lat' , n)
-   lon = data.createDimension('lon' , m)
+   time = data.createDimension('time', nt)
+   lat  = data.createDimension('lat' , n)
+   lon  = data.createDimension('lon' , m)
 
    # Create variables (horizontal, time,...)   
-   #times  = ds.createVariable('time' ,'f8',('time',))
-   lats = data.createVariable('lat'  ,'f8',('lat',))
-   lons = data.createVariable('lon'  ,'f8',('lon',))
-   
+   times = data.createVariable('time' ,'f8',('time',))
+   lats  = data.createVariable('lat'  ,'f8',('lat',))
+   lons  = data.createVariable('lon'  ,'f8',('lon',))
+
    # Create field variables using the fields given in the list
-   variables = [None]*len(fields_ll)
-   for l in range(0,len(fields_ll)):
-      variables[l] = data.createVariable(fields_cs[l].name, 'f8', ('lon','lat',))
+   variables = [None]*len(fields_cs)
+   for l in range(0, len(fields_cs)):
+      variables[l] = data.createVariable(fields_cs[l].name, 'f8', ('lon','lat','time'))
       #print(fields_cs[l].name)
 
    # Values
-   lats[:] = np.linspace( -90.0,  90.0, n)
-   lons[:] = np.linspace(-180.0, 180.0, m)
-   
-   for l in range(0,len(variables)):
-      variables[l][:,:] = fields_ll[l][:,:]
+   times[:] = ts    
+   lats[:]  = np.linspace( -90.0,  90.0, n)
+   lons[:]  = np.linspace(-180.0, 180.0, m)
 
-   data.close()
-   print("Done.")
+   #data.close()
+   print("Done.\n")
+   #print(type(data))
+   return data
+   
