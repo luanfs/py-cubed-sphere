@@ -15,7 +15,8 @@ from constants import*
 from cs_transform import*
 import sphgeo
 import time
-
+import os.path
+import netCDF4 as nc
 ####################################################################################
 #  General spherical points structure
 ####################################################################################
@@ -34,7 +35,7 @@ class point:
 #  Global cubed-sphere grid structure
 ####################################################################################      
 class cubed_sphere:
-   def __init__(self, N, transformation, showonscreen):
+   def __init__(self, N, transformation,gridload, showonscreen):
       # Panel indexes distribution
       #      +---+
       #      | 4 |
@@ -50,165 +51,214 @@ class cubed_sphere:
       # Grid name
       self.projection = transformation
       self.name = self.projection+"_"+str(N)
-
-      # Generate the grid
-      if showonscreen==True:
-         print("--------------------------------------------------------")      
-         print("Generating "+self.projection+" cubed-sphere with "+str(nbfaces*N*N)+" cells...")
-
-      if transformation == "gnomonic_equiangular":  
-         a = pio4
-      elif transformation == "gnomonic_equidistant":
-         a = 1.0/np.sqrt(3.0) # Half length of the cube
-      else:
-         print("ERROR: invalid grid transformation.")
-         exit()
-
-      ξ_min, ξ_max, η_min, η_max = [-a, a, -a, a]
       
-      # Start time counting
-      start_time = time.time()
+      # Load the grid
+      if gridload==True and (os.path.isfile(griddir+self.name+'.nc')):   # Check if grid file exists
+         if showonscreen==True:
+            print("--------------------------------------------------------")      
+            print('Loading grid file '+griddir+self.name+'.nc')
+         # Open grid data
+         griddata = nc.Dataset(griddir+self.name+'.nc','r')
 
-      # Grid spacing
-      Δξ = (ξ_max-ξ_min)/N
-      Δη = (η_max-η_min)/N
-      ξ = np.linspace(ξ_min, ξ_max, N+1)
-      η = np.linspace(η_min, η_max, N+1)
+         # Create points
+         vertices = point(N+1, N+1)
+         centers  = point(N, N)
 
-      # Generate cell vertices
-      if showonscreen==True:
-         print("Generating cell vertices...")
-      vertices = point(N+1, N+1)      
-      if transformation == "gnomonic_equiangular": 
-         vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = equiangular_gnomonic_map(ξ, η, N+1)
-      elif transformation=="gnomonic_equidistant":
-         vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = equidistant_gnomonic_map(ξ, η, N+1)
-      self.vertices = vertices
+         # Get values from file
+         vertices.x   = griddata['vertices'][:,:,:,0]
+         vertices.y   = griddata['vertices'][:,:,:,1]
+         vertices.z   = griddata['vertices'][:,:,:,2]
+         vertices.lon = griddata['vertices'][:,:,:,3]
+         vertices.lat = griddata['vertices'][:,:,:,4]         
+         
+         centers.x   = griddata['centers'][:,:,:,0]
+         centers.y   = griddata['centers'][:,:,:,1]
+         centers.z   = griddata['centers'][:,:,:,2]
+         centers.lon = griddata['centers'][:,:,:,3]
+         centers.lat = griddata['centers'][:,:,:,4]  
+
+         # Geometric properties
+         areas           = griddata['areas'][:,:,:]
+         length_x        = griddata['length_x'][:,:,:]
+         length_y        = griddata['length_y'][:,:,:]
+         length_diag     = griddata['length_diag'][:,:,:]
+         length_antidiag = griddata['length_antidiag'][:,:,:]
+         angles          = griddata['angles'][:,:,:,:]
+
+         # Attributes
+         self.centers         = centers
+         self.vertices        = vertices
+         self.length_x        = length_x
+         self.length_y        = length_y
+         self.length_diag     = length_diag
+         self.length_antidiag = length_antidiag
+         self.angles          = angles
+         self.areas           = areas
+
+         # Close netcdf file
+         griddata.close()
+         if showonscreen==True:
+            print("Done.")   
+            print("--------------------------------------------------------\n")      
+      else:   
+         # Generate the grid
+         if showonscreen==True:
+            print("--------------------------------------------------------")      
+            print("Generating "+self.projection+" cubed-sphere with "+str(nbfaces*N*N)+" cells...")
+
+         if transformation == "gnomonic_equiangular":  
+            a = pio4
+         elif transformation == "gnomonic_equidistant":
+            a = 1.0/np.sqrt(3.0) # Half length of the cube
+         else:
+            print("ERROR: invalid grid transformation.")
+            exit()
+
+         ξ_min, ξ_max, η_min, η_max = [-a, a, -a, a]
+      
+         # Start time counting
+         start_time = time.time()
+
+         # Grid spacing
+         Δξ = (ξ_max-ξ_min)/N
+         Δη = (η_max-η_min)/N
+         ξ = np.linspace(ξ_min, ξ_max, N+1)
+         η = np.linspace(η_min, η_max, N+1)
+
+         # Generate cell vertices
+         if showonscreen==True:
+            print("Generating cell vertices...")
+         vertices = point(N+1, N+1)
+         if transformation == "gnomonic_equiangular": 
+            vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = equiangular_gnomonic_map(ξ, η, N+1)
+         elif transformation=="gnomonic_equidistant":
+            vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = equidistant_gnomonic_map(ξ, η, N+1)
+         self.vertices = vertices
  
-      # Generate cell centers
-      if showonscreen==True:
-         print("Generating cell centers...")      
-      center = point(N, N)
-      ξ = np.linspace(ξ_min+Δξ/2.0, ξ_max-Δξ/2.0, N)
-      η = np.linspace(η_min+Δη/2.0, η_max-Δη/2.0, N)
-      if transformation == "gnomonic_equiangular":
-         center.x, center.y, center.z, center.lon, center.lat = equiangular_gnomonic_map(ξ, η, N)
-      elif transformation=="gnomonic_equidistant":
-         center.x, center.y, center.z, center.lon, center.lat = equidistant_gnomonic_map(ξ, η, N)
-      self.center = center
+         # Generate cell centers
+         if showonscreen==True:
+            print("Generating cell centers...")      
+         centers = point(N, N)
+         ξ = np.linspace(ξ_min+Δξ/2.0, ξ_max-Δξ/2.0, N)
+         η = np.linspace(η_min+Δη/2.0, η_max-Δη/2.0, N)
+         if transformation == "gnomonic_equiangular":
+            centers.x, centers.y, centers.z, centers.lon, centers.lat = equiangular_gnomonic_map(ξ, η, N)
+         elif transformation=="gnomonic_equidistant":
+            centers.x, centers.y, centers.z, centers.lon, centers.lat = equidistant_gnomonic_map(ξ, η, N)
+         self.centers = centers
 
-      # Compute cell lenghts
-      if showonscreen==True:
-         print("Computing cell lengths...")
+         # Compute cell lenghts
+         if showonscreen==True:
+            print("Computing cell lengths...")
 
-      # Compute the geodesic distance of cell edges in x direction
-      # Given points
-      p1 = [vertices.x[0:self.N  ,:,:]  , vertices.y[0:self.N  ,:,:], vertices.z[0:self.N  ,:,:]]
-      p2 = [vertices.x[1:self.N+1,:,:], vertices.y[1:self.N+1,:,:], vertices.z[1:self.N+1,:,:]]
+         # Compute the geodesic distance of cell edges in x direction
+         # Given points
+         p1 = [vertices.x[0:self.N  ,:,:]  , vertices.y[0:self.N  ,:,:], vertices.z[0:self.N  ,:,:]]
+         p2 = [vertices.x[1:self.N+1,:,:], vertices.y[1:self.N+1,:,:], vertices.z[1:self.N+1,:,:]]
 
-      # Reshape
-      p1 = np.reshape(p1,(3,N*(N+1)*nbfaces))
-      p2 = np.reshape(p2,(3,N*(N+1)*nbfaces))
+         # Reshape
+         p1 = np.reshape(p1,(3,N*(N+1)*nbfaces))
+         p2 = np.reshape(p2,(3,N*(N+1)*nbfaces))
+
+         # Compute arclen      
+         d = sphgeo.arclen(p1, p2)
+         d = np.reshape(d,(N,N+1,nbfaces))
+         self.length_x = d
+
+         # Compute the geodesic distance of cell edges in y direction
+         # Given points
+         p1 = [vertices.x[:,0:self.N  ,:], vertices.y[:,0:self.N  ,:], vertices.z[:,0:self.N  ,:]]
+         p2 = [vertices.x[:,1:self.N+1,:], vertices.y[:,1:self.N+1,:], vertices.z[:,1:self.N+1,:]]
+
+         # Reshape
+         p1 = np.reshape(p1,(3,N*(N+1)*nbfaces))
+         p2 = np.reshape(p2,(3,N*(N+1)*nbfaces))
+
+         # Compute arclen
+         d = sphgeo.arclen(p1,p2)
+         d = np.reshape(d,(N+1,N,nbfaces))
+         self.length_y = d
+
+         # Cell diagonal length
+         # Given points
+         p1 = [vertices.x[0:self.N,1:self.N+1,:], vertices.y[0:self.N,1:self.N+1,:], vertices.z[0:self.N,1:self.N+1,:]]
+         p2 = [vertices.x[1:self.N+1,0:self.N,:], vertices.y[1:self.N+1,0:self.N,:], vertices.z[1:self.N+1,0:self.N,:]]
       
-      # Compute arclen      
-      d = sphgeo.arclen(p1, p2)
-      d = np.reshape(d,(N,N+1,nbfaces))
-      self.length_x = d
-
-      # Compute the geodesic distance of cell edges in y direction
-      # Given points
-      p1 = [vertices.x[:,0:self.N  ,:], vertices.y[:,0:self.N  ,:], vertices.z[:,0:self.N  ,:]]
-      p2 = [vertices.x[:,1:self.N+1,:], vertices.y[:,1:self.N+1,:], vertices.z[:,1:self.N+1,:]]
-
-      # Reshape
-      p1 = np.reshape(p1,(3,N*(N+1)*nbfaces))
-      p2 = np.reshape(p2,(3,N*(N+1)*nbfaces))
-
-      # Compute arclen
-      d = sphgeo.arclen(p1,p2)
-      d = np.reshape(d,(N+1,N,nbfaces))
-      self.length_y = d
-
-      # Cell diagonal length
-      # Given points
-      p1 = [vertices.x[0:self.N,1:self.N+1,:], vertices.y[0:self.N,1:self.N+1,:], vertices.z[0:self.N,1:self.N+1,:]]
-      p2 = [vertices.x[1:self.N+1,0:self.N,:], vertices.y[1:self.N+1,0:self.N,:], vertices.z[1:self.N+1,0:self.N,:]]
+         # Reshape
+         p1 = np.reshape(p1,(3,N*N*nbfaces))
+         p2 = np.reshape(p2,(3,N*N*nbfaces))
       
-      # Reshape
-      p1 = np.reshape(p1,(3,N*N*nbfaces))
-      p2 = np.reshape(p2,(3,N*N*nbfaces))
+         # Compute arclen
+         d = sphgeo.arclen(p1,p2)
+         d = np.reshape(d,(N,N,nbfaces))
+         self.length_diag = d
+
+         # Cell antidiagonal length
+         # Given points
+         p1 = [vertices.x[0:self.N,0:self.N,:], vertices.y[0:self.N,0:self.N,:], vertices.z[0:self.N,0:self.N,:]]
+         p2 = [vertices.x[1:self.N+1,1:self.N+1,:], vertices.y[1:self.N+1,1:self.N+1,:], vertices.z[1:self.N+1,1:self.N+1,:]]
+
+         # Reshape
+         p1 = np.reshape(p1,(3,N*N*nbfaces))
+         p2 = np.reshape(p2,(3,N*N*nbfaces))
+
+         # Compute arclen
+         d = sphgeo.arclen(p1,p2)
+         d = np.reshape(d,(N,N,nbfaces))
+         self.length_antidiag = d
+
+         # Compute cell angles
+         # Each angle of a cell is identified as below
+         #    D---------C
+         #    |         |
+         #    |         |
+         #    |         |
+         #    |         |
+         #    A---------B
+         #
+         if showonscreen==True:
+            print("Computing cell angles...")
+         angles = np.zeros((self.N, self.N, nbfaces, 4))
+
+         # Compute the angle A using the triangle ABD
+         a = self.length_x[:,0:self.N,:] # AB
+         b = self.length_y[0:self.N,:,:] # AD
+         c = self.length_diag            # DB
+         angles[:,:,:,0] = sphgeo.tri_angle(a, b, c)
+         areas = sphgeo.tri_area(a, b, c)
+
+         # Compute the angle B using the triangle ABC
+         a = self.length_x[:,0:self.N,:]   # AB
+         b = self.length_y[1:self.N+1,:,:] # BC
+         c = self.length_antidiag          # AB
+         angles[:,:,:,1] = sphgeo.tri_angle(a, b, c)
+
+         # Compute the angle C using the triangle DCB
+         a = self.length_x[:,1:self.N+1,:] # DC
+         b = self.length_y[1:self.N+1,:,:] # CB
+         c = self.length_diag              # DB
+         angles[:,:,:,2] = sphgeo.tri_angle(a, b, c)
+         areas = areas + sphgeo.tri_area(a, b, c)
       
-      # Compute arclen
-      d = sphgeo.arclen(p1,p2)
-      d = np.reshape(d,(N,N,nbfaces))
-      self.length_diag = d
+         # Compute the angle D using the triangle ADC
+         a = self.length_x[:,1:self.N+1,:] # DC
+         b = self.length_y[0:self.N,:,:]   # AD
+         c = self.length_antidiag          # CA
+         angles[:,:,:,3] = sphgeo.tri_angle(a, b, c)
 
-      # Cell antidiagonal length
-      # Given points
-      p1 = [vertices.x[0:self.N,0:self.N,:], vertices.y[0:self.N,0:self.N,:], vertices.z[0:self.N,0:self.N,:]]
-      p2 = [vertices.x[1:self.N+1,1:self.N+1,:], vertices.y[1:self.N+1,1:self.N+1,:], vertices.z[1:self.N+1,1:self.N+1,:]]
+         # Angles attribute
+         self.angles = angles
 
-      # Reshape
-      p1 = np.reshape(p1,(3,N*N*nbfaces))
-      p2 = np.reshape(p2,(3,N*N*nbfaces))
+         # Compute areas
+         if showonscreen==True:
+            print("Computing cell areas...\n")    
 
-      # Compute arclen
-      d = sphgeo.arclen(p1,p2)
-      d = np.reshape(d,(N,N,nbfaces))
-      self.length_antidiag = d
+         # Use spherical excess formula
+         #self.areas = sphgeo.quad_area(angles[:,:,:,0], angles[:,:,:,1], angles[:,:,:,2], angles[:,:,:,3])
+         self.areas = areas
 
-      # Compute cell angles
-      # Each angle of a cell is identified as below
-      #    D---------C
-      #    |         |
-      #    |         |
-      #    |         |
-      #    |         |
-      #    A---------B
-      #
-      if showonscreen==True:
-         print("Computing cell angles...")
-      angles = np.zeros((self.N, self.N, nbfaces, 4))
-
-      # Compute the angle A using the triangle ABD
-      a = self.length_x[:,0:self.N,:] # AB
-      b = self.length_y[0:self.N,:,:] # AD
-      c = self.length_diag            # DB
-      angles[:,:,:,0] = sphgeo.tri_angle(a, b, c)
-      areas = sphgeo.tri_area(a, b, c)
-
-      # Compute the angle B using the triangle ABC
-      a = self.length_x[:,0:self.N,:]   # AB
-      b = self.length_y[1:self.N+1,:,:] # BC
-      c = self.length_antidiag          # AB
-      angles[:,:,:,1] = sphgeo.tri_angle(a, b, c)
-
-      # Compute the angle C using the triangle DCB
-      a = self.length_x[:,1:self.N+1,:] # DC
-      b = self.length_y[1:self.N+1,:,:] # CB
-      c = self.length_diag              # DB
-      angles[:,:,:,2] = sphgeo.tri_angle(a, b, c)
-      areas = areas + sphgeo.tri_area(a, b, c)
-      
-      # Compute the angle D using the triangle ADC
-      a = self.length_x[:,1:self.N+1,:] # DC
-      b = self.length_y[0:self.N,:,:]   # AD
-      c = self.length_antidiag          # CA
-      angles[:,:,:,3] = sphgeo.tri_angle(a, b, c)
-
-      # Angles attribute
-      self.angles = angles
-
-      # Compute areas
-      if showonscreen==True:
-         print("Computing cell areas...\n")    
-
-      # Use spherical excess formula
-      #self.areas = sphgeo.quad_area(angles[:,:,:,0], angles[:,:,:,1], angles[:,:,:,2], angles[:,:,:,3])
-      self.areas = areas
-
-      # Finish time counting
-      elapsed_time = time.time() - start_time
+         # Finish time counting
+         elapsed_time = time.time() - start_time
       
       if showonscreen==True:
          # Print some grid properties
@@ -231,9 +281,9 @@ class cubed_sphere:
          #ratio = ratio*np.cos((pi/4))**4*(1-1/m)
          #print(ratio)
          #exit()
-      if showonscreen==True:
-         print("\nDone in ","{:.2e}".format(elapsed_time),"seconds.")
-         print("--------------------------------------------------------\n")
+      if (showonscreen==True) and (gridload==False):
+            print("\nDone in ","{:.2e}".format(elapsed_time),"seconds.")
+            print("--------------------------------------------------------\n")
 
 ####################################################################################
 # Structure for scalar values on cubed-sphere grid

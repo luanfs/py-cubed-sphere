@@ -1,7 +1,9 @@
-#Grid parameters 
+#Parameters 
 #Number of cells N along a coordinates axis (total number of cells is 6*N*N) 
 24
 #Transformation? 1-equiangular; 2-equidistant
+1
+#Loadable grid? 0-No; 1-Yes
 1
 #Show ongoing process details on screen? 0-No; 1-Yes
 1

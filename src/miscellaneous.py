@@ -8,7 +8,7 @@
 
 
 import os
-from constants import datadir, graphdir
+from constants import griddir, datadir, graphdir
 
 ####################################################################################
 # Create a folder
@@ -26,14 +26,20 @@ def createFolder(dir):
 ####################################################################################       
 def createDirs():
    print("--------------------------------------------------------")
-   print("Cubed sphere grid generator code by Luan Santos - 2022\n")
+   print("Cubed-sphere grid generator by Luan Santos - 2022\n")
+    # Check directory grid does not exist
+   if not os.path.exists(griddir):
+      print('Creating directory ',griddir)
+      createFolder(griddir)
+
    # Check directory data does not exist   
    if not os.path.exists(datadir):
       print('Creating directory ',datadir)
       createFolder(datadir) 
 
-   # Check directory data does not exist
+   # Check directory graphs does not exist
    if not os.path.exists(graphdir):
       print('Creating directory ',graphdir)
       createFolder(graphdir)
+
    print("--------------------------------------------------------")      

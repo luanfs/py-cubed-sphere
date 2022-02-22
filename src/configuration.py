@@ -27,6 +27,8 @@ def get_parameters():
       tranformation = confpar.readline()
       confpar.readline()
       showonscreen = confpar.readline()
+      confpar.readline()
+      gridload = confpar.readline()
       confpar.readline()   
       test_case = confpar.readline()
       confpar.readline()
@@ -35,10 +37,11 @@ def get_parameters():
       
       # Close the file   
       confpar.close()
-
+        
       # Convert from str to int
       N              = int(N)
       showonscreen   = bool(int(showonscreen))  # Also converted to boolean
+      gridload       = bool(int(gridload))      # Also converted to boolean
       tranformation  = int(tranformation)
       test_case      = int(test_case)
       map_projection = int(map_projection)
@@ -60,12 +63,13 @@ def get_parameters():
       else: 
          print("ERROR: invalid map projection")
          exit()
-         
+
       # Print the parameters on the screen
       print("\n--------------------------------------------------------")
       print("Parameters from file", file_path,"\n")
       print("Number of cells along a coordinate axis: ", N)
       print("Show process on the screen: ", showonscreen)
+      print("Loadable grid: ", gridload)
       print("Transformation:", transf)
       print("Test case to be done: ", test_case)
       print("Map projection: ", map)              
@@ -75,4 +79,4 @@ def get_parameters():
       print("ERROR in get_grid_parameters: file mesh.par not found in /par.")
       exit()
 
-   return N, transf, showonscreen, test_case, map
+   return N, transf, showonscreen, gridload, test_case, map

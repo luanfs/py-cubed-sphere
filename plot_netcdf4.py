@@ -43,7 +43,7 @@ def plot_netcdf4(filename, transformation, map_projection):
 
    # Create a CS mesh
    N = 1
-   cs_grid = cubed_sphere(N, transformation,'False')
+   cs_grid = cubed_sphere(N, transformation,'False', 'False')
    
    # Get the variables
    for var in dataset.variables.values():
