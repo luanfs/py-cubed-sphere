@@ -6,7 +6,6 @@
 # (luan.santos@usp.br)
 ####################################################################################
 
-
 import cartopy.crs as ccrs
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,7 +13,6 @@ import netCDF4 as nc
 from cs_datastruct import cubed_sphere
 from constants import*
 from sphgeo import*
-
 
 ####################################################################################
 # This routine plots the cubed-sphere grid.
@@ -113,7 +111,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
    if cs_grid.N <= 10:
      cs_grid_aux = cs_grid
    else:
-     cs_grid_aux = cubed_sphere(1, cs_grid.projection, False)
+     cs_grid_aux = cubed_sphere(1, cs_grid.projection, False, False)
    
    for p in range(0, nbfaces):
       lons = cs_grid_aux.vertices.lon[:,:,p]*rad2deg
@@ -162,6 +160,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
 ####################################################################################  
 def open_netcdf4(fields_cs, ts, name):
    # Open a netcdf file
+   print("--------------------------------------------------------")
    print("Creating netcdf file "+datadir+name+".nc")
    data = nc.Dataset(datadir+name+".nc", mode='w', format='NETCDF4_CLASSIC')
 
@@ -195,8 +194,79 @@ def open_netcdf4(fields_cs, ts, name):
    lats[:]  = np.linspace( -90.0,  90.0, n)
    lons[:]  = np.linspace(-180.0, 180.0, m)
 
-   #data.close()
-   print("Done.\n")
-   #print(type(data))
+   print("Done.")
+   print("--------------------------------------------------------\n")
    return data
    
+
+####################################################################################
+# Create a netcdf file using the fields given in the list fields_ll
+####################################################################################  
+def save_grid_netcdf4(grid):
+   # Open a netcdf file
+   print("--------------------------------------------------------")
+   print("Creating grid netcdf file "+griddir+grid.name+".nc")
+   griddata = nc.Dataset(griddir+grid.name+".nc", mode='w', format='NETCDF4_CLASSIC')
+
+   # Name
+   griddata.title = grid.name 
+   
+   # Cell in each panel axis
+   n = grid.N
+
+   # Create dimensions
+   # Cells 
+   panel = griddata.createDimension('panel', nbfaces)
+
+   # Panel xy coordinates
+   ix = griddata.createDimension('ix', n+1)
+   jy = griddata.createDimension('jy', n+1)
+
+   ix2 = griddata.createDimension('ix2', n)
+   jy2 = griddata.createDimension('jy2', n)
+   
+   # R3 dimension + S2 (sphere in R3) dimension (x,y,z + lat,lon coordinates)
+   coorddim = griddata.createDimension('coorddim', 5)
+
+   # Number of edges in a cell
+   ed = griddata.createDimension('ed', 4)
+
+   # Create variables
+   vertices = griddata.createVariable('vertices', 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
+   centers  = griddata.createVariable('centers',  'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
+
+   # Geometric properties
+   areas           = griddata.createVariable('areas'          , 'f8', ('ix2', 'jy2', 'panel'))
+   length_x        = griddata.createVariable('length_x'       , 'f8', ('ix2', 'jy' , 'panel'))
+   length_y        = griddata.createVariable('length_y'       , 'f8', ('ix' , 'jy2', 'panel'))
+   length_diag     = griddata.createVariable('length_diag'    , 'f8', ('ix2', 'jy2', 'panel'))
+   length_antidiag = griddata.createVariable('length_antidiag', 'f8', ('ix2', 'jy2', 'panel'))
+   angles          = griddata.createVariable('angles'         , 'f8', ('ix2', 'jy2', 'panel', 'ed'))   
+
+   # Values attribution
+   vertices[:,:,:,0] = grid.vertices.x
+   vertices[:,:,:,1] = grid.vertices.y
+   vertices[:,:,:,2] = grid.vertices.z
+   vertices[:,:,:,3] = grid.vertices.lon
+   vertices[:,:,:,4] = grid.vertices.lat
+
+   centers[:,:,:,0] = grid.centers.x
+   centers[:,:,:,1] = grid.centers.y
+   centers[:,:,:,2] = grid.centers.z
+   centers[:,:,:,3] = grid.centers.lon
+   centers[:,:,:,4] = grid.centers.lat
+
+   angles[:,:,:,0] = grid.angles[:,:,:,0]
+   angles[:,:,:,1] = grid.angles[:,:,:,1]
+   angles[:,:,:,2] = grid.angles[:,:,:,2]
+   angles[:,:,:,3] = grid.angles[:,:,:,3]
+
+   areas[:,:,:]           = grid.areas[:,:,:]
+   length_x[:,:,:]        = grid.length_x[:,:,:]
+   length_y[:,:,:]        = grid.length_y[:,:,:]
+   length_diag[:,:,:]     = grid.length_diag[:,:,:]
+   length_antidiag[:,:,:] = grid.length_antidiag[:,:,:]
+
+   griddata.close()
+   print("Done.")
+   print("--------------------------------------------------------\n")
