@@ -35,7 +35,7 @@ class point:
 #  Global cubed-sphere grid structure
 ####################################################################################      
 class cubed_sphere:
-   def __init__(self, N, transformation,gridload, showonscreen):
+   def __init__(self, N, transformation, showonscreen, gridload):
       # Panel indexes distribution
       #      +---+
       #      | 4 |
@@ -56,12 +56,16 @@ class cubed_sphere:
       self.netcdfdata_filename = griddir+self.name+".nc"
       
       # Load the grid
-      if gridload==True and (os.path.isfile(griddir+self.name+'.nc')):   # Check if grid file exists
+      if gridload==True and (os.path.isfile(self.netcdfdata_filename)):   # Check if grid file exists
          if showonscreen==True:
             print("--------------------------------------------------------")      
-            print('Loading grid file '+griddir+self.name+'.nc')
+            print('Loading grid file '+self.netcdfdata_filename)
+         
+         # Start time counting
+         start_time = time.time()
+          
          # Open grid data
-         griddata = nc.Dataset(griddir+self.name+'.nc','r')
+         griddata = nc.Dataset(self.netcdfdata_filename,'r')
 
          # Create points
          vertices = point(N+1, N+1)
@@ -100,9 +104,9 @@ class cubed_sphere:
 
          # Close netcdf file
          griddata.close()
-         if showonscreen==True:
-            print("Done.")   
-            print("--------------------------------------------------------\n")      
+         
+         # Finish time counting
+         elapsed_time = time.time() - start_time    
       else:   
          # Generate the grid
          if showonscreen==True:
@@ -265,7 +269,7 @@ class cubed_sphere:
       
       if showonscreen==True:
          # Print some grid properties
-         print("Min  edge length (km)  : ","{:.2e}".format(erad*np.amin(self.length_x)))
+         print("\nMin  edge length (km)  : ","{:.2e}".format(erad*np.amin(self.length_x)))
          print("Max  edge length (km)  : ","{:.2e}".format(erad*np.amax(self.length_x)))
          print("Mean edge length (km)  : ","{:.2e}".format(erad*np.mean(self.length_x)))
          print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_x)/np.amin(self.length_x)))
@@ -284,7 +288,7 @@ class cubed_sphere:
          #ratio = ratio*np.cos((pi/4))**4*(1-1/m)
          #print(ratio)
          #exit()
-      if (showonscreen==True) and (gridload==False):
+      if (showonscreen==True):
             print("\nDone in ","{:.2e}".format(elapsed_time),"seconds.")
             print("--------------------------------------------------------\n")
 

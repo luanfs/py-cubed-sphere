@@ -40,7 +40,7 @@ def main():
       plot_grid(cs_grid, map_projection)
       
       # Save grid in netcdf format
-      if not(os.path.isfile(griddir+cs_grid.name+'.nc')):
+      if not(os.path.isfile(cs_grid.netcdfdata_filename)) or (os.path.isfile(cs_grid.netcdfdata_filename) and gridload==False):
          save_grid_netcdf4(cs_grid)
 
    else:
@@ -48,7 +48,7 @@ def main():
       cs_grid = cubed_sphere(N, transformation, showonscreen, gridload)
 
       # Save grid in netcdf format
-      if not(os.path.isfile(cs_grid.netcdfdata_filename)):
+      if not(os.path.isfile(cs_grid.netcdfdata_filename)) or (os.path.isfile(cs_grid.netcdfdata_filename) and gridload==False):
          save_grid_netcdf4(cs_grid)
 
       # Create the latlon mesh (for plotting)  
