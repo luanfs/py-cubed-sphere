@@ -52,6 +52,9 @@ class cubed_sphere:
       self.projection = transformation
       self.name = self.projection+"_"+str(N)
       
+      # Grid data netcdf filename
+      self.netcdfdata_filename = griddir+self.name+".nc"
+      
       # Load the grid
       if gridload==True and (os.path.isfile(griddir+self.name+'.nc')):   # Check if grid file exists
          if showonscreen==True:

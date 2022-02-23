@@ -20,7 +20,7 @@ from cs_datastruct import cubed_sphere, latlon_grid
 from interpolation import ll2cs
 from gridquality   import grid_quality
 from plot          import plot_grid, save_grid_netcdf4
-from constants     import Nlat, Nlon, griddir
+from constants     import Nlat, Nlon
 #from divergence    import divergence_test
 
 def main():
@@ -48,7 +48,7 @@ def main():
       cs_grid = cubed_sphere(N, transformation, showonscreen, gridload)
 
       # Save grid in netcdf format
-      if not(os.path.isfile(griddir+cs_grid.name+'.nc')):
+      if not(os.path.isfile(cs_grid.netcdfdata_filename)):
          save_grid_netcdf4(cs_grid)
 
       # Create the latlon mesh (for plotting)  

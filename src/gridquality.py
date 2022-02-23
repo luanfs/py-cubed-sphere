@@ -27,7 +27,6 @@ def grid_quality(cs_grid, ll_grid, map_projection):
    distortion  = distortions (cs_grid)
    alignment   = alignment_index(cs_grid)
 
-   #print(np.amax(area.f)/np.amin(area.f))
    # Interpolate to the latlon grid
    angle_ll       = nearest_neighbour(angle, cs_grid, ll_grid)
    area_ll        = nearest_neighbour(area, cs_grid, ll_grid)
@@ -35,9 +34,6 @@ def grid_quality(cs_grid, ll_grid, map_projection):
    distortion_ll  = nearest_neighbour(distortion, cs_grid, ll_grid)
    alignment_ll   = nearest_neighbour(alignment, cs_grid, ll_grid)
 
-   #plot_scalar_field(mean_length_ll, mean_length.name, cs_grid, ll_grid, map_projection) 
-   #plot_scalar_field(area_ll, area.name, cs_grid, ll_grid, map_projection)    
-   #exit()
    # Create list of fields
    fields_ll = [angle_ll , area_ll, mean_length_ll, distortion_ll, alignment_ll]
    fields_cs = [angle    , area   , mean_length   , distortion   , alignment   ]

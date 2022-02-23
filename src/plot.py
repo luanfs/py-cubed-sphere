@@ -206,7 +206,7 @@ def save_grid_netcdf4(grid):
    # Open a netcdf file
    print("--------------------------------------------------------")
    print("Creating grid netcdf file "+griddir+grid.name+".nc")
-   griddata = nc.Dataset(griddir+grid.name+".nc", mode='w', format='NETCDF4_CLASSIC')
+   griddata = nc.Dataset(grid.netcdfdata_filename, mode='w', format='NETCDF4_CLASSIC')
 
    # Name
    griddata.title = grid.name 
@@ -215,7 +215,7 @@ def save_grid_netcdf4(grid):
    n = grid.N
 
    # Create dimensions
-   # Cells 
+   # Panels 
    panel = griddata.createDimension('panel', nbfaces)
 
    # Panel xy coordinates
