@@ -130,7 +130,7 @@ def plot_netcdf4(filename, transformation, map_projection):
 ###############################################################
 print("Script for plotting netcdf files")
 # Get the parameters
-N, transformation, showonscreen, test_case, map_projection = get_parameters()
+N, transformation, showonscreen, gridload, test_case, map_projection = get_parameters()
 
 # Name test case
 if test_case == 2:
