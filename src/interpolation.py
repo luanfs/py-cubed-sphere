@@ -10,7 +10,7 @@ import numpy as np
 from constants import*
 from sphgeo import*
 import time
-from cs_transform import inverse_equiangular_gnomonic_map, inverse_equidistant_gnomonic_map, linear_search, inverse_conformal_map
+from cs_transform import inverse_equiangular_gnomonic_map, inverse_equidistant_gnomonic_map, linear_search, binary_search, inverse_conformal_map
 
 ####################################################################################
 # This routine receives cubeb-sphere and lat-lon grids and convert each lat-lon 
@@ -112,11 +112,10 @@ def ll2cs(cs_grid, latlon_grid):
          ξ, η = inverse_equidistant_gnomonic_map(xll[mask], yll[mask], zll[mask], p)
          i[mask], j[mask] = find_closest_index(ξ, η)
       elif cs_grid.projection == 'conformal':
-         print(p)
-         i[mask], j[mask] = linear_search(xll[mask], yll[mask], zll[mask], cs_grid, p)
+         i[mask], j[mask] = binary_search(xll[mask], yll[mask], zll[mask], cs_grid, p)
          #i[mask], j[mask] = inverse_conformal_map(xll[mask], yll[mask], zll[mask], cs_grid, p)
          #exit()
-   #exit()
+   exit()
    # Finish time counting
    elapsed_time = time.time() - start_time
 

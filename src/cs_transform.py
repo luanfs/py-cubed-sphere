@@ -239,7 +239,7 @@ def inverse_equidistant_gnomonic_map(x, y, z, panel):
    return ξ, η
       
 ####################################################################################
-# Compute the conformal map from Rancic (96).
+# Compute the conformal map from Rancic et al(1996).
 #
 # This routine is a python translation from the Julia code provided by
 # https://github.com/CliMA/CubedSphere.jl and the matlab 
@@ -554,10 +554,10 @@ def B_coeffs():
    return B
 
 ####################################################################################
-# Given a panel, this routine computes the inverse of the conformal map
-# The points given in the arrays x,y,z are assumed to lie in the same panel
+# Linear search of the points (xll, yll, zll) in a given panel 
 ####################################################################################
 def linear_search(xll, yll, zll, cs_grid, panel):
+   print('Using linear search, this may take a while')
    x = cs_grid.vertices.x[:,:,panel]
    y = cs_grid.vertices.y[:,:,panel]
    z = cs_grid.vertices.z[:,:,panel]
@@ -590,4 +590,98 @@ def linear_search(xll, yll, zll, cs_grid, panel):
       if inside == False:
          print('Error in linear search.')
          exit()
+   return indexes
+
+####################################################################################
+# Binary search of the points (xll, yll, zll) in a given panel 
+####################################################################################
+def binary_search(xll, yll, zll, cs_grid, panel):
+   #print('Using linear search, this may take a while')
+   x = cs_grid.vertices.x[:,:,panel]
+   y = cs_grid.vertices.y[:,:,panel]
+   z = cs_grid.vertices.z[:,:,panel]
+   N = cs_grid.N
+
+   # Points
+   p  = np.zeros(3)
+   p1 = np.zeros(3)
+   p2 = np.zeros(3)
+   p3 = np.zeros(3)
+   p4 = np.zeros(3)
+   indexes =  np.zeros((2,len(xll)), dtype=np.int32)
+
+   for k in range(0,len(xll)):
+      print('Binary search: searching for point',k,'from',len(xll),'in panel',panel)
+      p[0:3] = xll[k], yll[k], zll[k]
+      leftx  = 0
+      rightx = N
+      lefty  = 0
+      righty = N
+
+      while abs(leftx-rightx)>1 or abs(lefty - righty)>1:
+         if(leftx < rightx):
+            middlex = int((leftx+rightx)/2)
+         if(lefty < righty):
+            middley = int((lefty+righty)/2)
+
+         p1[0:3] = x[leftx, lefty],   y[leftx, lefty]  , z[leftx, lefty]
+         p2[0:3] = x[rightx, lefty],  y[rightx, lefty] , z[rightx, lefty]
+         p3[0:3] = x[leftx, righty],  y[leftx, righty] , z[leftx, righty]         
+         p4[0:3] = x[rightx, righty], y[rightx, righty], z[rightx, righty]
+         inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
+
+         if(inside==False):
+            print('Error 1')
+            exit()
+
+         ix = [leftx, middlex, rightx]
+         jy = [lefty, middley, righty]        
+
+         for i in range(0,2):
+            for j in range(0,2):
+               A = ix[i]  , jy[j]
+               B = ix[i+1], jy[j]
+               C = ix[i]  , jy[j+1]
+               D = ix[i+1], jy[j+1]
+               
+               p1[0:3] = x[A], y[A], z[A]
+               p2[0:3] = x[B], y[B], z[B]
+               p3[0:3] = x[C], y[C], z[C]         
+               p4[0:3] = x[D], y[D], z[D]
+               inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
+               if inside == True:
+                  leftx_old, rightx_old = leftx, rightx
+                  lefty_old, righty_old = lefty, righty
+                  leftx , lefty  = A
+                  rightx, righty = D
+                  break
+            if inside == True:
+               break
+         
+         # Linear search
+         if inside == False:
+            for i in range(leftx_old, rightx_old):
+               for j in range(lefty_old, righty_old):
+                  p1[0:3] = x[i  , j]  , y[i  , j]  , z[i  , j]
+                  p2[0:3] = x[i+1, j]  , y[i+1, j]  , z[i+1, j]
+                  p3[0:3] = x[i  , j+1], y[i  , j+1], z[i  , j+1]   
+                  p4[0:3] = x[i+1, j+1], y[i+1, j+1], z[i+1, j+1]   
+                  inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)           
+                  if inside == True:
+                     leftx , lefty  = i, j
+                     rightx, righty = i, j
+                     break
+               if inside == True:
+                  leftx , lefty  = i, j
+                  rightx, righty = i, j
+                  break
+            #print(inside,leftx,rightx)
+            if inside == False:
+               leftx_old  = 0
+               lefty_old  = 0
+               rightx_old = N
+               righty_old = N
+               #exit()
+      indexes[0,k] = leftx
+      indexes[1,k] = lefty
    return indexes
