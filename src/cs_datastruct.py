@@ -117,6 +117,8 @@ class cubed_sphere:
             a = pio4
          elif transformation == "gnomonic_equidistant":
             a = 1.0/np.sqrt(3.0) # Half length of the cube
+         elif transformation == "conformal":
+            a = 1.0
          else:
             print("ERROR: invalid grid transformation.")
             exit()
@@ -135,23 +137,37 @@ class cubed_sphere:
          # Generate cell vertices
          if showonscreen==True:
             print("Generating cell vertices...")
+            
          vertices = point(N+1, N+1)
+
          if transformation == "gnomonic_equiangular": 
             vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = equiangular_gnomonic_map(ξ, η, N+1)
+
          elif transformation=="gnomonic_equidistant":
             vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = equidistant_gnomonic_map(ξ, η, N+1)
+
+         elif transformation=="conformal":
+            vertices.x, vertices.y, vertices.z, vertices.lon, vertices.lat = conformal_map(ξ, η, N+1)
          self.vertices = vertices
  
          # Generate cell centers
          if showonscreen==True:
-            print("Generating cell centers...")      
+            print("Generating cell centers...")  
+
          centers = point(N, N)
+
          ξ = np.linspace(ξ_min+Δξ/2.0, ξ_max-Δξ/2.0, N)
          η = np.linspace(η_min+Δη/2.0, η_max-Δη/2.0, N)
+
          if transformation == "gnomonic_equiangular":
             centers.x, centers.y, centers.z, centers.lon, centers.lat = equiangular_gnomonic_map(ξ, η, N)
+
          elif transformation=="gnomonic_equidistant":
             centers.x, centers.y, centers.z, centers.lon, centers.lat = equidistant_gnomonic_map(ξ, η, N)
+
+         elif transformation=="conformal":
+            centers.x, centers.y, centers.z, centers.lon, centers.lat = conformal_map(ξ, η, N)
+
          self.centers = centers
 
          # Compute cell lenghts
