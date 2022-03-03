@@ -17,7 +17,7 @@ from sphgeo import*
 ####################################################################################
 # This routine plots the cubed-sphere grid.
 ####################################################################################
-fig_format = 'png' # Figure format
+fig_format = 'pdf' # Figure format
 def plot_grid(grid, map_projection):
    # Figure resolution
    dpi = 100
@@ -79,6 +79,7 @@ def plot_grid(grid, map_projection):
       ax.gridlines(draw_labels=True)
       
    # Save the figure
+   #plt.show()
    plt.savefig(graphdir+grid.name+"_"+map_projection+'.'+fig_format, format=fig_format)
    print('Figure has been saved in '+graphdir+grid.name+"_"+map_projection+'.'+fig_format)
    print("--------------------------------------------------------\n")    

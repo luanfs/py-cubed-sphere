@@ -53,8 +53,7 @@ def main():
 
       # Create the latlon mesh (for plotting)  
       ll_grid = latlon_grid(Nlat, Nlon)
-      ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)      
-
+      ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
       if test_case == 2:
          print("Test case 2: grid quality test.\n")
          # Call grid quality test
@@ -64,7 +63,6 @@ def main():
       #   # Call divergence test
       #   print("Test case 3: Divergence test.\n")
       #   divergence_test(cs_grid, ll_grid, map_projection)
-
       else:
          print("ERROR: invalid testcase.")
          exit()
