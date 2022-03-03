@@ -71,3 +71,61 @@ def quad_area(α1, α2, α3, α4):
 def tri_angle(a, b, c):
    angle = np.arccos((np.cos(c) - np.cos(a)*np.cos(b))/(np.sin(a)*np.sin(b)))
    return angle
+
+####################################################################################
+# Based on the routine INSIDETR from iModel (https://github.com/luanfs/iModel/blob/master/src/smeshpack.f90)
+# Checks if 'p' is inside the geodesical triangle formed by p1, p2, p3
+# The vertices of the triangle must be given ccwisely
+# The algorithm checks if the point left of each edge
+####################################################################################
+def inside_triangle(p, p1, p2, p3):
+   insidetr = False
+   A = np.zeros((3,3))
+
+   # For every edge
+   # Check if point is at left of edge
+   A[0:3,0] = p[0:3] 
+   A[0:3,1] = p1[0:3] 
+   A[0:3,2] = p2[0:3] 
+   left = np.linalg.det(A)
+   if(left < 0):
+      # Point not in triangle
+      return insidetr
+
+   A[0:3,0] = p[0:3] 
+   A[0:3,1] = p2[0:3] 
+   A[0:3,2] = p3[0:3] 
+   left = np.linalg.det(A)
+   if(left < 0):
+      # Point not in triangle
+      return insidetr
+
+   A[0:3,0] = p[0:3] 
+   A[0:3,1] = p3[0:3] 
+   A[0:3,2] = p1[0:3]
+   left = np.linalg.det(A)
+   if(left < 0):
+      # Point not in triangle
+      return insidetr
+
+   # If left >=0  to all edge, then the point
+   # is inside the triangle, or on the edge
+   insidetr = True
+
+   return insidetr
+
+####################################################################################
+# Checks if 'p' is inside the geodesical quadrilateral formed by p1, p2, p3, p4
+# The vertices of the quadrilateral must be given ccwisely
+####################################################################################
+def inside_quadrilateral(p, p1, p2, p3, p4):
+   # Check if p is inside the geodesical triangle formed by p1, p2 and p3
+   inside_tr1 = inside_triangle(p, p1, p2, p3)
+
+   if inside_tr1 == True:
+      return inside_tr1
+   else:
+      # Check if p is inside the geodesical triangle formed by p2, p4 and p3
+      inside_tr2 = inside_triangle(p, p2, p4, p3)
+      inside_quad = np.logical_or(inside_tr1, inside_tr2)
+      return inside_quad
