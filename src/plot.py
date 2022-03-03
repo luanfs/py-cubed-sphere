@@ -17,7 +17,7 @@ from sphgeo import*
 ####################################################################################
 # This routine plots the cubed-sphere grid.
 ####################################################################################
-fig_format = 'pdf' # Figure format
+fig_format = 'png' # Figure format
 def plot_grid(grid, map_projection):
    # Figure resolution
    dpi = 100
