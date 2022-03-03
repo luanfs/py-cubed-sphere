@@ -1,14 +1,14 @@
 #Parameters 
 #Number of cells N along a coordinates axis (total number of cells is 6*N*N) 
 24
-#Transformation? 1-equiangular; 2-equidistant
+#Transformation? 1-equiangular; 2-equidistant; 3-conformal
 1
 #Loadable grid? 0-No; 1-Yes
-1
+0
 #Show ongoing process details on screen? 0-No; 1-Yes
 1
 #Test case to be done
-2
+1
 # Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------
