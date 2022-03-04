@@ -7,10 +7,14 @@
 ####################################################################################
 
 import numpy as np
+import os.path
+import time
+import netCDF4 as nc
+
 from constants import*
 from sphgeo import*
-import time
 from cs_transform import inverse_equiangular_gnomonic_map, inverse_equidistant_gnomonic_map, linear_search, binary_search, inverse_conformal_map
+from plot import ll2cs_netcdf
 
 ####################################################################################
 # This routine receives cubeb-sphere and lat-lon grids and convert each lat-lon 
@@ -34,93 +38,108 @@ def ll2cs(cs_grid, latlon_grid):
    yll = latlon_grid.y
    zll = latlon_grid.z
 
-   # Define a grid for each transformation
-   if cs_grid.projection == 'gnomonic_equiangular':
-      a  = pio4      
-   elif cs_grid.projection == 'gnomonic_equidistant':
-      a  = 1.0/np.sqrt(3.0) # Half length of the cube
-   elif cs_grid.projection == 'conformal':
-      a  = 1.0
-   
-   # Grid spacing
-   Δx = 2*a/cs_grid.N
-   Δy = 2*a/cs_grid.N
-
-   # Create the grid
-   [xmin, xmax, ymin, ymax] = [-a, a, -a, a]      
-   x = np.linspace(xmin+Δx/2.0, xmax-Δx/2.0, cs_grid.N)
-   y = np.linspace(ymin+Δy/2.0, ymax-Δy/2.0, cs_grid.N)
-
-   # This routine receives an array xx (yy) and for each 
-   # point in xx (yy), returns in i (j) the index of the 
-   # closest point in the array xx (yy).
-   def find_closest_index(xx,yy):
-      i = (np.floor((xx-xmin)/Δx))
-      j = (np.floor((yy-ymin)/Δy))
-      i = np.array(i, dtype=np.uint32)
-      j = np.array(j, dtype=np.uint32)  
-      return i, j
-
-   # Start time counting
-   print("--------------------------------------------------------")      
-   print("Converting lat-lon grid points to cubed-sphere points (for plotting) ...")
-   start_time = time.time()  
-
-   # Find panel - Following Lauritzen et al 2015.
-   P = np.zeros( (np.shape(xll)[0], np.shape(xll)[1], 3) )
-   P[:,:,0] = abs(xll)
-   P[:,:,1] = abs(yll)
-   P[:,:,2] = abs(zll)
-   PM = P.max(axis=2)
-
    # Indexes lists
    i = np.zeros(np.shape(xll), dtype=np.uint32)
    j = np.zeros(np.shape(xll), dtype=np.uint32)   
    panel_list = np.zeros(np.shape(xll), dtype=np.uint32)
 
-   # Panel 0 
-   mask = np.logical_and(PM == abs(xll), xll>0)
-   panel_list[mask] = 0
-
-   # Panel 1
-   mask = np.logical_and(PM == abs(yll), yll>0)
-   panel_list[mask] = 1
-   
-   # Panel 2
-   mask = np.logical_and(PM == abs(xll), xll<0)
-   panel_list[mask] = 2
-
-   # Panel 3
-   mask = np.logical_and(PM == abs(yll), yll<0)
-   panel_list[mask] = 3
-   
-   # Panel 4
-   mask = np.logical_and(PM == abs(zll), zll>0)
-   panel_list[mask] = 4
-   
-   # Panel 5
-   mask = np.logical_and(PM == abs(zll), zll<=0)
-   panel_list[mask] = 5
-
-   # Compute inverse transformation (sphere to cube) for each panel p
-   for p in range(0, nbfaces):
-      mask = (panel_list == p)
+   filename = griddir+cs_grid.name+'_ll2cs'+'.nc'
+   #print(filename)
+   if (os.path.isfile(filename)):
+      print("--------------------------------------------------------")
+      print("Loading lat-lon grid points to cubed-sphere points (for plotting) ...")
+      # Open grid data
+      data = nc.Dataset(filename,'r')
+      i[:,:] = data['i'][:,:]
+      j[:,:] = data['j'][:,:]
+      panel_list[:,:] = data['panel'][:,:]
+      print("--------------------------------------------------------\n")
+   else:
+      # Define a grid for each transformation
       if cs_grid.projection == 'gnomonic_equiangular':
-         ξ, η = inverse_equiangular_gnomonic_map(xll[mask], yll[mask], zll[mask], p)
-         i[mask], j[mask] = find_closest_index(ξ, η)
+         a  = pio4      
       elif cs_grid.projection == 'gnomonic_equidistant':
-         ξ, η = inverse_equidistant_gnomonic_map(xll[mask], yll[mask], zll[mask], p)
-         i[mask], j[mask] = find_closest_index(ξ, η)
+         a  = 1.0/np.sqrt(3.0) # Half length of the cube
       elif cs_grid.projection == 'conformal':
-         i[mask], j[mask] = binary_search(xll[mask], yll[mask], zll[mask], cs_grid, p)
-         #i[mask], j[mask] = inverse_conformal_map(xll[mask], yll[mask], zll[mask], cs_grid, p)
-         #exit()
-   exit()
-   # Finish time counting
-   elapsed_time = time.time() - start_time
+         a  = 1.0
+   
+      # Grid spacing
+      Δx = 2*a/cs_grid.N
+      Δy = 2*a/cs_grid.N
 
-   print("Done in ","{:.2e}".format(elapsed_time),"seconds.")
-   print("--------------------------------------------------------\n")
+      # Create the grid
+      [xmin, xmax, ymin, ymax] = [-a, a, -a, a]      
+      x = np.linspace(xmin+Δx/2.0, xmax-Δx/2.0, cs_grid.N)
+      y = np.linspace(ymin+Δy/2.0, ymax-Δy/2.0, cs_grid.N)
+
+      # This routine receives an array xx (yy) and for each 
+      # point in xx (yy), returns in i (j) the index of the 
+      # closest point in the array xx (yy).
+      def find_closest_index(xx,yy):
+         i = (np.floor((xx-xmin)/Δx))
+         j = (np.floor((yy-ymin)/Δy))
+         i = np.array(i, dtype=np.uint32)
+         j = np.array(j, dtype=np.uint32)  
+         return i, j
+
+      # Start time counting
+      print("--------------------------------------------------------")      
+      print("Converting lat-lon grid points to cubed-sphere points (for plotting) ...")
+      start_time = time.time()  
+
+      # Find panel - Following Lauritzen et al 2015.
+      P = np.zeros( (np.shape(xll)[0], np.shape(xll)[1], 3) )
+      P[:,:,0] = abs(xll)
+      P[:,:,1] = abs(yll)
+      P[:,:,2] = abs(zll)
+      PM = P.max(axis=2)
+
+      # Panel 0 
+      mask = np.logical_and(PM == abs(xll), xll>0)
+      panel_list[mask] = 0
+
+      # Panel 1
+      mask = np.logical_and(PM == abs(yll), yll>0)
+      panel_list[mask] = 1
+   
+      # Panel 2
+      mask = np.logical_and(PM == abs(xll), xll<0)
+      panel_list[mask] = 2
+
+      # Panel 3
+      mask = np.logical_and(PM == abs(yll), yll<0)
+      panel_list[mask] = 3
+   
+      # Panel 4
+      mask = np.logical_and(PM == abs(zll), zll>0)
+      panel_list[mask] = 4
+   
+      # Panel 5
+      mask = np.logical_and(PM == abs(zll), zll<=0)
+      panel_list[mask] = 5
+
+      # Compute inverse transformation (sphere to cube) for each panel p
+      for p in range(0, nbfaces):
+         mask = (panel_list == p)
+         if cs_grid.projection == 'gnomonic_equiangular':
+            ξ, η = inverse_equiangular_gnomonic_map(xll[mask], yll[mask], zll[mask], p)
+            i[mask], j[mask] = find_closest_index(ξ, η)
+         elif cs_grid.projection == 'gnomonic_equidistant':
+            ξ, η = inverse_equidistant_gnomonic_map(xll[mask], yll[mask], zll[mask], p)
+            i[mask], j[mask] = find_closest_index(ξ, η)
+         elif cs_grid.projection == 'conformal':
+            i[mask], j[mask] = binary_search(xll[mask], yll[mask], zll[mask], cs_grid, p)
+            #i[mask], j[mask] = inverse_conformal_map(xll[mask], yll[mask], zll[mask], cs_grid, p)
+            #exit()
+      #exit()
+      # Finish time counting
+      elapsed_time = time.time() - start_time
+
+      print("Done in ","{:.2e}".format(elapsed_time),"seconds.")
+      print("--------------------------------------------------------\n")
+      
+      # Save indexes
+      ll2cs_netcdf(i, j, panel_list, cs_grid)
    return i, j, panel_list
    
 ####################################################################################

@@ -610,6 +610,11 @@ def binary_search(xll, yll, zll, cs_grid, panel):
    p4 = np.zeros(3)
    indexes =  np.zeros((2,len(xll)), dtype=np.int32)
 
+   leftxs  =  np.zeros((N), dtype=np.int32)
+   leftys  =  np.zeros((N), dtype=np.int32)
+   rightxs =  np.zeros((N), dtype=np.int32)
+   rightys =  np.zeros((N), dtype=np.int32)
+
    for k in range(0,len(xll)):
       print('Binary search: searching for point',k,'from',len(xll),'in panel',panel)
       p[0:3] = xll[k], yll[k], zll[k]
@@ -617,7 +622,7 @@ def binary_search(xll, yll, zll, cs_grid, panel):
       rightx = N
       lefty  = 0
       righty = N
-
+      l = 0
       while abs(leftx-rightx)>1 or abs(lefty - righty)>1:
          if(leftx < rightx):
             middlex = int((leftx+rightx)/2)
@@ -650,8 +655,9 @@ def binary_search(xll, yll, zll, cs_grid, panel):
                p4[0:3] = x[D], y[D], z[D]
                inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
                if inside == True:
-                  leftx_old, rightx_old = leftx, rightx
-                  lefty_old, righty_old = lefty, righty
+                  leftxs[l], rightxs[l] = leftx, rightx
+                  leftys[l], rightys[l] = lefty, righty
+                  l = l + 1
                   leftx , lefty  = A
                   rightx, righty = D
                   break
@@ -660,8 +666,24 @@ def binary_search(xll, yll, zll, cs_grid, panel):
          
          # Linear search
          if inside == False:
-            for i in range(leftx_old, rightx_old):
-               for j in range(lefty_old, righty_old):
+            print('Using linear search...')
+            while inside == False:
+               p1[0:3] = x[leftxs[l], leftys[l]],   y[leftxs[l], leftys[l]]  , z[leftxs[l], leftys[l]]
+               p2[0:3] = x[rightxs[l], leftys[l]],  y[rightxs[l], leftys[l]] , z[rightxs[l], leftys[l]]
+               p3[0:3] = x[leftxs[l], rightys[l]],  y[leftxs[l], rightys[l]] , z[leftxs[l], rightys[l]]         
+               p4[0:3] = x[rightxs[l], rightys[l]], y[rightxs[l], rightys[l]], z[rightxs[l], rightys[l]]
+               inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
+               #print(k,l,inside)
+               l = l - 1
+               if l < 0:
+                  print('Error in linear search.')
+                  exit()
+            #print('ok',l)   
+            #l = l+1
+
+            # Linear search
+            for i in range(leftxs[l], rightxs[l]):
+               for j in range(leftys[l], rightys[l]):
                   p1[0:3] = x[i  , j]  , y[i  , j]  , z[i  , j]
                   p2[0:3] = x[i+1, j]  , y[i+1, j]  , z[i+1, j]
                   p3[0:3] = x[i  , j+1], y[i  , j+1], z[i  , j+1]   
@@ -676,12 +698,7 @@ def binary_search(xll, yll, zll, cs_grid, panel):
                   rightx, righty = i, j
                   break
             #print(inside,leftx,rightx)
-            if inside == False:
-               leftx_old  = 0
-               lefty_old  = 0
-               rightx_old = N
-               righty_old = N
-               #exit()
+
       indexes[0,k] = leftx
       indexes[1,k] = lefty
    return indexes

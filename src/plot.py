@@ -271,3 +271,38 @@ def save_grid_netcdf4(grid):
    griddata.close()
    print("Done.")
    print("--------------------------------------------------------\n")
+   
+####################################################################################
+# Create a netcdf file for the latlon 2 cubed sphere indexes
+####################################################################################  
+def ll2cs_netcdf(i, j, panel_list, cs_grid):
+   # Open a netcdf file
+   print("--------------------------------------------------------")
+   filename = griddir+cs_grid.name+'_ll2cs'
+   print("Creating grid netcdf file "+filename+".nc")
+
+   data = nc.Dataset(filename+".nc", mode='w', format='NETCDF4_CLASSIC')
+
+   # Name
+   data.title = cs_grid.name+'_ll2cs'
+
+   Nlon, Nlat = np.shape(i)
+
+   # Create dimensions
+   # Latlon coordinates
+   lon = data.createDimension('lon', Nlon)
+   lat = data.createDimension('lat', Nlat)
+
+   # Create variables
+   I = data.createVariable('i',  'i4', ('lon','lat'))
+   J = data.createVariable('j',  'i4', ('lon','lat'))
+   P = data.createVariable('panel',  'i4', ('lon','lat'))
+
+   # Values
+   I[:,:] = i[:,:]
+   J[:,:] = j[:,:]
+   P[:,:] = panel_list[:,:]      
+
+   data.close()
+   print("Done.")
+   print("--------------------------------------------------------\n")
