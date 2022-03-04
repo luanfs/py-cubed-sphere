@@ -6,7 +6,11 @@ Luan F. Santos
 (luan.santos@usp.br)
 
 -------------------------------------------------------
-Requires: 
+<p align="center">
+  <img src = "/image/cubed_spheres.jpg">
+</p>
+-------------------------------------------------------
+Requires:
 
 - numpy
 - matplotlib
