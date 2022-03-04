@@ -7,9 +7,7 @@ Luan F. Santos
 
 -------------------------------------------------------
 
-<p align="center">
-  <img src = "../master/image/cubed_spheres.jpg">
-</p>
+![alt text](https://github.com/luanfs/py_cs/blob/main/image/cubed_spheres.png?raw=true)
 
 -------------------------------------------------------
 Requires:
