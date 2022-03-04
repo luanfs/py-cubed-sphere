@@ -6,9 +6,11 @@ Luan F. Santos
 (luan.santos@usp.br)
 
 -------------------------------------------------------
+
 <p align="center">
   <img src = "../master/image/cubed_spheres.jpg">
 </p>
+
 -------------------------------------------------------
 Requires:
 
