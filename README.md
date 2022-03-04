@@ -7,7 +7,7 @@ Luan F. Santos
 
 -------------------------------------------------------
 <p align="center">
-  <img src = "/image/cubed_spheres.jpg">
+  <img src = "../master/image/cubed_spheres.jpg">
 </p>
 -------------------------------------------------------
 Requires:
