@@ -47,8 +47,16 @@ def plot_grid(grid, map_projection):
         lat = grid.vertices.lat[:,:,p]*rad2deg
 
         # Centers
-        #lonc = grid.center.lon[:,:,p]*rad2deg
-        #latc = grid.center.lat[:,:,p]*rad2deg
+        lonc = grid.centers.lon[:,:,p]*rad2deg
+        latc = grid.centers.lat[:,:,p]*rad2deg
+
+        # Edges x direction
+        lon_edx = grid.edges_xdir.lon[:,:,p]*rad2deg
+        lat_edx = grid.edges_xdir.lat[:,:,p]*rad2deg
+
+        # Edges y direction
+        lon_edy = grid.edges_ydir.lon[:,:,p]*rad2deg
+        lat_edy = grid.edges_ydir.lat[:,:,p]*rad2deg
 
         # Plot vertices
         A_lon, A_lat = lon[0:grid.N, 0:grid.N], lat[0:grid.N, 0:grid.N]
@@ -68,12 +76,22 @@ def plot_grid(grid, map_projection):
         plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
         plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
  
-        # Plot centers
-        #if map_projection == 'mercator':
-        #   center_lon, center_lat = lonc, latc
-        #   center_lon, center_lat = np.ndarray.flatten(center_lon),np.ndarray.flatten(center_lat)
-        #   print(np.shape(center_lon))
-        #   plt.plot(center_lon, center_lat, marker='+',color = 'black')
+        # Plot center and edge points
+        if map_projection == 'mercator':
+            center_lon, center_lat = lonc, latc
+            center_lon, center_lat = np.ndarray.flatten(center_lon),np.ndarray.flatten(center_lat)
+            for i in range(0, np.shape(center_lon)[0]):
+                plt.plot(center_lon[i], center_lat[i], marker='.',color = 'black')
+ 
+            edges_xdir_lon, edges_xdir_lat  = lon_edx, lat_edx
+            edges_xdir_lon, edges_xdir_lat = np.ndarray.flatten(edges_xdir_lon), np.ndarray.flatten(edges_xdir_lat)
+            for i in range(0, np.shape(edges_xdir_lon)[0]):
+                plt.plot(edges_xdir_lon[i], edges_xdir_lat[i], marker='.',color = 'white')
+
+            edges_ydir_lon, edges_ydir_lat  = lon_edy, lat_edy
+            edges_ydir_lon, edges_ydir_lat = np.ndarray.flatten(edges_ydir_lon), np.ndarray.flatten(edges_ydir_lat)
+            for i in range(0, np.shape(edges_ydir_lon)[0]):
+                plt.plot(edges_ydir_lon[i], edges_ydir_lat[i], marker='.',color = 'white')
 
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
@@ -245,15 +263,15 @@ def save_grid_netcdf4(grid):
     angles          = griddata.createVariable('angles'         , 'f8', ('ix2', 'jy2', 'panel', 'ed'))   
 
     # Values attribution
-    vertices[:,:,:,0] = grid.vertices.x
-    vertices[:,:,:,1] = grid.vertices.y
-    vertices[:,:,:,2] = grid.vertices.z
+    vertices[:,:,:,0] = grid.vertices.X
+    vertices[:,:,:,1] = grid.vertices.Y
+    vertices[:,:,:,2] = grid.vertices.Z
     vertices[:,:,:,3] = grid.vertices.lon
     vertices[:,:,:,4] = grid.vertices.lat
 
-    centers[:,:,:,0] = grid.centers.x
-    centers[:,:,:,1] = grid.centers.y
-    centers[:,:,:,2] = grid.centers.z
+    centers[:,:,:,0] = grid.centers.X
+    centers[:,:,:,1] = grid.centers.Y
+    centers[:,:,:,2] = grid.centers.Z
     centers[:,:,:,3] = grid.centers.lon
     centers[:,:,:,4] = grid.centers.lat
 
