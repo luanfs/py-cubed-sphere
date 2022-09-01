@@ -50,18 +50,30 @@ def plot_grid(grid, map_projection):
         lonc = grid.centers.lon[:,:,p]*rad2deg
         latc = grid.centers.lat[:,:,p]*rad2deg
 
-        # Edges x direction
-        lon_edx = grid.edges_xdir.lon[:,:,p]*rad2deg
-        lat_edx = grid.edges_xdir.lat[:,:,p]*rad2deg
+        # Edges in x direction
+        lon_edx = grid.edx.lon[:,:,p]*rad2deg
+        lat_edx = grid.edx.lat[:,:,p]*rad2deg
 
-        # Edges y direction
-        lon_edy = grid.edges_ydir.lon[:,:,p]*rad2deg
-        lat_edy = grid.edges_ydir.lat[:,:,p]*rad2deg
+        # Edges in y direction
+        lon_edy = grid.edy.lon[:,:,p]*rad2deg
+        lat_edy = grid.edy.lat[:,:,p]*rad2deg
+
+        # Tangent vector at edges in x direction
+        vec_tgx_edx_lat = grid.tg_ex_edx.lat[:,:,p]
+        vec_tgx_edx_lon = grid.tg_ex_edx.lon[:,:,p]
+        vec_tgy_edx_lat = grid.tg_ey_edx.lat[:,:,p]
+        vec_tgy_edx_lon = grid.tg_ey_edx.lon[:,:,p]
+
+        # Tangent vector at edges in y direction
+        vec_tgx_edy_lat = grid.tg_ex_edy.lat[:,:,p]
+        vec_tgx_edy_lon = grid.tg_ex_edy.lon[:,:,p]
+        vec_tgy_edy_lat = grid.tg_ey_edy.lat[:,:,p]
+        vec_tgy_edy_lon = grid.tg_ey_edy.lon[:,:,p]
 
         # Plot vertices
         A_lon, A_lat = lon[0:grid.N, 0:grid.N], lat[0:grid.N, 0:grid.N]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
-      
+
         B_lon, B_lat = lon[1:grid.N+1, 0:grid.N], lat[1:grid.N+1, 0:grid.N]
         B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
       
@@ -93,6 +105,11 @@ def plot_grid(grid, map_projection):
             for i in range(0, np.shape(edges_ydir_lon)[0]):
                 plt.plot(edges_ydir_lon[i], edges_ydir_lat[i], marker='.',color = 'white')
 
+            # Plot tangent vector at edge points in x dir
+            #plt.quiver(lon_edx, lat_edx, vec_tgx_edx_lon, vec_tgx_edx_lat, width = 0.001)
+            #plt.quiver(lon_edx, lat_edx, vec_tgy_edx_lon, vec_tgy_edx_lat, width = 0.001)
+            #plt.quiver(lon_edy, lat_edy, vec_tgx_edy_lon, vec_tgx_edy_lat, width = 0.001)
+            #plt.quiver(lon_edy, lat_edy, vec_tgy_edy_lon, vec_tgy_edy_lat, width = 0.001)
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
       
