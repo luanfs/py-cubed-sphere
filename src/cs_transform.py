@@ -31,64 +31,64 @@ import matplotlib.pyplot as plt
 #
 # This routine computes the Gnomonic mapping based on the equiangular projection
 # defined by Ronchi et al (96) for each panel.
-# - ξ, η are 1d arrays storing the angular variables defined in [-pi/4,pi/4].
-# - The projection is applied on the points (ξ,η)
+# - x, y are 1d arrays storing the angular variables defined in [-pi/4,pi/4].
+# - The projection is applied on the points (x, y)
 # - N is the number of cells along a coordinate axis
 # - Returns the Cartesian (X,Y,Z) and spherical (lon, lat) coordinates of the
 # projected points.
 #
 ####################################################################################
-def equiangular_gnomonic_map(ξ, η, N, M):
+def equiangular_gnomonic_map(x, y, N, M, R):
     # Cartesian coordinates of the projected points
     X = np.zeros((N, M, nbfaces))
     Y = np.zeros((N, M, nbfaces))
     Z = np.zeros((N, M, nbfaces))      
    
     # Creates a grid in [-pi/4,pi/4]x[-pi/4,pi/4] using
-    # the given values of ξ and η
-    ξ, η = np.meshgrid(ξ, η, indexing='ij')
+    # the given values of x and y
+    x, y = np.meshgrid(x, y, indexing='ij')
    
     # Auxiliary variables
-    x = np.tan(ξ)
-    y = np.tan(η)
-    δ2   = 1.0 + x**2 + y**2
-    δ    = np.sqrt(δ2)
-    invδ = 1.0/δ
-    Xoδ  = invδ*x
-    Yoδ  = invδ*y    
+    tanx = np.tan(x)
+    tany = np.tan(y)
+    D2   = 1.0 + tanx**2 + tany**2
+    D    = np.sqrt(D2)
+    invD = 1.0/D
+    XoD  = invD*tanx
+    YoD  = invD*tany    
     
     # Compute the Cartesian coordinates for each panel
     # with the aid of the auxiliary variables 
 
     # Panel 0
-    X[:,:,0] = invδ
-    Y[:,:,0] = Xoδ  # x*X
-    Z[:,:,0] = Yoδ  # x*Y
+    X[:,:,0] = invD
+    Y[:,:,0] = XoD  # x*X
+    Z[:,:,0] = YoD  # x*Y
 
     # Panel 1
-    Y[:,:,1] =  invδ
-    X[:,:,1] = -Xoδ #-y*X
-    Z[:,:,1] =  Yoδ # y*Y
+    Y[:,:,1] =  invD
+    X[:,:,1] = -XoD #-y*X
+    Z[:,:,1] =  YoD # y*Y
 
     # Panel 2
-    X[:,:,2] = -invδ
-    Y[:,:,2] = -Xoδ # x*X
-    Z[:,:,2] =  Yoδ #-x*Y
+    X[:,:,2] = -invD
+    Y[:,:,2] = -XoD # x*X
+    Z[:,:,2] =  YoD #-x*Y
    
    # Panel 3
-    Y[:,:,3] = -invδ
-    X[:,:,3] =  Xoδ #-y*X
-    Z[:,:,3] =  Yoδ #-y*Y       
+    Y[:,:,3] = -invD
+    X[:,:,3] =  XoD #-y*X
+    Z[:,:,3] =  YoD #-y*Y       
    
     # Panel 4
-    Z[:,:,4] =  invδ
-    X[:,:,4] = -Yoδ #-z*Y
-    Y[:,:,4] =  Xoδ # z*X
+    Z[:,:,4] =  invD
+    X[:,:,4] = -YoD #-z*Y
+    Y[:,:,4] =  XoD # z*X
    
     # Panel 5
-    Z[:,:,5] = -invδ
-    X[:,:,5] =  Yoδ #-z*Y
-    Y[:,:,5] =  Xoδ #-z*X         
+    Z[:,:,5] = -invD
+    X[:,:,5] =  YoD #-z*Y
+    Y[:,:,5] =  XoD #-z*X
                
     # Convert to spherical coordinates
     lon, lat = sphgeo.cart2sph(X, Y, Z)
@@ -100,30 +100,30 @@ def equiangular_gnomonic_map(ξ, η, N, M):
 ####################################################################################
 def inverse_equiangular_gnomonic_map(X, Y, Z, panel):
     if panel == 0:
-        x = Y/X
-        y = Z/X
+        tanx = Y/X
+        tany = Z/X
     elif panel == 1:
-        x = -X/Y
-        y =  Z/Y
+        tanx = -X/Y
+        tany =  Z/Y
     elif panel == 2:
-        x =  Y/X
-        y = -Z/X
+        tanx =  Y/X
+        tany = -Z/X
     elif panel == 3:
-        x = -X/Y
-        y = -Z/Y
+        tanx = -X/Y
+        tany = -Z/Y
     elif panel == 4:
-        x =  Y/Z
-        y = -X/Z
+        tanx =  Y/Z
+        tany = -X/Z
     elif panel == 5:
-        x = -Y/Z
-        y = -X/Z
+        tanx = -Y/Z
+        tany = -X/Z
     else:
         print("ERROR: invalid panel.")
         exit()
 
-    ξ, η = np.arctan(x), np.arctan(y)
+    x, y = np.arctan(tanx), np.arctan(tany)
 
-    return  ξ, η
+    return  x, y
 
 ####################################################################################
 # This routine computes the Gnomonic mapping based on the equidistant projection
@@ -143,9 +143,9 @@ def inverse_equiangular_gnomonic_map(X, Y, Z, panel):
 # from https://journals.ametsoc.org/view/journals/mwre/133/4/mwr2890.1.xml
 #
 ####################################################################################
-def equidistant_gnomonic_map(x, y, N, M):
+def equidistant_gnomonic_map(x, y, N, M, R):
     # Half length of the cube
-    a = 1.0/np.sqrt(3.0)
+    a = R/np.sqrt(3.0)
 
     # Cartesian coordinates of the projected points
     X = np.zeros((N, M, nbfaces))
@@ -153,7 +153,7 @@ def equidistant_gnomonic_map(x, y, N, M):
     Z = np.zeros((N, M, nbfaces))      
    
     # Creates a grid in [-a,a]x[-a,a] using
-    # the given values of x1 and y
+    # the given values of x and y
     x, y = np.meshgrid(x, y, indexing='ij')
    
     # Auxiliary variables
@@ -190,7 +190,7 @@ def equidistant_gnomonic_map(x, y, N, M):
     # Panel 4
     X[:,:,4] = -yor
     Y[:,:,4] =  xor
-    Z[:,:,4] =  aor    
+    Z[:,:,4] =  aor
 
     # Panel 5
     X[:,:,5] =  yor
@@ -210,34 +210,191 @@ def inverse_equidistant_gnomonic_map(X, Y, Z, panel):
     a = 1.0/np.sqrt(3.0)
     if panel == 0:
         r = a/X
-        ξ = Y*r
-        η = Z*r
+        x = Y*r
+        y = Z*r
     elif panel == 1:
         r =  a/Y
-        ξ = -X*r
-        η =  Z*r
+        x = -X*r
+        y =  Z*r
     elif panel == 2:
         r = -a/X
-        ξ = -Y*r
-        η =  Z*r
+        x = -Y*r
+        y =  Z*r
     elif panel == 3:
         r = -a/Y
-        ξ =  X*r
-        η =  Z*r
+        x =  X*r
+        y =  Z*r
     elif panel == 4:
         r =  a/Z
-        ξ =  Y*r
-        η = -X*r
+        x =  Y*r
+        y = -X*r
     elif panel == 5:
         r = -a/Z
-        ξ =  Y*r
-        η =  X*r
+        x =  Y*r
+        y =  X*r
     else:
         print("ERROR: invalid panel.")
         exit()
 
-    return ξ, η
-      
+    return x, y
+
+
+####################################################################################
+# Tangent vector of the equidistant gnomonic mapping in x dir
+####################################################################################
+def equidistant_tg_xdir(x, y, N, M, R):
+    # Half length of the cube
+    a = R/np.sqrt(3.0)
+
+    # Cartesian coordinates of the tangent vector
+    X = np.zeros((N, M, nbfaces))
+    Y = np.zeros((N, M, nbfaces))
+    Z = np.zeros((N, M, nbfaces))      
+   
+    # Creates a grid in [-a,a]x[-a,a] using
+    # the given values of x and y
+    x, y = np.meshgrid(x, y, indexing='ij')
+   
+    # Auxiliary variables
+    r2   = a**2 + x**2 + y**2
+    r32  = np.sqrt(r2)**3
+    invr = R/r32
+    ax = a*x
+    xy = x*y
+    y2 = y*y
+    a2 = a*a
+
+    # Compute the Cartesian coordinates of the tangent vector for each panel
+    # with the aid of the auxiliary variables 
+
+    # Panel 0
+    X[:,:,0] = -ax*invr
+    Y[:,:,0] =  (a2 + y2)*invr
+    Z[:,:,0] = -xy*invr
+
+    # Panel 1
+    X[:,:,1] = -(a2 + y2)*invr
+    Y[:,:,1] = -ax*invr
+    Z[:,:,1] = -xy*invr
+
+    # Panel 2
+    X[:,:,2] =  ax*invr
+    Y[:,:,2] = -(a2 + y2)*invr
+    Z[:,:,2] = -xy*invr
+   
+    # Panel 3
+    X[:,:,3] =  (a2 + y2)*invr
+    Y[:,:,3] =  ax*invr
+    Z[:,:,3] = -xy*invr 
+
+    # Panel 4
+    X[:,:,4] =  xy*invr
+    Y[:,:,4] =  (a2 + y2)*invr
+    Z[:,:,4] = -ax*invr
+
+    # Panel 5
+    X[:,:,5] = -xy*invr
+    Y[:,:,5] =  (a2 + y2)*invr
+    Z[:,:,5] =  ax*invr
+
+    return X, Y, Z
+
+####################################################################################
+# Tangent vector of the equidistant gnomonic mapping in y dir
+####################################################################################
+def equidistant_tg_ydir(x, y, N, M, R):
+    # Half length of the cube
+    a = R/np.sqrt(3.0)
+
+    # Cartesian coordinates of the tangent vector
+    X = np.zeros((N, M, nbfaces))
+    Y = np.zeros((N, M, nbfaces))
+    Z = np.zeros((N, M, nbfaces))      
+   
+    # Creates a grid in [-a,a]x[-a,a] using
+    # the given values of x and y
+    x, y = np.meshgrid(x, y, indexing='ij')
+   
+    # Auxiliary variables
+    r2   = a**2 + x**2 + y**2
+    r32  = np.sqrt(r2)**3
+    invr = R/r32
+    ay = a*y
+    xy = x*y
+    x2 = x*x
+    a2 = a*a
+    
+    # Compute the Cartesian coordinates of the tangent vector for each panel
+    # with the aid of the auxiliary variables 
+
+    # Panel 0
+    X[:,:,0] = -ay*invr
+    Y[:,:,0] = -xy*invr
+    Z[:,:,0] = (a2 + x2)*invr
+
+    # Panel 1
+    X[:,:,1] =  xy*invr
+    Y[:,:,1] = -ay*invr
+    Z[:,:,1] =  (a2 + x2)*invr
+
+    # Panel 2
+    X[:,:,2] =  ay*invr
+    Y[:,:,2] =  xy*invr
+    Z[:,:,2] = (a2 + x2)*invr
+   
+    # Panel 3
+    X[:,:,3] = -xy*invr
+    Y[:,:,3] =  ay*invr
+    Z[:,:,3] = (a2 + x2)*invr 
+
+    # Panel 4
+    X[:,:,4] = -(a2 + x2)*invr
+    Y[:,:,4] = -xy*invr
+    Z[:,:,4] = -ay *invr
+
+    # Panel 5
+    X[:,:,5] =  (a2 + x2)*invr
+    Y[:,:,5] = -xy*invr
+    Z[:,:,5] =  ay*invr
+
+    return X, Y, Z
+
+
+####################################################################################
+# Tangent vector of the equiangular gnomonic mapping in x dir
+####################################################################################
+def equiangular_tg_xdir(x, y, N, M, R):
+    # Half length of the cube
+    a = R/np.sqrt(3.0)
+
+    X, Y, Z = equidistant_tg_xdir(a*np.tan(x), a*np.tan(y), N, M, R)
+    
+    x, y = np.meshgrid(x, y, indexing='ij')
+    
+    cosx = np.cos(x)
+    cos2x = cosx*cosx
+    
+    for p in range(0, nbfaces): 
+        X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2x, a*Y[:,:,p]/cos2x, a*Z[:,:,p]/cos2x
+    return X, Y, Z
+
+####################################################################################
+# Tangent vector of the equiangular gnomonic mapping in y dir
+####################################################################################
+def equiangular_tg_ydir(x, y, N, M, R):
+    # Half length of the cube
+    a = R/np.sqrt(3.0)
+
+    X, Y, Z = equidistant_tg_ydir(a*np.tan(x), a*np.tan(y), N, M, R)
+
+    x, y = np.meshgrid(x, y, indexing='ij')
+ 
+    cosy = np.cos(y)
+    cos2y = cosy*cosy
+    for p in range(0, nbfaces): 
+        X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2y, a*Y[:,:,p]/cos2y, a*Z[:,:,p]/cos2y
+    return X, Y, Z
+ 
 ####################################################################################
 # Compute the conformal map from Rancic et al(1996).
 #

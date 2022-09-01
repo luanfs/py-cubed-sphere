@@ -48,6 +48,10 @@ class cubed_sphere:
         # Number of cells along a coordinate axis (same for all panels)
         self.N = N
 
+        # Sphere radius
+        self.R = erad
+        #self.R = 1.0
+
         # Grid name
         self.projection = transformation
         self.name = self.projection+"_"+str(N)
@@ -114,16 +118,16 @@ class cubed_sphere:
                 print("Generating "+self.projection+" cubed-sphere with "+str(nbfaces*N*N)+" cells...")
 
             if transformation == "gnomonic_equiangular":  
-                a = pio4
+                x_min, x_max, y_min, y_max = [-pio4, pio4, -pio4, pio4] # Angular coordinates
             elif transformation == "gnomonic_equidistant":
-                a = 1.0/np.sqrt(3.0) # Half length of the cube
+                a = self.R/np.sqrt(3.0)  # Half length of the cube
+                x_min, x_max, y_min, y_max = [-a, a, -a, a]
             elif transformation == "conformal":
                 a = 1.0
+                x_min, x_max, y_min, y_max = [-1.0, 1.0, -1.0, 1.0]
             else:
                 print("ERROR: invalid grid transformation.")
                 exit()
-
-            x_min, x_max, y_min, y_max = [-a, a, -a, a]
       
             # Start time counting
             start_time = time.time()
@@ -137,19 +141,25 @@ class cubed_sphere:
             # Generate cell vertices
             if showonscreen==True:
                 print("Generating cell vertices...")
-            
+
             vertices = point(N+1, N+1)
 
             if transformation == "gnomonic_equiangular": 
-                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equiangular_gnomonic_map(x, y, N+1, N+1)
+                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equiangular_gnomonic_map(x, y, N+1, N+1, self.R)
 
             elif transformation=="gnomonic_equidistant":
-                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equidistant_gnomonic_map(x, y, N+1, N+1)
+                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equidistant_gnomonic_map(x, y, N+1, N+1, self.R)
 
             elif transformation=="conformal":
                 vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = conformal_map(x, y, N+1, N+1)
             self.vertices = vertices
- 
+
+            # Metric tensor on vertices
+            metric_tensor_vertices = np.zeros((N+1, N+1, nbfaces))
+            metric_tensor_vertices[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            for p in range(1, nbfaces): metric_tensor_vertices[:,:,p] = metric_tensor_vertices[:,:,0]  
+            self.metric_tensor_vertices = metric_tensor_vertices
+
             # Generate cell centers
             if showonscreen==True:
                 print("Generating cell centers...")  
@@ -160,56 +170,82 @@ class cubed_sphere:
             y = np.linspace(y_min+dy/2.0, y_max-dy/2.0, N) # Centers
 
             if transformation == "gnomonic_equiangular":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equiangular_gnomonic_map(x, y, N, N)
+                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equiangular_gnomonic_map(x, y, N, N, self.R)
 
             elif transformation=="gnomonic_equidistant":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equidistant_gnomonic_map(x, y, N, N)
+                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equidistant_gnomonic_map(x, y, N, N, self.R)
 
             elif transformation=="conformal":
                 centers.X, centers.Y, centers.Z, centers.lon, centers.lat = conformal_map(x, y, N, N)
 
             self.centers = centers
 
+            # Metric tensor on centers
+            metric_tensor_centers = np.zeros((N, N, nbfaces))
+            metric_tensor_centers[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            for p in range(1, nbfaces): metric_tensor_centers[:,:,p] = metric_tensor_centers[:,:,0]  
+            self.metric_tensor_centers = metric_tensor_centers
+
             # Generate cell edges in x direction
             if showonscreen==True:
                 print("Generating cell edges in x direction...")  
 
-            edges_xdir = point(N+1, N)
+            edx = point(N+1, N)
+            tg_ex_edx = point(N+1, N)
+            tg_ey_edx = point(N+1, N)
 
             x = np.linspace(x_min, x_max, N+1) # Edges
             y = np.linspace(y_min+dy/2.0, y_max-dy/2.0, N) # Centers
 
             if transformation == "gnomonic_equiangular":
-                edges_xdir.X, edges_xdir.Y, edges_xdir.Z, edges_xdir.lon, edges_xdir.lat = equiangular_gnomonic_map(x, y, N+1, N)
-
+                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equiangular_gnomonic_map(x, y, N+1, N, self.R)
+                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equiangular_tg_xdir(x, y, N+1, N, self.R)
+                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equiangular_tg_ydir(x, y, N+1, N, self.R)
             elif transformation=="gnomonic_equidistant":
-                edges_xdir.X, edges_xdir.Y, edges_xdir.Z, edges_xdir.lon, edges_xdir.lat = equidistant_gnomonic_map(x, y, N+1, N)
-
+                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equidistant_gnomonic_map(x, y, N+1, N, self.R)
+                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equidistant_tg_xdir(x, y, N+1, N, self.R)
+                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equidistant_tg_ydir(x, y, N+1, N, self.R)
             elif transformation=="conformal":
-                edges_xdir.X, edges_xdir.Y, edges_xdir.Z, edges_xdir.lon, edges_xdir.lat = conformal_map(x, y, N+1, N)
+                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = conformal_map(x, y, N+1, N)
 
-            self.edges_xdir = edges_xdir
-            
+            self.edx = edx
+ 
+            # Metric tensor on edges in x direction
+            metric_tensor_edx = np.zeros((N+1, N, nbfaces))
+            metric_tensor_edx[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            for p in range(1, nbfaces): metric_tensor_edx[:,:,p] = metric_tensor_edx[:,:,0]  
+            self.metric_tensor_edx = metric_tensor_edx
+
             # Generate cell edges in y direction
             if showonscreen==True:
-                print("Generating cell edges in x direction...")  
+                print("Generating cell edges in y direction...")  
 
-            edges_ydir = point(N, N+1)
+            edy = point(N, N+1)
+            tg_ex_edy = point(N, N+1)
+            tg_ey_edy = point(N, N+1)
 
             x = np.linspace(x_min+dx/2.0, x_max-dx/2.0, N) # Centers
             y = np.linspace(y_min, y_max, N+1) # Edges
 
             if transformation == "gnomonic_equiangular":
-                edges_ydir.X, edges_ydir.Y, edges_ydir.Z, edges_ydir.lon, edges_ydir.lat = equiangular_gnomonic_map(x, y, N, N+1)
-
+                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equiangular_gnomonic_map(x, y, N, N+1, self.R)
+                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equiangular_tg_xdir(x, y, N, N+1, self.R)
+                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equiangular_tg_ydir(x, y, N, N+1, self.R)
             elif transformation=="gnomonic_equidistant":
-                edges_ydir.X, edges_ydir.Y, edges_ydir.Z, edges_ydir.lon, edges_ydir.lat = equidistant_gnomonic_map(x, y, N, N+1)
-
+                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equidistant_gnomonic_map(x, y, N, N+1, self.R)
+                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equidistant_tg_xdir(x, y, N, N+1, self.R)
+                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equidistant_tg_ydir(x, y, N, N+1, self.R)
             elif transformation=="conformal":
-                edges_ydir.X, edges_ydir.Y, edges_ydir.Z, edges_ydir.lon, edges_ydir.lat = conformal_map(x, y, N, N+1)
+                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = conformal_map(x, y, N, N+1)
 
-            self.edges_ydir = edges_ydir
+            self.edy = edy
  
+            # Metric tensor on edges in y direction
+            metric_tensor_edy = np.zeros((N, N+1, nbfaces))
+            metric_tensor_edy[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            for p in range(1, nbfaces): metric_tensor_edy[:,:,p] = metric_tensor_edy[:,:,0]  
+            self.metric_tensor_edy = metric_tensor_edy
+
             # Compute cell lenghts
             if showonscreen==True:
                 print("Computing cell lengths...")
@@ -314,33 +350,63 @@ class cubed_sphere:
 
             # Compute areas
             if showonscreen==True:
-                print("Computing cell areas...\n")    
-
-            # Compute areas
+                print("Computing cell areas...")    
+                self.areas = (self.R**2)*areas
+                self.length_x = self.R*self.length_x
+                self.length_y = self.R*self.length_y
             # Use spherical excess formula
             #self.areas = sphgeo.quad_area(angles[:,:,:,0], angles[:,:,:,1], angles[:,:,:,2], angles[:,:,:,3])
             #self.areas = areas
-            x = np.linspace(x_min, x_max, N+1)
-            y = np.linspace(y_min, y_max, N+1)
-            x, y = np.meshgrid(x, y, indexing='ij')
-            areas2 = np.zeros((N, N, nbfaces))
-            areas2[:,:,:]= sphgeo.quad_areas(x, y)
-            self.areas = areas2
+            #x = np.linspace(x_min, x_max, N+1)
+            #y = np.linspace(y_min, y_max, N+1)
+            #x, y = np.meshgrid(x, y, indexing='ij')
+            #areas2 = np.zeros((N, N, nbfaces))
+            #areas2[:,:,:]= sphgeo.quad_areas(x, y)
+
             #print(np.amax(abs(areas2[:,:,0]-areas[:,:,0])/areas[:,:,0]))
 
+            # Generate tangent vectors
+            if showonscreen==True:
+                print("Generating tangent vectors... \n")  
+
+            # Lat-lon tangent unit vectors
+            self.elon_edx = sphgeo.tangent_geo_lon(edx.lon)
+            self.elat_edx = sphgeo.tangent_geo_lat(edx.lon, edx.lat)
+            self.elon_edy = sphgeo.tangent_geo_lon(edy.lon)
+            self.elat_edy = sphgeo.tangent_geo_lat(edy.lon, edy.lat)
+
+            # CS map tangent unit vectors at edges points
+            # latlon coordinates     
+            tg_ex_edx.lon = tg_ex_edx.X[:,:,:]*self.elon_edx[:,:,:,0] + tg_ex_edx.Y[:,:,:]*self.elon_edx[:,:,:,1] + tg_ex_edx.Z[:,:,:]*self.elon_edx[:,:,:,2]
+            tg_ex_edx.lat = tg_ex_edx.X[:,:,:]*self.elat_edx[:,:,:,0] + tg_ex_edx.Y[:,:,:]*self.elat_edx[:,:,:,1] + tg_ex_edx.Z[:,:,:]*self.elat_edx[:,:,:,2]
+            
+            tg_ex_edy.lon = tg_ex_edy.X[:,:,:]*self.elon_edy[:,:,:,0] + tg_ex_edy.Y[:,:,:]*self.elon_edy[:,:,:,1] + tg_ex_edy.Z[:,:,:]*self.elon_edy[:,:,:,2]
+            tg_ex_edy.lat = tg_ex_edy.X[:,:,:]*self.elat_edy[:,:,:,0] + tg_ex_edy.Y[:,:,:]*self.elat_edy[:,:,:,1] + tg_ex_edy.Z[:,:,:]*self.elat_edy[:,:,:,2]
+            
+            tg_ey_edx.lon = tg_ey_edx.X[:,:,:]*self.elon_edx[:,:,:,0] + tg_ey_edx.Y[:,:,:]*self.elon_edx[:,:,:,1] + tg_ey_edx.Z[:,:,:]*self.elon_edx[:,:,:,2]
+            tg_ey_edx.lat = tg_ey_edx.X[:,:,:]*self.elat_edx[:,:,:,0] + tg_ey_edx.Y[:,:,:]*self.elat_edx[:,:,:,1] + tg_ey_edx.Z[:,:,:]*self.elat_edx[:,:,:,2]
+            
+            tg_ey_edy.lon = tg_ey_edy.X[:,:,:]*self.elon_edy[:,:,:,0] + tg_ey_edy.Y[:,:,:]*self.elon_edy[:,:,:,1] + tg_ey_edy.Z[:,:,:]*self.elon_edy[:,:,:,2]
+            tg_ey_edy.lat = tg_ey_edy.X[:,:,:]*self.elat_edy[:,:,:,0] + tg_ey_edy.Y[:,:,:]*self.elat_edy[:,:,:,1] + tg_ey_edy.Z[:,:,:]*self.elat_edy[:,:,:,2]
+            
+            self.tg_ex_edx = tg_ex_edx
+            self.tg_ey_edx = tg_ey_edx
+            self.tg_ex_edy = tg_ex_edy
+            self.tg_ey_edy = tg_ey_edy
+            
             # Finish time counting
             elapsed_time = time.time() - start_time
       
         if showonscreen==True:
             # Print some grid properties
-            print("\nMin  edge length (km)  : ","{:.2e}".format(erad*np.amin(self.length_x)))
-            print("Max  edge length (km)  : ","{:.2e}".format(erad*np.amax(self.length_x)))
-            print("Mean edge length (km)  : ","{:.2e}".format(erad*np.mean(self.length_x)))
+            print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_x)))
+            print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_x)))
+            print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_x)))
             print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_x)/np.amin(self.length_x)))
          
-            print("Min  area (km2)        : ","{:.2e}".format(erad*erad*np.amin(self.areas)))
-            print("Max  area (km2)        : ","{:.2e}".format(erad*erad*np.amax(self.areas)))
-            print("Mean area (km2)        : ","{:.2e}".format(erad*erad*np.mean(self.areas)))         
+            print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas)))
+            print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas)))
+            print("Mean area (km2)        : ","{:.2e}".format(np.mean(self.areas)))         
             print("Ratio max/min area     : ","{:.2e}".format(np.amax(self.areas)/np.amin(self.areas)))
          
             print("Min  angle (degrees)   : ","{:.2e}".format(np.amin(self.angles*rad2deg)))
