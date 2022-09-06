@@ -33,34 +33,6 @@ def cart2sph(X, Y, Z):
     return lon, lat
 
 ####################################################################################
-# Compute the metric tensor of the cubed-sphere mapping
-# Inputs: 1d arrays x and y containing the cube face coordinates, the cube   
-# projection and sphere radius R.
-# Output: metric tensor G on the grid (x,y)
-# Reference: Rancic et al 1996
-####################################################################################
-def metric_tensor(x, y, R, projection):
-    # Half of cube length
-    a = R/np.sqrt(3.0)
-    x, y = np.meshgrid(x, y, indexing='ij')
-    if projection == 'gnomonic_equidistant':
-        r = np.sqrt(a*a + x*x + y*y)
-        G = R*R*a/r**3
-    elif projection == 'gnomonic_equiangular':
-        tanx, tany = np.tan(x), np.tan(y)
-        r = np.sqrt((1.0 + tanx*tanx + tany*tany))
-        G = R*R/r**3
-        G = G/(np.cos(x)*np.cos(y))**2
-        G = G
-        #print(x[:,0])
-        #print(tanx[:,0])
-        #exit()
-    else:
-        print("Error in metric_tensor from sphgeo.py: Invalid map projection")
-        exit()
-    return G
-
-####################################################################################
 # Compute the geodesic distance of the unit sphere points p1=(x1,y1,z1) and 
 # p2=(x2,y2,z2) given in cartesian coordinates. First, it computes the inner product
 # r = <p1+p2,p1+p2> = <p1,p1> + 2*<p1,p2> + <p2,p2> = 2 + 2*<p1,p2>
@@ -115,23 +87,23 @@ def tangent_geo_lat(lon, lat):
     return e_lat
 
 ####################################################################################
-# Given a point P in the sphere of radius R, this routine returns the projection
+# Given a point P in the sphere of radius 1, this routine returns the projection
 # of Q at the tangent space at P.
+# Returns the X, Y and Z components of the projection
 ####################################################################################
-def tangent_projection(P, Q, R):
+def tangent_projection(P, Q):
     proj_vec = np.zeros((np.shape(P)[0], np.shape(P)[1], np.shape(P)[2], 3))
     c = P[:,:,:,0]*Q[:,:,:,0] + P[:,:,:,1]*Q[:,:,:,1] + P[:,:,:,2]*Q[:,:,:,2]
-    proj_vec[:,:,:,0] = (c/R)*P[:,:,:,0] - Q[:,:,:,0]
-    proj_vec[:,:,:,1] = (c/R)*P[:,:,:,1] - Q[:,:,:,1]
-    proj_vec[:,:,:,2] = (c/R)*P[:,:,:,2] - Q[:,:,:,2]
+    proj_vec[:,:,:,0] = c*P[:,:,:,0] - Q[:,:,:,0]
+    proj_vec[:,:,:,1] = c*P[:,:,:,1] - Q[:,:,:,1]
+    proj_vec[:,:,:,2] = c*P[:,:,:,2] - Q[:,:,:,2]
 
     # normalization
-    norm = np.sqrt(proj_vec[:,:,:,0]**2 + proj_vec[:,:,:,1]**2 + proj_vec[:,:,:,1]**2)
-    proj_vec[:,:,:,0] = proj_vec[:,:,:,0]/norm
-    proj_vec[:,:,:,1] = proj_vec[:,:,:,1]/norm
-    proj_vec[:,:,:,2] = proj_vec[:,:,:,2]/norm
-    proj_vec[:,:,:,:] = proj_vec[:,:,:,:]
-    return proj_vec
+    #norm = np.sqrt(proj_vec[:,:,:,0]**2 + proj_vec[:,:,:,1]**2 + proj_vec[:,:,:,1]**2)
+    #proj_vec[:,:,:,0] = proj_vec[:,:,:,0]/norm
+    #proj_vec[:,:,:,1] = proj_vec[:,:,:,1]/norm
+    #proj_vec[:,:,:,2] = proj_vec[:,:,:,2]/norm
+    return proj_vec[:,:,:,0], proj_vec[:,:,:,1], proj_vec[:,:,:,2]
 
 ####################################################################################
 # Given a spherical triangle with lengths a, b and c, this routine computes the
