@@ -42,6 +42,7 @@ def plot_grid(grid, map_projection):
     ax.stock_img()
   
     for p in range(0, nbfaces):
+    #for p in range(0, 1):
         # Vertices
         lon = grid.vertices.lon[:,:,p]*rad2deg
         lat = grid.vertices.lat[:,:,p]*rad2deg
