@@ -48,21 +48,21 @@ def get_parameters():
 
       # Name the transformation
       if tranformation == 1:
-         transf = "gnomonic_equiangular"
-      elif tranformation == 2:
          transf = "gnomonic_equidistant"
+      elif tranformation == 2:
+         transf = "gnomonic_equiangular"
       elif tranformation == 3:
          transf = "conformal"
       else: 
          print("ERROR: invalid transformation")
          exit()
-         
+
       # Name the map projection
       if map_projection == 1:
          map = "mercator"
       elif map_projection == 2:
          map = "sphere"
-      else: 
+      else:
          print("ERROR: invalid map projection")
          exit()
 
