@@ -359,7 +359,6 @@ def equidistant_tg_ydir(x, y, N, M, R):
 
     return X, Y, Z
 
-
 ####################################################################################
 # Tangent vector of the equiangular gnomonic mapping in x dir
 ####################################################################################
@@ -394,7 +393,33 @@ def equiangular_tg_ydir(x, y, N, M, R):
     for p in range(0, nbfaces): 
         X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2y, a*Y[:,:,p]/cos2y, a*Z[:,:,p]/cos2y
     return X, Y, Z
- 
+
+
+####################################################################################
+# Compute the metric tensor of the cubed-sphere mapping
+# Inputs: 1d arrays x and y containing the cube face coordinates, the cube   
+# projection and sphere radius R.
+# Output: metric tensor G on the grid (x,y)
+# Reference: Rancic et al 1996
+####################################################################################
+def metric_tensor(x, y, R, projection):
+    # Half of cube length
+    a = R/np.sqrt(3.0)
+    x, y = np.meshgrid(x, y, indexing='ij')
+    #print(x)
+    if projection == 'gnomonic_equidistant':
+        r = np.sqrt(a*a + x*x + y*y)
+        G = R*R*a/r**3
+    elif projection == 'gnomonic_equiangular':
+        atanx, atany = a*np.tan(x), a*np.tan(y)
+        r = np.sqrt(a*a + atanx*atanx + atany*atany)
+        G = R*R*a/r**3
+        G = G/(np.cos(x)*np.cos(y))**2
+    else:
+        print("Error in metric_tensor from sphgeo.py: Invalid map projection")
+        exit()
+    return G
+
 ####################################################################################
 # Compute the conformal map from Rancic et al(1996).
 #
