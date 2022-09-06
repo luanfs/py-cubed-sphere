@@ -21,7 +21,7 @@ from interpolation      import ll2cs
 from gridquality        import grid_quality
 from plot               import plot_grid, save_grid_netcdf4
 from constants          import Nlat, Nlon
-from advection_ic       import adv_simulation_par_2d
+from advection_ic       import adv_simulation_par
 from advection_sphere   import adv_sphere
 
 def main():
@@ -64,10 +64,11 @@ def main():
             # Call advection test case
             print("Test case 3: Advection test case.\n")
             dt, Tf, tc, ic, mono = get_advection_parameters()
-            simulation = adv_simulation_par_2d(dt, Tf, ic, tc, mono)
+            simulation = adv_simulation_par(dt, Tf, ic, tc, mono)
 
             if simulation.tc == 1: # Advection on the sphere simalution
-                adv_sphere(cs_grid, ll_grid, simulation, map_projection)
+                plot = True
+                adv_sphere(cs_grid, ll_grid, simulation, map_projection, plot)
 
             elif simulation.tc == 2: # Convergence analysis
                 print('Not implemented yet =(')
