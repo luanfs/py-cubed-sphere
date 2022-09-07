@@ -22,6 +22,12 @@ def plot_grid(grid, map_projection):
     # Figure resolution
     dpi = 100
 
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
+
     # Color of each cubed panel
     colors = ('blue','red','blue','red','green','green')
 
@@ -72,16 +78,16 @@ def plot_grid(grid, map_projection):
         vec_tgy_edy_lon = grid.tg_ey_edy.lon[:,:,p]
 
         # Plot vertices
-        A_lon, A_lat = lon[0:grid.N, 0:grid.N], lat[0:grid.N, 0:grid.N]
+        A_lon, A_lat = lon[i0:iend, j0:jend], lat[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
-        B_lon, B_lat = lon[1:grid.N+1, 0:grid.N], lat[1:grid.N+1, 0:grid.N]
+        B_lon, B_lat = lon[i0+1:iend+1, j0:jend], lat[i0+1:iend+1, j0:jend]
         B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
-      
-        C_lon, C_lat = lon[1:grid.N+1, 1:grid.N+1], lat[1:grid.N+1, 1:grid.N+1]
+
+        C_lon, C_lat = lon[i0+1:iend+1, j0+1:jend+1], lat[i0+1:iend+1, j0+1:jend+1]
         C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
 
-        D_lon, D_lat = lon[0:grid.N  , 1:grid.N+1], lat[0:grid.N  , 1:grid.N+1]
+        D_lon, D_lat = lon[i0:iend, j0+1:jend+1], lat[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
         plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
@@ -91,17 +97,17 @@ def plot_grid(grid, map_projection):
  
         # Plot center and edge points
         if map_projection == 'mercator':
-            center_lon, center_lat = lonc, latc
+            center_lon, center_lat = lonc[i0:iend, j0:jend], latc[i0:iend, j0:jend]
             center_lon, center_lat = np.ndarray.flatten(center_lon),np.ndarray.flatten(center_lat)
             for i in range(0, np.shape(center_lon)[0]):
                 plt.plot(center_lon[i], center_lat[i], marker='.',color = 'black')
  
-            edges_xdir_lon, edges_xdir_lat  = lon_edx, lat_edx
+            edges_xdir_lon, edges_xdir_lat  = lon_edx[i0:iend+1, j0:jend], lat_edx[i0:iend+1, j0:jend]
             edges_xdir_lon, edges_xdir_lat = np.ndarray.flatten(edges_xdir_lon), np.ndarray.flatten(edges_xdir_lat)
             for i in range(0, np.shape(edges_xdir_lon)[0]):
                 plt.plot(edges_xdir_lon[i], edges_xdir_lat[i], marker='.',color = 'white')
 
-            edges_ydir_lon, edges_ydir_lat  = lon_edy, lat_edy
+            edges_ydir_lon, edges_ydir_lat  = lon_edy[i0:iend, j0:jend+1], lat_edy[i0:iend, j0:jend+1]
             edges_ydir_lon, edges_ydir_lat = np.ndarray.flatten(edges_ydir_lon), np.ndarray.flatten(edges_ydir_lat)
             for i in range(0, np.shape(edges_ydir_lon)[0]):
                 plt.plot(edges_ydir_lon[i], edges_ydir_lat[i], marker='.',color = 'white')
@@ -149,22 +155,28 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
         cs_grid_aux = cs_grid
     else:
         cs_grid_aux = cubed_sphere(1, cs_grid.projection, False, False)
-   
+
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = cs_grid_aux.i0
+    iend = cs_grid_aux.iend
+    j0   = cs_grid_aux.j0
+    jend = cs_grid_aux.jend
+
     for p in range(0, nbfaces):
         lons = cs_grid_aux.vertices.lon[:,:,p]*rad2deg
         lats = cs_grid_aux.vertices.lat[:,:,p]*rad2deg
 
         # Plot vertices
-        A_lon, A_lat = lons[0:cs_grid_aux.N, 0:cs_grid_aux.N], lats[0:cs_grid_aux.N, 0:cs_grid_aux.N]
+        A_lon, A_lat = lons[i0:iend, j0:jend], lats[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
       
-        B_lon, B_lat = lons[1:cs_grid_aux.N+1, 0:cs_grid_aux.N], lats[1:cs_grid_aux.N+1, 0:cs_grid_aux.N]
+        B_lon, B_lat = lons[i0+1:iend+1, j0:jend], lats[i0+1:iend+1, j0:jend]
         B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
       
-        C_lon, C_lat = lons[1:cs_grid_aux.N+1, 1:cs_grid_aux.N+1], lats[1:cs_grid_aux.N+1, 1:cs_grid_aux.N+1]
+        C_lon, C_lat = lons[i0+1:iend+1, j0+1:jend+1], lats[i0+1:iend+1, j0+1:jend+1]
         C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
 
-        D_lon, D_lat = lons[0:cs_grid_aux.N  , 1:cs_grid_aux.N+1], lats[0:cs_grid_aux.N  , 1:cs_grid_aux.N+1]
+        D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
         plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
@@ -249,7 +261,7 @@ def save_grid_netcdf4(grid):
     griddata.title = grid.name 
    
     # Cell in each panel axis
-    n = grid.N
+    n = grid.N+grid.nghost
 
     # Create dimensions
     # Panels 

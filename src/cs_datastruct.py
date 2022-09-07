@@ -58,7 +58,7 @@ class cubed_sphere:
       
         # Grid data netcdf filename
         self.netcdfdata_filename = griddir+self.name+".nc"
-      
+
         # Load the grid
         if gridload==True and (os.path.isfile(self.netcdfdata_filename)):   # Check if grid file exists
             if showonscreen==True:
@@ -135,28 +135,39 @@ class cubed_sphere:
             # Grid spacing
             dx = (x_max-x_min)/N
             dy = (y_max-y_min)/N
-            x = np.linspace(x_min, x_max, N+1) # vertices
-            y = np.linspace(y_min, y_max, N+1) # vertices
+            self.dx, self.dy = dx, dy
+
+            # Ghost cells for each panel
+            nghost_left  = 2
+            nghost_right = 3
+            nghost = nghost_right + nghost_left
+            self.nghost_left  = nghost_left
+            self.nghost_right = nghost_right 
+            self.nghost = nghost
+            self.i0, self.iend = nghost_left, nghost_left+N
+            self.j0, self.jend = nghost_left, nghost_left+N
 
             # Generate cell vertices
+            x = np.linspace(x_min-nghost_left*dx, x_max + nghost_right*dx, N+1+nghost) # vertices
+            y = np.linspace(y_min-nghost_left*dx, y_max + nghost_right*dy, N+1+nghost) # vertices
             if showonscreen==True:
                 print("Generating cell vertices...")
 
-            vertices = point(N+1, N+1)
+            vertices = point(N+1+nghost, N+1+nghost)
 
             if transformation == "gnomonic_equiangular": 
-                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equiangular_gnomonic_map(x, y, N+1, N+1, self.R)
+                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equiangular_gnomonic_map(x, y, N+1+nghost, N+1+nghost, self.R)
 
             elif transformation=="gnomonic_equidistant":
-                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equidistant_gnomonic_map(x, y, N+1, N+1, self.R)
+                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equidistant_gnomonic_map(x, y, N+1+nghost, N+1+nghost, self.R)
 
             elif transformation=="conformal":
-                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = conformal_map(x, y, N+1, N+1)
+                vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = conformal_map(x, y, N+1+nghost, N+1+nghost)
             self.vertices = vertices
 
             # Metric tensor on vertices
-            metric_tensor_vertices = np.zeros((N+1, N+1, nbfaces))
-            metric_tensor_vertices[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            metric_tensor_vertices = np.zeros((N+1+nghost, N+1+nghost, nbfaces))
+            metric_tensor_vertices[:,:,0] = metric_tensor(x, y, self.R, transformation)  
             for p in range(1, nbfaces): metric_tensor_vertices[:,:,p] = metric_tensor_vertices[:,:,0]  
             self.metric_tensor_vertices = metric_tensor_vertices
 
@@ -164,85 +175,198 @@ class cubed_sphere:
             if showonscreen==True:
                 print("Generating cell centers...")  
 
-            centers = point(N, N)
+            centers = point(N+nghost, N+nghost)
 
-            x = np.linspace(x_min+dx/2.0, x_max-dx/2.0, N) # Centers
-            y = np.linspace(y_min+dy/2.0, y_max-dy/2.0, N) # Centers
-
+            x = np.linspace(x_min+dx/2.0-nghost_left*dx, x_max-dx/2.0+nghost_right*dx, N+nghost) # Centers
+            y = np.linspace(y_min+dy/2.0-nghost_left*dy, y_max-dy/2.0+nghost_right*dy, N+nghost) # Centers
             if transformation == "gnomonic_equiangular":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equiangular_gnomonic_map(x, y, N, N, self.R)
+                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equiangular_gnomonic_map(x, y, N+nghost, N+nghost, self.R)
 
             elif transformation=="gnomonic_equidistant":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equidistant_gnomonic_map(x, y, N, N, self.R)
+                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equidistant_gnomonic_map(x, y, N+nghost, N+nghost, self.R)
 
             elif transformation=="conformal":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = conformal_map(x, y, N, N)
-
+                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = conformal_map(x, y, N+nghost, N+nghost)
             self.centers = centers
 
             # Metric tensor on centers
-            metric_tensor_centers = np.zeros((N, N, nbfaces))
-            metric_tensor_centers[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            metric_tensor_centers = np.zeros((N+nghost, N+nghost, nbfaces))
+            metric_tensor_centers[:,:,0] = metric_tensor(x, y, self.R, transformation)  
             for p in range(1, nbfaces): metric_tensor_centers[:,:,p] = metric_tensor_centers[:,:,0]  
             self.metric_tensor_centers = metric_tensor_centers
 
             # Generate cell edges in x direction
             if showonscreen==True:
-                print("Generating cell edges in x direction...")  
+                print("Generating cell edges and tangent vectors in x direction...")  
 
-            edx = point(N+1, N)
-            tg_ex_edx = point(N+1, N)
-            tg_ey_edx = point(N+1, N)
+            edx       = point(N+1+nghost, N+nghost)
+            tg_ex_edx = point(N+1+nghost, N+nghost)
+            tg_ey_edx = point(N+1+nghost, N+nghost)
 
-            x = np.linspace(x_min, x_max, N+1) # Edges
-            y = np.linspace(y_min+dy/2.0, y_max-dy/2.0, N) # Centers
-
+            x = np.linspace(x_min-nghost_left*dx, x_max+nghost_right*dx, N+1+nghost) # Edges
+            y = np.linspace(y_min+dy/2.0-nghost_left*dy, y_max-dy/2.0+nghost_right*dy, N+nghost) # Centers
             if transformation == "gnomonic_equiangular":
-                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equiangular_gnomonic_map(x, y, N+1, N, self.R)
-                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equiangular_tg_xdir(x, y, N+1, N, self.R)
-                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equiangular_tg_ydir(x, y, N+1, N, self.R)
+                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equiangular_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
+                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equiangular_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
+                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equiangular_tg_ydir(x, y, N+1+nghost, N+nghost, self.R)
             elif transformation=="gnomonic_equidistant":
-                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equidistant_gnomonic_map(x, y, N+1, N, self.R)
-                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equidistant_tg_xdir(x, y, N+1, N, self.R)
-                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equidistant_tg_ydir(x, y, N+1, N, self.R)
+                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equidistant_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
+                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equidistant_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
+                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equidistant_tg_ydir(x, y, N+1+nghost, N+nghost, self.R)
             elif transformation=="conformal":
-                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = conformal_map(x, y, N+1, N)
+                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = conformal_map(x, y, N+1+nghost, N+nghost)
 
             self.edx = edx
- 
+
+            # Normalize the tangent vectors in x dir
+            norm = tg_ex_edx.X*tg_ex_edx.X + tg_ex_edx.Y*tg_ex_edx.Y + tg_ex_edx.Z*tg_ex_edx.Z
+            norm = np.sqrt(norm)
+            tg_ex_edx.X = tg_ex_edx.X/norm
+            tg_ex_edx.Y = tg_ex_edx.Y/norm
+            tg_ex_edx.Z = tg_ex_edx.Z/norm
+
+            # Normalize the tangent vectors in y dir
+            norm = tg_ey_edx.X*tg_ey_edx.X + tg_ey_edx.Y*tg_ey_edx.Y + tg_ey_edx.Z*tg_ey_edx.Z
+            norm = np.sqrt(norm)
+            tg_ey_edx.X = tg_ey_edx.X/norm
+            tg_ey_edx.Y = tg_ey_edx.Y/norm
+            tg_ey_edx.Z = tg_ey_edx.Z/norm
+
+            # Unit tangent vectors in x dir
+            tg_ex_edx2 = point(N+1+nghost, N+nghost)
+            P = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+            Q = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+            P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edx.X, edx.Y, edx.Z
+            Q[0:N+nghost,:,:,0], Q[0:N+nghost,:,:,1], Q[0:N+nghost,:,:,2] = edx.X[0:N+nghost,:,:]-edx.X[1:N+nghost+1,:,:], edx.Y[0:N+nghost,:,:]-edx.Y[1:N+nghost+1,:,:], edx.Z[0:N+nghost,:,:]-edx.Z[1:N+nghost+1,:,:]
+            Q[N+nghost,:,:,0], Q[N+nghost,:,:,1], Q[N+nghost,:,:,2] = edx.X[N+nghost-1,:,:]-edx.X[N+nghost,:,:], edx.Y[N+nghost-1,:,:]-edx.Y[N+nghost,:,:], edx.Z[N+nghost-1,:,:]-edx.Z[N+nghost,:,:]
+
+            tg_ex_edx2.X, tg_ex_edx2.Y, tg_ex_edx2.Z = sphgeo.tangent_projection(P, Q)
+            norm = tg_ex_edx2.X*tg_ex_edx2.X + tg_ex_edx2.Y*tg_ex_edx2.Y + tg_ex_edx2.Z*tg_ex_edx2.Z
+            norm = np.sqrt(norm)
+            tg_ex_edx2.X = tg_ex_edx2.X/norm
+            tg_ex_edx2.Y = tg_ex_edx2.Y/norm
+            tg_ex_edx2.Z = tg_ex_edx2.Z/norm
+
+            #print(np.amax(abs(tg_ex_edx2.X-tg_ex_edx.X)))
+            #print(np.amax(abs(tg_ex_edx2.Y-tg_ex_edx.Y)))
+            #print(np.amax(abs(tg_ex_edx2.Z-tg_ex_edx.Z)))
+            
+            tg_ex_edx.X = tg_ex_edx2.X
+            tg_ex_edx.Y = tg_ex_edx2.Y
+            tg_ex_edx.Z = tg_ex_edx2.Z
+
+            # Unit tangent vectors in y dir
+            tg_ey_edx2 = point(N+1+nghost, N+nghost)
+            P = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+            Q = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+            P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edx.X, edx.Y, edx.Z
+            Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2] = edx.X[:,:,:]-vertices.X[:,1:N+nghost+1,:], edx.Y[:,:,:]-vertices.Y[:,1:N+nghost+1,:], edx.Z[:,:,:]-vertices.Z[:,1:N+nghost+1,:]
+
+            tg_ey_edx2.X, tg_ey_edx2.Y, tg_ey_edx2.Z = sphgeo.tangent_projection(P, Q)
+            norm = tg_ey_edx2.X*tg_ey_edx2.X + tg_ey_edx2.Y*tg_ey_edx2.Y + tg_ey_edx2.Z*tg_ey_edx2.Z
+            norm = np.sqrt(norm)
+            tg_ey_edx2.X = tg_ey_edx2.X/norm
+            tg_ey_edx2.Y = tg_ey_edx2.Y/norm
+            tg_ey_edx2.Z = tg_ey_edx2.Z/norm
+
+            #print(np.amax(abs(tg_ey_edx2.X-tg_ey_edx.X)))
+            #print(np.amax(abs(tg_ey_edx2.Y-tg_ey_edx.Y)))
+            #print(np.amax(abs(tg_ey_edx2.Z-tg_ey_edx.Z)))
+
+            tg_ey_edx.X = tg_ey_edx2.X
+            tg_ey_edx.Y = tg_ey_edx2.Y
+            tg_ey_edx.Z = tg_ey_edx2.Z
+
             # Metric tensor on edges in x direction
-            metric_tensor_edx = np.zeros((N+1, N, nbfaces))
-            metric_tensor_edx[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            metric_tensor_edx = np.zeros((N+1+nghost, N+nghost, nbfaces))
+            metric_tensor_edx[:,:,0] = metric_tensor(x, y, self.R, transformation)  
             for p in range(1, nbfaces): metric_tensor_edx[:,:,p] = metric_tensor_edx[:,:,0]  
             self.metric_tensor_edx = metric_tensor_edx
 
             # Generate cell edges in y direction
             if showonscreen==True:
-                print("Generating cell edges in y direction...")  
+                print("Generating cell edges and tangent vectors in y direction...")  
 
-            edy = point(N, N+1)
-            tg_ex_edy = point(N, N+1)
-            tg_ey_edy = point(N, N+1)
+            edy = point(N+nghost, N+nghost+1)
+            tg_ex_edy = point(N+nghost, N+nghost+1)
+            tg_ey_edy = point(N+nghost, N+nghost+1)
 
-            x = np.linspace(x_min+dx/2.0, x_max-dx/2.0, N) # Centers
-            y = np.linspace(y_min, y_max, N+1) # Edges
-
+            x = np.linspace(x_min+dx/2.0-nghost_left*dx, x_max-dx/2.0+nghost_right*dx, N+nghost) # Centers
+            y = np.linspace(y_min-nghost_left*dx, y_max + nghost_right*dy, N+1+nghost) # Edges
             if transformation == "gnomonic_equiangular":
-                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equiangular_gnomonic_map(x, y, N, N+1, self.R)
-                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equiangular_tg_xdir(x, y, N, N+1, self.R)
-                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equiangular_tg_ydir(x, y, N, N+1, self.R)
+                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equiangular_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
+                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equiangular_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
+                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equiangular_tg_ydir(x, y, N+nghost, N+nghost+1, self.R)
             elif transformation=="gnomonic_equidistant":
-                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equidistant_gnomonic_map(x, y, N, N+1, self.R)
-                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equidistant_tg_xdir(x, y, N, N+1, self.R)
-                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equidistant_tg_ydir(x, y, N, N+1, self.R)
+                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equidistant_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
+                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equidistant_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
+                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equidistant_tg_ydir(x, y, N+nghost, N+nghost+1, self.R)
             elif transformation=="conformal":
-                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = conformal_map(x, y, N, N+1)
+                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = conformal_map(x, y, N+nghost, N+nghost+1)
 
             self.edy = edy
- 
+
+            # Normalize the tangent vectors in x dir
+            norm = tg_ex_edy.X*tg_ex_edy.X + tg_ex_edy.Y*tg_ex_edy.Y + tg_ex_edy.Z*tg_ex_edy.Z
+            norm = np.sqrt(norm)
+            tg_ex_edy.X = tg_ex_edy.X/norm
+            tg_ex_edy.Y = tg_ex_edy.Y/norm
+            tg_ex_edy.Z = tg_ex_edy.Z/norm
+
+            # Normalize the tangent vectors in y dir
+            norm = tg_ey_edy.X*tg_ey_edy.X + tg_ey_edy.Y*tg_ey_edy.Y + tg_ey_edy.Z*tg_ey_edy.Z
+            norm = np.sqrt(norm)
+            tg_ey_edy.X = tg_ey_edy.X/norm
+            tg_ey_edy.Y = tg_ey_edy.Y/norm
+            tg_ey_edy.Z = tg_ey_edy.Z/norm
+
+            # Unit tangent vectors in x dir
+            tg_ex_edy2 = point(N+nghost, N+nghost+1)
+            P = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+            Q = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+            P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edy.X, edy.Y, edy.Z
+            Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2] = edy.X-vertices.X[1:N+nghost+1,:,:], edy.Y-vertices.Y[1:N+nghost+1,:,:], edy.Z-vertices.Z[1:N+nghost+1,:,:]
+            tg_ex_edy2.X, tg_ex_edy2.Y, tg_ex_edy2.Z = sphgeo.tangent_projection(P, Q)
+            norm = tg_ex_edy2.X*tg_ex_edy2.X + tg_ex_edy2.Y*tg_ex_edy2.Y + tg_ex_edy2.Z*tg_ex_edy2.Z
+            norm = np.sqrt(norm)
+            tg_ex_edy2.X = tg_ex_edy2.X/norm
+            tg_ex_edy2.Y = tg_ex_edy2.Y/norm
+            tg_ex_edy2.Z = tg_ex_edy2.Z/norm
+
+            #print(np.amax(abs(tg_ex_edy2.X-tg_ex_edy.X)))
+            #print(np.amax(abs(tg_ex_edy2.Y-tg_ex_edy.Y)))
+            #print(np.amax(abs(tg_ex_edy2.Z-tg_ex_edy.Z)))
+
+            tg_ex_edy.X = tg_ex_edy2.X
+            tg_ex_edy.Y = tg_ex_edy2.Y
+            tg_ex_edy.Z = tg_ex_edy2.Z
+
+            # Unit tangent vectors in y dir
+            tg_ey_edy2 = point(N+nghost, N+nghost+1)
+            P = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+            Q = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+            P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edy.X, edy.Y, edy.Z
+            Q[:,0:N+nghost,:,0], Q[:,0:N+nghost,:,1], Q[:,0:N+nghost,:,2] = edy.X[:,0:N+nghost,:]-edy.X[:,1:N+nghost+1,:], edy.Y[:,0:N+nghost,:]-edy.Y[:,1:N+nghost+1,:], edy.Z[:,0:N+nghost,:]-edy.Z[:,1:N+nghost+1,:]
+            Q[:,N+nghost,:,0], Q[:,N+nghost,:,1], Q[:,N+nghost,:,2] = edy.X[:,N+nghost-1,:]-edy.X[:,N+nghost,:], edy.Y[:,N+nghost-1,:]-edy.Y[:,N+nghost,:], edy.Z[:,N+nghost-1,:]-edy.Z[:,N+nghost,:]
+
+            tg_ey_edy2.X, tg_ey_edy2.Y, tg_ey_edy2.Z = sphgeo.tangent_projection(P, Q)
+            norm = tg_ey_edy2.X*tg_ey_edy2.X + tg_ey_edy2.Y*tg_ey_edy2.Y + tg_ey_edy2.Z*tg_ey_edy2.Z
+            norm = np.sqrt(norm)
+            tg_ey_edy2.X = tg_ey_edy2.X/norm
+            tg_ey_edy2.Y = tg_ey_edy2.Y/norm
+            tg_ey_edy2.Z = tg_ey_edy2.Z/norm
+
+            #print(np.amax(abs(tg_ey_edy2.X-tg_ey_edy.X)))
+            #print(np.amax(abs(tg_ey_edy2.Y-tg_ey_edy.Y)))
+            #print(np.amax(abs(tg_ey_edy2.Z-tg_ey_edy.Z)))
+
+            tg_ey_edy.X = tg_ey_edy2.X
+            tg_ey_edy.Y = tg_ey_edy2.Y
+            tg_ey_edy.Z = tg_ey_edy2.Z
+
             # Metric tensor on edges in y direction
-            metric_tensor_edy = np.zeros((N, N+1, nbfaces))
-            metric_tensor_edy[:,:,0] = sphgeo.metric_tensor(x, y, self.R, transformation)  
+            metric_tensor_edy = np.zeros((N+nghost, N+nghost+1, nbfaces))
+            metric_tensor_edy[:,:,0] = metric_tensor(x, y, self.R, transformation)  
             for p in range(1, nbfaces): metric_tensor_edy[:,:,p] = metric_tensor_edy[:,:,0]  
             self.metric_tensor_edy = metric_tensor_edy
 
@@ -252,60 +376,59 @@ class cubed_sphere:
 
             # Compute the geodesic distance of cell edges in x direction
             # Given points
-            p1 = [vertices.X[0:self.N  ,:,:]  , vertices.Y[0:self.N  ,:,:], vertices.Z[0:self.N  ,:,:]]
-            p2 = [vertices.X[1:self.N+1,:,:], vertices.Y[1:self.N+1,:,:], vertices.Z[1:self.N+1,:,:]]
+            p1 = [vertices.X[0:N+nghost,:,:], vertices.Y[0:N+nghost  ,:,:], vertices.Z[0:N+nghost  ,:,:]]
+            p2 = [vertices.X[1:N+nghost+1,:,:], vertices.Y[1:N+nghost+1,:,:], vertices.Z[1:N+nghost+1,:,:]]
 
             # Reshape
-            p1 = np.reshape(p1,(3,N*(N+1)*nbfaces))
-            p2 = np.reshape(p2,(3,N*(N+1)*nbfaces))
+            p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost+1)*nbfaces))
+            p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost+1)*nbfaces))
 
             # Compute arclen      
             d = sphgeo.arclen(p1, p2)
-            d = np.reshape(d,(N,N+1,nbfaces))
+            d = np.reshape(d,(N+nghost,N+nghost+1,nbfaces))
             self.length_x = d
-
             # Compute the geodesic distance of cell edges in y direction
             # Given points
-            p1 = [vertices.X[:,0:self.N  ,:], vertices.Y[:,0:self.N  ,:], vertices.Z[:,0:self.N  ,:]]
-            p2 = [vertices.X[:,1:self.N+1,:], vertices.Y[:,1:self.N+1,:], vertices.Z[:,1:self.N+1,:]]
+            p1 = [vertices.X[:,0:N+nghost  ,:], vertices.Y[:,0:N+nghost  ,:], vertices.Z[:,0:N+nghost  ,:]]
+            p2 = [vertices.X[:,1:N+nghost+1,:], vertices.Y[:,1:N+nghost+1,:], vertices.Z[:,1:N+nghost+1,:]]
 
             # Reshape
-            p1 = np.reshape(p1,(3,N*(N+1)*nbfaces))
-            p2 = np.reshape(p2,(3,N*(N+1)*nbfaces))
+            p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost+1)*nbfaces))
+            p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost+1)*nbfaces))
 
             # Compute arclen
             d = sphgeo.arclen(p1,p2)
-            d = np.reshape(d,(N+1,N,nbfaces))
+            d = np.reshape(d,(N+nghost+1,N+nghost,nbfaces))
             self.length_y = d
 
             # Cell diagonal length
             # Given points
-            p1 = [vertices.X[0:self.N,1:self.N+1,:], vertices.Y[0:self.N,1:self.N+1,:], vertices.Z[0:self.N,1:self.N+1,:]]
-            p2 = [vertices.X[1:self.N+1,0:self.N,:], vertices.Y[1:self.N+1,0:self.N,:], vertices.Z[1:self.N+1,0:self.N,:]]
+            p1 = [vertices.X[0:N+nghost,1:N+nghost+1,:], vertices.Y[0:N+nghost,1:N+nghost+1,:], vertices.Z[0:N+nghost,1:N+nghost+1,:]]
+            p2 = [vertices.X[1:N+nghost+1,0:N+nghost,:], vertices.Y[1:N+nghost+1,0:N+nghost,:], vertices.Z[1:N+nghost+1,0:N+nghost,:]]
       
             # Reshape
-            p1 = np.reshape(p1,(3,N*N*nbfaces))
-            p2 = np.reshape(p2,(3,N*N*nbfaces))
+            p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost)*nbfaces))
+            p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost)*nbfaces))
       
             # Compute arclen
             d = sphgeo.arclen(p1,p2)
-            d = np.reshape(d,(N,N,nbfaces))
+            d = np.reshape(d,(N+nghost,N+nghost,nbfaces))
             self.length_diag = d
+
 
             # Cell antidiagonal length
             # Given points
-            p1 = [vertices.X[0:self.N,0:self.N,:], vertices.Y[0:self.N,0:self.N,:], vertices.Z[0:self.N,0:self.N,:]]
-            p2 = [vertices.X[1:self.N+1,1:self.N+1,:], vertices.Y[1:self.N+1,1:self.N+1,:], vertices.Z[1:self.N+1,1:self.N+1,:]]
+            p1 = [vertices.X[0:N+nghost,0:N+nghost,:], vertices.Y[0:N+nghost,0:N+nghost,:], vertices.Z[0:N+nghost,0:N+nghost,:]]
+            p2 = [vertices.X[1:N+nghost+1,1:N+nghost+1,:], vertices.Y[1:N+nghost+1,1:N+nghost+1,:], vertices.Z[1:N+nghost+1,1:N+nghost+1,:]]
 
             # Reshape
-            p1 = np.reshape(p1,(3,N*N*nbfaces))
-            p2 = np.reshape(p2,(3,N*N*nbfaces))
+            p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost)*nbfaces))
+            p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost)*nbfaces))
 
             # Compute arclen
             d = sphgeo.arclen(p1,p2)
-            d = np.reshape(d,(N,N,nbfaces))
+            d = np.reshape(d,(N+nghost,N+nghost,nbfaces))
             self.length_antidiag = d
-
             # Compute cell angles
             # Each angle of a cell is identified as below
             #    D---------C
@@ -317,31 +440,31 @@ class cubed_sphere:
             #
             if showonscreen==True:
                 print("Computing cell angles...")
-            angles = np.zeros((self.N, self.N, nbfaces, 4))
+            angles = np.zeros((N+nghost, N+nghost, nbfaces, 4))
 
             # Compute the angle A using the triangle ABD
-            a = self.length_x[:,0:self.N,:] # AB
-            b = self.length_y[0:self.N,:,:] # AD
+            a = self.length_x[:,0:N+nghost,:] # AB
+            b = self.length_y[0:N+nghost,:,:] # AD
             c = self.length_diag            # DB
             angles[:,:,:,0] = sphgeo.tri_angle(a, b, c)
             areas = sphgeo.tri_area(a, b, c)
 
             # Compute the angle B using the triangle ABC
-            a = self.length_x[:,0:self.N,:]   # AB
-            b = self.length_y[1:self.N+1,:,:] # BC
+            a = self.length_x[:,0:N+nghost,:]   # AB
+            b = self.length_y[1:N+nghost+1,:,:] # BC
             c = self.length_antidiag          # AB
             angles[:,:,:,1] = sphgeo.tri_angle(a, b, c)
 
             # Compute the angle C using the triangle DCB
-            a = self.length_x[:,1:self.N+1,:] # DC
-            b = self.length_y[1:self.N+1,:,:] # CB
+            a = self.length_x[:,1:N+nghost+1,:] # DC
+            b = self.length_y[1:N+nghost+1,:,:] # CB
             c = self.length_diag              # DB
             angles[:,:,:,2] = sphgeo.tri_angle(a, b, c)
             areas = areas + sphgeo.tri_area(a, b, c)
       
             # Compute the angle D using the triangle ADC
-            a = self.length_x[:,1:self.N+1,:] # DC
-            b = self.length_y[0:self.N,:,:]   # AD
+            a = self.length_x[:,1:N+nghost+1,:] # DC
+            b = self.length_y[0:N+nghost,:,:]   # AD
             c = self.length_antidiag          # CA
             angles[:,:,:,3] = sphgeo.tri_angle(a, b, c)
 
@@ -351,9 +474,9 @@ class cubed_sphere:
             # Compute areas
             if showonscreen==True:
                 print("Computing cell areas...")    
-                self.areas = (self.R**2)*areas
-                self.length_x = self.R*self.length_x
-                self.length_y = self.R*self.length_y
+            self.areas = (self.R**2)*areas
+            self.length_x = self.R*self.length_x
+            self.length_y = self.R*self.length_y
             # Use spherical excess formula
             #self.areas = sphgeo.quad_area(angles[:,:,:,0], angles[:,:,:,1], angles[:,:,:,2], angles[:,:,:,3])
             #self.areas = areas
@@ -376,10 +499,12 @@ class cubed_sphere:
             self.elat_edy = sphgeo.tangent_geo_lat(edy.lon, edy.lat)
 
             # CS map tangent unit vectors at edges points
-            # latlon coordinates     
+            # latlon coordinates
             tg_ex_edx.lon = tg_ex_edx.X[:,:,:]*self.elon_edx[:,:,:,0] + tg_ex_edx.Y[:,:,:]*self.elon_edx[:,:,:,1] + tg_ex_edx.Z[:,:,:]*self.elon_edx[:,:,:,2]
             tg_ex_edx.lat = tg_ex_edx.X[:,:,:]*self.elat_edx[:,:,:,0] + tg_ex_edx.Y[:,:,:]*self.elat_edx[:,:,:,1] + tg_ex_edx.Z[:,:,:]*self.elat_edx[:,:,:,2]
-            
+            #norm =  tg_ex_edx.lon* tg_ex_edx.lon +  tg_ex_edx.lat*tg_ex_edx.lat
+            #print(norm)
+            #exit()
             tg_ex_edy.lon = tg_ex_edy.X[:,:,:]*self.elon_edy[:,:,:,0] + tg_ex_edy.Y[:,:,:]*self.elon_edy[:,:,:,1] + tg_ex_edy.Z[:,:,:]*self.elon_edy[:,:,:,2]
             tg_ex_edy.lat = tg_ex_edy.X[:,:,:]*self.elat_edy[:,:,:,0] + tg_ex_edy.Y[:,:,:]*self.elat_edy[:,:,:,1] + tg_ex_edy.Z[:,:,:]*self.elat_edy[:,:,:,2]
             
@@ -429,7 +554,7 @@ class scalar_field:
     def __init__(self, grid, name, position):
         # Field name
         self.name = name
-      
+
         # Field position
         self.position = position
       

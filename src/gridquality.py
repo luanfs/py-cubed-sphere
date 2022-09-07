@@ -58,8 +58,13 @@ def grid_quality(cs_grid, ll_grid, map_projection):
 # Compute the cell areas considering the earth radius
 ####################################################################################
 def areas(grid):
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
     areas = scalar_field(grid, 'areas', 'center')
-    areas.f = grid.areas
+    areas.f = grid.areas[i0:iend,j0:jend,:]
     #areas.f = np.sqrt(areas.f)
     #print((np.sum(grid.areas)-4*np.pi)/4*np.pi)
     return areas
@@ -68,17 +73,26 @@ def areas(grid):
 # Compute the metric tensor considering the unit sphere
 ####################################################################################
 def metrictensor(grid):
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
     metrictensor = scalar_field(grid, 'metric_tensor', 'center')
-    metrictensor.f = grid.metric_tensor_centers
+    metrictensor.f = grid.metric_tensor_centers[i0:iend,j0:jend,:]
     return metrictensor
 
 ####################################################################################
 # Compute the angle deviation from orthogonality for each cell in a cube sphere grid
 ####################################################################################
 def angles_deviation(grid):
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
     angles = scalar_field(grid, 'angle', 'center')
     for k in range(0,4):
-        angles.f = angles.f + (grid.angles[:,:,:,k]*rad2deg-90.0)**2
+        angles.f = angles.f + (grid.angles[i0:iend,j0:jend,:,k]*rad2deg-90.0)**2
     angles.f = np.sqrt(angles.f)/2.0
     return angles
 
@@ -86,13 +100,18 @@ def angles_deviation(grid):
 # Compute the mean lenght for each cell in a cube sphere grid
 ####################################################################################
 def mean_lengths(grid):
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
     length = scalar_field(grid, 'mean_length', 'center')   
     # Mean edge lengths in x direction   
-    length_x = grid.length_x[:,0:grid.N,:]+grid.length_x[:,1:grid.N+1,:]   
+    length_x = grid.length_x[i0:iend,j0:jend,:]+grid.length_x[i0:iend,j0+1:jend+1,:]   
     length_x = 0.5*length_x
 
     # Mean edge lengths in y direction
-    length_y = grid.length_y[0:grid.N,:,:]+grid.length_y[1:grid.N+1,:,:]
+    length_y = grid.length_y[i0:iend,j0:jend,:]+grid.length_y[i0+1:iend+1,j0:jend,:]
     length_y = 0.5*length_y
    
     # Mean length
@@ -111,20 +130,26 @@ def mean_lengths(grid):
 # Journal of Computational Physics, https://doi.org/10.1006/jcph.2001.6897.
 ####################################################################################
 def distortions(grid):
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
+
     # Compute lmean = sqrt{ (l1^2 + l2^2 + l3^2 + l4^2)/4 }
-    mean_length_l2 = grid.length_y[0:grid.N,:,:]**2
-    mean_length_l2 = mean_length_l2 + grid.length_y[1:grid.N+1,:,:]**2
-    mean_length_l2 = mean_length_l2 + grid.length_x[:,0:grid.N,:]**2
-    mean_length_l2 = mean_length_l2 + grid.length_x[:,1:grid.N+1,:] **2      
+    mean_length_l2 = grid.length_y[i0:iend,j0:jend,:]**2
+    mean_length_l2 = mean_length_l2 + grid.length_y[i0+1:iend+1,j0:jend,:]**2
+    mean_length_l2 = mean_length_l2 + grid.length_x[i0:iend,j0:jend,:]**2
+    mean_length_l2 = mean_length_l2 + grid.length_x[i0:iend,j0+1:jend+1,:] **2      
     mean_length_l2 = mean_length_l2/4.0
     mean_length_l2 = np.sqrt(mean_length_l2)
    
     # Compute the distortion
     distortion   =  scalar_field(grid, 'distortion', 'center')
-    distortion.f = (grid.length_y[0:grid.N,:,:]-mean_length_l2)**2
-    distortion.f = distortion.f + (grid.length_y[1:grid.N+1,:,:] - mean_length_l2)**2
-    distortion.f = distortion.f + (grid.length_x[:,0:grid.N,:]   - mean_length_l2)**2
-    distortion.f = distortion.f + (grid.length_x[:,1:grid.N+1,:] - mean_length_l2)**2
+    distortion.f = (grid.length_y[i0:iend,j0:jend,:]-mean_length_l2)**2
+    distortion.f = distortion.f + (grid.length_y[i0+1:iend+1,j0:jend,:] - mean_length_l2)**2
+    distortion.f = distortion.f + (grid.length_x[i0:iend,j0:jend,:]   - mean_length_l2)**2
+    distortion.f = distortion.f + (grid.length_x[i0:iend,j0+1:jend+1,:] - mean_length_l2)**2
     distortion.f = distortion.f/4.0
     distortion.f = np.sqrt(distortion.f)/mean_length_l2
     return distortion
@@ -137,9 +162,14 @@ def distortions(grid):
 # https://doi.org/10.1016/j.jcp.2012.11.041.
 ####################################################################################
 def alignment_index(grid):
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = grid.i0
+    iend = grid.iend
+    j0   = grid.j0
+    jend = grid.jend
     # Compute the mean alignment
-    mean_align = grid.length_x[:,0:grid.N,:] + grid.length_x[:,1:grid.N+1,:]
-    mean_align = mean_align + grid.length_y[0:grid.N,:,:] + grid.length_y[1:grid.N+1,:,:] 
+    mean_align = grid.length_x[i0:iend,j0:jend,:] + grid.length_x[i0:iend,j0+1:jend+1,:]
+    mean_align = mean_align + grid.length_y[i0:iend,j0:jend,:] + grid.length_y[i0+1:iend+1,j0:jend,:] 
     mean_align = mean_align*0.25
    
     # Each cell vertex is identified as below
@@ -152,13 +182,13 @@ def alignment_index(grid):
 
     alignment   = scalar_field(grid, 'alignment', 'center')
     # |d_21 - d_43|
-    alignment.f = alignment.f + abs(grid.length_x[:,0:grid.N,:] -grid.length_x[:,1:grid.N+1,:])
+    alignment.f = alignment.f + abs(grid.length_x[i0:iend,j0:jend,:] -grid.length_x[i0:iend,j0+1:jend+1,:])
     # |d_32 - d_14|
-    alignment.f = alignment.f + abs(grid.length_y[0:grid.N,:,:] -grid.length_y[1:grid.N+1,:,:])
+    alignment.f = alignment.f + abs(grid.length_y[i0:iend,j0:jend,:] -grid.length_y[i0+1:iend+1,j0:jend,:])
     # |d_21 - d_43|
-    alignment.f = alignment.f + abs(grid.length_x[:,0:grid.N,:] -grid.length_x[:,1:grid.N+1,:])
+    alignment.f = alignment.f + abs(grid.length_x[i0:iend,j0:jend,:] -grid.length_x[i0:iend,j0+1:jend+1,:])
     # |d_32 - d_14|   
-    alignment.f = alignment.f + abs(grid.length_y[0:grid.N,:,:] -grid.length_y[1:grid.N+1,:,:])
+    alignment.f = alignment.f + abs(grid.length_y[i0:iend,j0:jend,:] -grid.length_y[i0+1:iend+1,j0:jend,:])
     alignment.f = alignment.f*0.25
     alignment.f = alignment.f/mean_align
     return alignment
