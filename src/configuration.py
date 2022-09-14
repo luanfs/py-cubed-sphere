@@ -50,8 +50,8 @@ def get_parameters():
          transf = "gnomonic_equidistant"
       elif tranformation == 2:
          transf = "gnomonic_equiangular"
-      elif tranformation == 3:
-         transf = "conformal"
+      #elif tranformation == 3:
+      #   transf = "conformal"
       else: 
          print("ERROR: invalid transformation")
          exit()
