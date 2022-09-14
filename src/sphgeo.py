@@ -114,87 +114,11 @@ def tri_angle(a, b, c):
     return angle
 
 ####################################################################################
-#
-#
+# Compute
 ####################################################################################
-def quad_areas(x, y):
-    N = np.shape(x)[0]
-    print(N)
-    area = np.zeros((N-1,N-1,6))
-    for i in range(0,N-1):
-        for j in range(0,N-1):
-            x0 = x[i,j]
-            xf = x[i+1,j]
-            y0 = y[i,j]
-            yf = y[i,j+1]
-            # Equidistant CS
-            a = 1.0/np.sqrt(3.0)
-            r1 = (a*np.sqrt(a**2 + xf**2 + yf**2))
-            r2 = (a*np.sqrt(a**2 + x0**2 + yf**2))
-            r3 = (a*np.sqrt(a**2 + xf**2 + y0**2))
-            r4 = (a*np.sqrt(a**2 + x0**2 + y0**2))
-            #print(x0,xf,r1)
-            area[i,j,:] = np.arctan(xf*yf/r1)
-            area[i,j,:] = area[i,j,:] - np.arctan(x0*yf/r2)
-            area[i,j,:] = area[i,j,:] - np.arctan(xf*y0/r3)
-            area[i,j,:] = area[i,j,:] + np.arctan(x0*y0/r4)
-            area[i,j,:] = area[i,j,:]
-    return area
-
-####################################################################################
-# Based on the routine INSIDETR from iModel (https://github.com/luanfs/iModel/blob/master/src/smeshpack.f90)
-# Checks if 'p' is inside the geodesical triangle formed by p1, p2, p3
-# The vertices of the triangle must be given ccwisely
-# The algorithm checks if the point left of each edge
-####################################################################################
-def inside_triangle(p, p1, p2, p3):
-    insidetr = False
-    A = np.zeros((3,3))
-
-    # For every edge
-    # Check if point is at left of edge
-    A[0:3,0] = p[0:3] 
-    A[0:3,1] = p1[0:3] 
-    A[0:3,2] = p2[0:3] 
-    left = np.linalg.det(A)
-    if(left < 0):
-        # Point not in triangle
-        return insidetr
-
-    A[0:3,0] = p[0:3] 
-    A[0:3,1] = p2[0:3] 
-    A[0:3,2] = p3[0:3] 
-    left = np.linalg.det(A)
-    if(left < 0):
-        # Point not in triangle
-        return insidetr
-
-    A[0:3,0] = p[0:3] 
-    A[0:3,1] = p3[0:3] 
-    A[0:3,2] = p1[0:3]
-    left = np.linalg.det(A)
-    if(left < 0):
-        # Point not in triangle
-        return insidetr
-
-    # If left >=0  to all edge, then the point
-    # is inside the triangle, or on the edge
-    insidetr = True
-
-    return insidetr
-
-####################################################################################
-# Checks if 'p' is inside the geodesical quadrilateral formed by p1, p2, p3, p4
-# The vertices of the quadrilateral must be given ccwisely
-####################################################################################
-def inside_quadrilateral(p, p1, p2, p3, p4):
-    # Check if p is inside the geodesical triangle formed by p1, p2 and p3
-    inside_tr1 = inside_triangle(p, p1, p2, p3)
-
-    if inside_tr1 == True:
-        return inside_tr1
-    else:
-        # Check if p is inside the geodesical triangle formed by p2, p4 and p3
-        inside_tr2 = inside_triangle(p, p2, p4, p3)
-        inside_quad = np.logical_or(inside_tr1, inside_tr2)
-        return inside_quad
+def latlon_to_contravariant(u_lon, v_lat, ex_lon, ex_lat, ey_lon, ey_lat, det):
+    ucontra =  ey_lat*u_lon - ey_lon*v_lat
+    vcontra = -ex_lat*u_lon + ex_lon*v_lat
+    ucontra =  ucontra/det
+    vcontra =  vcontra/det
+    return ucontra, vcontra
