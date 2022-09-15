@@ -8,7 +8,7 @@
 
 # Imports
 import numpy as np
-from constants import pi
+from constants import pi, nbfaces
 
 ####################################################################################
 # Convert from spherical (lat,lon) to cartesian coordinates (x,y,z) 
@@ -114,7 +114,7 @@ def tri_angle(a, b, c):
     return angle
 
 ####################################################################################
-# Compute
+# Convert a latlon vector to contravariant vector
 ####################################################################################
 def latlon_to_contravariant(u_lon, v_lat, ex_lon, ex_lat, ey_lon, ey_lat, det):
     ucontra =  ey_lat*u_lon - ey_lon*v_lat
@@ -122,3 +122,139 @@ def latlon_to_contravariant(u_lon, v_lat, ex_lon, ex_lat, ey_lon, ey_lat, det):
     ucontra =  ucontra/det
     vcontra =  vcontra/det
     return ucontra, vcontra
+
+####################################################################################
+# Convert a contravariant vector to latlon vector
+####################################################################################
+def contravariant_to_latlon(ucontra, vcontra, ex_lon, ex_lat, ey_lon, ey_lat):
+    u_lon =  ex_lon*ucontra + ey_lon*vcontra
+    v_lat =  ex_lat*ucontra + ey_lat*vcontra
+    return u_lon, v_lat
+
+####################################################################################
+#  General spherical points structure
+####################################################################################
+class point:
+    def __init__(self, N, M):
+        # Cartesian coordinates - represented in capital letters (X,Y,Z)
+        self.X   = np.zeros((N, M, nbfaces))
+        self.Y   = np.zeros((N, M, nbfaces))
+        self.Z   = np.zeros((N, M, nbfaces))
+
+        # Spherical coordinates
+        self.lat = np.zeros((N, M, nbfaces))
+        self.lon = np.zeros((N, M, nbfaces))
+
+####################################################################################
+# Compute unit tangent vectors at edges (in x dir) midpoints using the projection
+# on the geodesic tangent line at P. Works only for geodesic grids.
+# Returns the tangent vectors in both x and y directions of the CS local coordinates.
+# Inputs:
+# - edx (edges midpoints in x direction)
+# - vertices (cell vertices)
+# - N (cells per axis on each CS panel)
+# - nghost (number of ghost cells)
+####################################################################################
+def tg_vector_geodesic_edx_midpoints(edx, vertices, N, nghost):
+    # Unit tangent vectors in x dir
+    tg_ex_edx = point(N+1+nghost, N+nghost)
+    P = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+    Q = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+
+    # Points where we are going to compute the tangent vector
+    P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edx.X, edx.Y, edx.Z
+    
+    # Vectors to be projected at the tangent line at P.
+    # The tangent line considers the geodesic connecting edge mipoints in x dir.
+    Q[0:N+nghost,:,:,0], Q[0:N+nghost,:,:,1], Q[0:N+nghost,:,:,2] = edx.X[0:N+nghost,:,:]-edx.X[1:N+nghost+1,:,:], edx.Y[0:N+nghost,:,:]-edx.Y[1:N+nghost+1,:,:], edx.Z[0:N+nghost,:,:]-edx.Z[1:N+nghost+1,:,:]
+    Q[N+nghost,:,:,0], Q[N+nghost,:,:,1], Q[N+nghost,:,:,2] = edx.X[N+nghost-1,:,:]-edx.X[N+nghost,:,:], edx.Y[N+nghost-1,:,:]-edx.Y[N+nghost,:,:], edx.Z[N+nghost-1,:,:]-edx.Z[N+nghost,:,:]
+    
+    # Compute the projection on the tangent line at P     
+    tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = tangent_projection(P, Q)
+
+    # Normalization
+    norm = tg_ex_edx.X*tg_ex_edx.X + tg_ex_edx.Y*tg_ex_edx.Y + tg_ex_edx.Z*tg_ex_edx.Z
+    norm = np.sqrt(norm)
+    tg_ex_edx.X = tg_ex_edx.X/norm
+    tg_ex_edx.Y = tg_ex_edx.Y/norm
+    tg_ex_edx.Z = tg_ex_edx.Z/norm
+
+    # Unit tangent vectors in y dir
+    tg_ey_edx = point(N+1+nghost, N+nghost)
+    P = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+    Q = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
+
+    # Points where we are going to compute the tangent vector
+    P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edx.X, edx.Y, edx.Z
+    
+    # Vectors to be projected at the tangent line at P.
+    # The tangent line considers the geodesic connecting edx midpoints and vertices (y dir). 
+    Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2] = edx.X[:,:,:]-vertices.X[:,1:N+nghost+1,:], edx.Y[:,:,:]-vertices.Y[:,1:N+nghost+1,:], edx.Z[:,:,:]-vertices.Z[:,1:N+nghost+1,:]
+
+    # Compute the projection on the tangent line at P
+    tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = tangent_projection(P, Q)
+ 
+    # Normalization
+    norm = tg_ey_edx.X*tg_ey_edx.X + tg_ey_edx.Y*tg_ey_edx.Y + tg_ey_edx.Z*tg_ey_edx.Z
+    norm = np.sqrt(norm)
+    tg_ey_edx.X = tg_ey_edx.X/norm
+    tg_ey_edx.Y = tg_ey_edx.Y/norm
+    tg_ey_edx.Z = tg_ey_edx.Z/norm
+    return tg_ex_edx, tg_ey_edx
+
+####################################################################################
+# Compute unit tangent vectors at edges (in y dir) midpoints using the projection
+# on the geodesic tangent line at P. Works only for geodesic grids.
+# Returns the tangent vectors in both x and y directions of the CS local coordinates.
+# Inputs:
+# - edy (edges midpoints in y direction)
+# - vertices (cell vertices)
+# - N (cells per axis on each CS panel)
+# - nghost (number of ghost cells)
+####################################################################################
+def tg_vector_geodesic_edy_midpoints(edy, vertices, N, nghost):
+    # Unit tangent vectors in x dir
+    tg_ex_edy = point(N+nghost, N+nghost+1)
+    P = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+    Q = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+
+    # Points where we are going to compute the tangent vector
+    P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edy.X, edy.Y, edy.Z
+ 
+    # Vectors to be projected at the tangent line at P.
+    # The tangent line considers the geodesic connecting edge mipoints and vercites in x dir.
+    Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2] = edy.X-vertices.X[1:N+nghost+1,:,:], edy.Y-vertices.Y[1:N+nghost+1,:,:], edy.Z-vertices.Z[1:N+nghost+1,:,:]
+
+    # Compute the projection on the tangent line at P     
+    tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = tangent_projection(P, Q)
+
+    # Normalization
+    norm = tg_ex_edy.X*tg_ex_edy.X + tg_ex_edy.Y*tg_ex_edy.Y + tg_ex_edy.Z*tg_ex_edy.Z
+    norm = np.sqrt(norm)
+    tg_ex_edy.X = tg_ex_edy.X/norm
+    tg_ex_edy.Y = tg_ex_edy.Y/norm
+    tg_ex_edy.Z = tg_ex_edy.Z/norm
+
+    # Unit tangent vectors in y dir
+    tg_ey_edy = point(N+1+nghost, N+nghost)
+    P = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+    Q = np.zeros((N+nghost, N+nghost+1, nbfaces, 3))
+
+    # Points where we are going to compute the tangent vector
+    P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edy.X, edy.Y, edy.Z
+
+    # Vectors to be projected at the tangent line at P.
+    # The tangent line considers the geodesic connecting edx midpoints and vertices (x dir). 
+    Q[:,0:N+nghost,:,0], Q[:,0:N+nghost,:,1], Q[:,0:N+nghost,:,2] = edy.X[:,0:N+nghost,:]-edy.X[:,1:N+nghost+1,:], edy.Y[:,0:N+nghost,:]-edy.Y[:,1:N+nghost+1,:], edy.Z[:,0:N+nghost,:]-edy.Z[:,1:N+nghost+1,:]
+    Q[:,N+nghost,:,0], Q[:,N+nghost,:,1], Q[:,N+nghost,:,2] = edy.X[:,N+nghost-1,:]-edy.X[:,N+nghost,:], edy.Y[:,N+nghost-1,:]-edy.Y[:,N+nghost,:], edy.Z[:,N+nghost-1,:]-edy.Z[:,N+nghost,:]
+
+    # Compute the projection on the tangent line at P
+    tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = tangent_projection(P, Q)
+
+    # Normalization
+    norm = tg_ey_edy.X*tg_ey_edy.X + tg_ey_edy.Y*tg_ey_edy.Y + tg_ey_edy.Z*tg_ey_edy.Z
+    norm = np.sqrt(norm)
+    tg_ey_edy.X = tg_ey_edy.X/norm
+    tg_ey_edy.Y = tg_ey_edy.Y/norm
+    tg_ey_edy.Z = tg_ey_edy.Z/norm
+    return tg_ex_edy, tg_ey_edy
