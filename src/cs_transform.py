@@ -375,6 +375,7 @@ def equiangular_tg_xdir(x, y, N, M, R):
     
     for p in range(0, nbfaces): 
         X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2x, a*Y[:,:,p]/cos2x, a*Z[:,:,p]/cos2x
+
     return X, Y, Z
 
 ####################################################################################
@@ -392,8 +393,8 @@ def equiangular_tg_ydir(x, y, N, M, R):
     cos2y = cosy*cosy
     for p in range(0, nbfaces): 
         X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2y, a*Y[:,:,p]/cos2y, a*Z[:,:,p]/cos2y
-    return X, Y, Z
 
+    return X, Y, Z
 
 ####################################################################################
 # Compute the metric tensor of the cubed-sphere mapping
@@ -410,7 +411,7 @@ def metric_tensor(x, y, R, projection):
     if projection == 'gnomonic_equidistant':
         r = np.sqrt(a*a + x*x + y*y)
         G = R*R*a/r**3
-    elif projection == 'gnomonic_equiangular':
+    elif projection == 'gnomonic_equiangular' or 'conformal':
         atanx, atany = a*np.tan(x), a*np.tan(y)
         r = np.sqrt(a*a + atanx*atanx + atany*atany)
         G = R*R*a/r**3
@@ -432,9 +433,13 @@ def metric_tensor(x, y, R, projection):
 #  spherical cube: Gnomonic versus conformal coordinates. Q.J.R. Meteorol. Soc., 122: 959-982. 
 #  https://doi.org/10.1002/qj.49712253209
 #################################################################################### 
-def conformal_map(ξ, η, N):
-    ξ, η = np.meshgrid(ξ, η, indexing='ij')
-
+def conformal_map(ξ, η, N, M):
+    #print(ξ)
+    swap = ξ
+    ξ = -η
+    η = swap
+    ξ, η = np.meshgrid(ξ, η)
+    #print(np.shape(ξ))
     ξc = abs(ξ)
     ηc = abs(η)
 
@@ -486,16 +491,16 @@ def conformal_map(ξ, η, N):
     Y[η==0]=0
    
     #print(np.amax(abs(X**2+Y**2+Z**2-1)))
-
+    #print(np.shape(X))
     # Cartesian coordinates of the projected points
-    x = np.zeros((N, N, nbfaces))
-    y = np.zeros((N, N, nbfaces))
-    z = np.zeros((N, N, nbfaces))
-  
+    x = np.zeros((N, M, nbfaces))
+    y = np.zeros((N, M, nbfaces))
+    z = np.zeros((N, M, nbfaces))
+
     # Panel 4
-    x[:,:,4] = np.transpose(np.flipud(X))
-    y[:,:,4] = np.transpose(np.flipud(Y))
-    z[:,:,4] = np.transpose(np.flipud(Z))
+    x[:,:,4] = X
+    y[:,:,4] = Y
+    z[:,:,4] = Z
 
     # Panel 5
     x[:,:,5] = -x[:,:,4]
@@ -734,153 +739,3 @@ def B_coeffs():
         0.00072168520663,
         0.00067885239089]
     return B
-
-####################################################################################
-# Linear search of the points (xll, yll, zll) in a given panel 
-####################################################################################
-def linear_search(xll, yll, zll, cs_grid, panel):
-    print('Using linear search, this may take a while')
-    x = cs_grid.vertices.x[:,:,panel]
-    y = cs_grid.vertices.y[:,:,panel]
-    z = cs_grid.vertices.z[:,:,panel]
-    N = cs_grid.N
-   
-    # Points
-    p  = np.zeros(3)
-    p1 = np.zeros(3)
-    p2 = np.zeros(3)
-    p3 = np.zeros(3)
-    p4 = np.zeros(3)
-    indexes =  np.zeros((2,len(xll)), dtype=np.int32)
-
-    for k in range(0,len(xll)):
-        p[0:3] = xll[k], yll[k], zll[k]
-        # Linear search for p
-        for i in range(0,N):
-            for j in range(0,N):
-                p1[0:3] = x[i  , j]  , y[i  , j]  , z[i  , j]
-                p2[0:3] = x[i+1, j]  , y[i+1, j]  , z[i+1, j]
-                p3[0:3] = x[i  , j+1], y[i  , j+1], z[i  , j+1]   
-                p4[0:3] = x[i+1, j+1], y[i+1, j+1], z[i+1, j+1]   
-                inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)           
-                if inside == True:
-                    indexes[0,k], indexes[1,k] = i, j
-                    break
-            if inside == True:
-                indexes[0,k], indexes[1,k] = i, j
-                break
-        if inside == False:
-            print('Error in linear search.')
-            exit()
-    return indexes
-
-####################################################################################
-# Binary search of the points (xll, yll, zll) in a given panel 
-####################################################################################
-def binary_search(xll, yll, zll, cs_grid, panel):
-   #print('Using linear search, this may take a while')
-   x = cs_grid.vertices.x[:,:,panel]
-   y = cs_grid.vertices.y[:,:,panel]
-   z = cs_grid.vertices.z[:,:,panel]
-   N = cs_grid.N
-
-   # Points
-   p  = np.zeros(3)
-   p1 = np.zeros(3)
-   p2 = np.zeros(3)
-   p3 = np.zeros(3)
-   p4 = np.zeros(3)
-   indexes =  np.zeros((2,len(xll)), dtype=np.int32)
-
-   leftxs  =  np.zeros((N), dtype=np.int32)
-   leftys  =  np.zeros((N), dtype=np.int32)
-   rightxs =  np.zeros((N), dtype=np.int32)
-   rightys =  np.zeros((N), dtype=np.int32)
-
-   for k in range(0,len(xll)):
-      print('Binary search: searching for point',k,'from',len(xll),'in panel',panel)
-      p[0:3] = xll[k], yll[k], zll[k]
-      leftx  = 0
-      rightx = N
-      lefty  = 0
-      righty = N
-      l = 0
-      while abs(leftx-rightx)>1 or abs(lefty - righty)>1:
-         if(leftx < rightx):
-            middlex = int((leftx+rightx)/2)
-         if(lefty < righty):
-            middley = int((lefty+righty)/2)
-
-         p1[0:3] = x[leftx, lefty],   y[leftx, lefty]  , z[leftx, lefty]
-         p2[0:3] = x[rightx, lefty],  y[rightx, lefty] , z[rightx, lefty]
-         p3[0:3] = x[leftx, righty],  y[leftx, righty] , z[leftx, righty]         
-         p4[0:3] = x[rightx, righty], y[rightx, righty], z[rightx, righty]
-         inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
-
-         if(inside==False):
-            print('Error 1')
-            exit()
-
-         ix = [leftx, middlex, rightx]
-         jy = [lefty, middley, righty]        
-
-         for i in range(0,2):
-            for j in range(0,2):
-               A = ix[i]  , jy[j]
-               B = ix[i+1], jy[j]
-               C = ix[i]  , jy[j+1]
-               D = ix[i+1], jy[j+1]
-               
-               p1[0:3] = x[A], y[A], z[A]
-               p2[0:3] = x[B], y[B], z[B]
-               p3[0:3] = x[C], y[C], z[C]         
-               p4[0:3] = x[D], y[D], z[D]
-               inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
-               if inside == True:
-                  leftxs[l], rightxs[l] = leftx, rightx
-                  leftys[l], rightys[l] = lefty, righty
-                  l = l + 1
-                  leftx , lefty  = A
-                  rightx, righty = D
-                  break
-            if inside == True:
-               break
-         
-         # Linear search
-         if inside == False:
-            print('Using linear search...')
-            while inside == False:
-               p1[0:3] = x[leftxs[l], leftys[l]],   y[leftxs[l], leftys[l]]  , z[leftxs[l], leftys[l]]
-               p2[0:3] = x[rightxs[l], leftys[l]],  y[rightxs[l], leftys[l]] , z[rightxs[l], leftys[l]]
-               p3[0:3] = x[leftxs[l], rightys[l]],  y[leftxs[l], rightys[l]] , z[leftxs[l], rightys[l]]         
-               p4[0:3] = x[rightxs[l], rightys[l]], y[rightxs[l], rightys[l]], z[rightxs[l], rightys[l]]
-               inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)
-               #print(k,l,inside)
-               l = l - 1
-               if l < 0:
-                  print('Error in linear search.')
-                  exit()
-            #print('ok',l)   
-            #l = l+1
-
-            # Linear search
-            for i in range(leftxs[l], rightxs[l]):
-               for j in range(leftys[l], rightys[l]):
-                  p1[0:3] = x[i  , j]  , y[i  , j]  , z[i  , j]
-                  p2[0:3] = x[i+1, j]  , y[i+1, j]  , z[i+1, j]
-                  p3[0:3] = x[i  , j+1], y[i  , j+1], z[i  , j+1]   
-                  p4[0:3] = x[i+1, j+1], y[i+1, j+1], z[i+1, j+1]   
-                  inside = sphgeo.inside_quadrilateral(p, p1, p2, p3, p4)           
-                  if inside == True:
-                     leftx , lefty  = i, j
-                     rightx, righty = i, j
-                     break
-               if inside == True:
-                  leftx , lefty  = i, j
-                  rightx, righty = i, j
-                  break
-            #print(inside,leftx,rightx)
-
-      indexes[0,k] = leftx
-      indexes[1,k] = lefty
-   return indexes
