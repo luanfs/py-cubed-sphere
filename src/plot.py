@@ -79,6 +79,9 @@ def plot_grid(grid, map_projection):
 
         # Plot vertices
         A_lon, A_lat = lon[i0:iend, j0:jend], lat[i0:iend, j0:jend]
+        #for i in range(0,grid.N):
+        #    for j in range(0,2):
+        #        plt.plot(A_lon[i,j], A_lat[i,j], marker='.',color = 'black')
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
         B_lon, B_lat = lon[i0+1:iend+1, j0:jend], lat[i0+1:iend+1, j0:jend]
@@ -98,19 +101,28 @@ def plot_grid(grid, map_projection):
         # Plot center and edge points
         if map_projection == 'mercator':
             center_lon, center_lat = lonc[i0:iend, j0:jend], latc[i0:iend, j0:jend]
+            #for i in range(0,grid.N):
+            #    for j in range(0,1):
+            #        plt.plot(center_lon[i,j], center_lat[i,j], marker='.',color = 'black')
             center_lon, center_lat = np.ndarray.flatten(center_lon),np.ndarray.flatten(center_lat)
-            for i in range(0, np.shape(center_lon)[0]):
-                plt.plot(center_lon[i], center_lat[i], marker='.',color = 'black')
+            #for i in range(0, np.shape(center_lon)[0]):
+            #    plt.plot(center_lon[i], center_lat[i], marker='.',color = 'black')
  
             edges_xdir_lon, edges_xdir_lat  = lon_edx[i0:iend+1, j0:jend], lat_edx[i0:iend+1, j0:jend]
+            #for i in range(0,grid.N+1):
+            #    for j in range(0,grid.N):
+            #        plt.plot(edges_xdir_lon[i,j], edges_xdir_lat[i,j], marker='.',color = 'white')
             edges_xdir_lon, edges_xdir_lat = np.ndarray.flatten(edges_xdir_lon), np.ndarray.flatten(edges_xdir_lat)
-            for i in range(0, np.shape(edges_xdir_lon)[0]):
-                plt.plot(edges_xdir_lon[i], edges_xdir_lat[i], marker='.',color = 'white')
+            #for i in range(0, np.shape(edges_xdir_lon)[0]):
+            #    plt.plot(edges_xdir_lon[i], edges_xdir_lat[i], marker='.',color = 'white')
 
             edges_ydir_lon, edges_ydir_lat  = lon_edy[i0:iend, j0:jend+1], lat_edy[i0:iend, j0:jend+1]
+            #for i in range(0,grid.N):
+            #    for j in range(0,grid.N+1):
+            #        plt.plot(edges_ydir_lon[i,j], edges_ydir_lat[i,j], marker='.',color = 'white')
             edges_ydir_lon, edges_ydir_lat = np.ndarray.flatten(edges_ydir_lon), np.ndarray.flatten(edges_ydir_lat)
-            for i in range(0, np.shape(edges_ydir_lon)[0]):
-                plt.plot(edges_ydir_lon[i], edges_ydir_lat[i], marker='.',color = 'white')
+            #for i in range(0, np.shape(edges_ydir_lon)[0]):
+            #    plt.plot(edges_ydir_lon[i], edges_ydir_lat[i], marker='.',color = 'white')
 
             # Plot tangent vector at edge points in x dir
             #plt.quiver(lon_edx, lat_edx, vec_tgx_edx_lon, vec_tgx_edx_lat, width = 0.001)
@@ -136,6 +148,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
     # Figure quality
     dpi = 100
    
+    # Map projection
     if map_projection == "mercator":
         plateCr = ccrs.PlateCarree()
         plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
@@ -162,6 +175,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
     j0   = cs_grid_aux.j0
     jend = cs_grid_aux.jend
 
+    # Plot CS grid
     for p in range(0, nbfaces):
         lons = cs_grid_aux.vertices.lon[:,:,p]*rad2deg
         lats = cs_grid_aux.vertices.lat[:,:,p]*rad2deg
@@ -246,7 +260,6 @@ def open_netcdf4(fields_cs, ts, name):
     print("Done.")
     print("--------------------------------------------------------\n")
     return data
-   
 
 ####################################################################################
 # Create a netcdf file using the fields given in the list fields_ll
@@ -262,6 +275,31 @@ def save_grid_netcdf4(grid):
    
     # Cell in each panel axis
     n = grid.N+grid.nghost
+    
+    # Grid spacing
+    dx  = griddata.createVariable('dx','f8')
+    dy  = griddata.createVariable('dy','f8')
+    dx[:] = grid.dx
+    dy[:] = grid.dy
+
+    # Some integers
+    nghost          = griddata.createVariable('nghost'   ,'i4')
+    nghost_left     = griddata.createVariable('nghost_left'   ,'i4')
+    nghost_right    = griddata.createVariable('nghost_right'   ,'i4')
+    N     = griddata.createVariable('N'   ,'i4')
+    i0    = griddata.createVariable('i0'  ,'i4')
+    iend  = griddata.createVariable('iend','i4')
+    j0    = griddata.createVariable('j0'  ,'i4')
+    jend  = griddata.createVariable('jend','i4')
+
+    nghost[:] = grid.nghost
+    nghost_left[:]  = grid.nghost_left
+    nghost_right[:] = grid.nghost_right
+    N[:]    = grid.N
+    i0[:]   = grid.i0
+    iend[:] = grid.iend
+    j0[:]   = grid.j0
+    jend[:] = grid.jend
 
     # Create dimensions
     # Panels 
@@ -273,24 +311,58 @@ def save_grid_netcdf4(grid):
 
     ix2 = griddata.createDimension('ix2', n)
     jy2 = griddata.createDimension('jy2', n)
-   
+
     # R3 dimension + S2 (sphere in R3) dimension (x,y,z + lat,lon coordinates)
     coorddim = griddata.createDimension('coorddim', 5)
+    
+    # R3 dimension
+    r3dim = griddata.createDimension('r3dim', 3)
 
     # Number of edges in a cell
     ed = griddata.createDimension('ed', 4)
 
     # Create variables
     vertices = griddata.createVariable('vertices', 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
-    centers  = griddata.createVariable('centers',  'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
+    centers  = griddata.createVariable('centers' , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
+    edx      = griddata.createVariable('edx'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
+    edy      = griddata.createVariable('edy'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+    
+    # Tangent vectors
+    tg_ex_edx = griddata.createVariable('tg_ex_edx', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
+    tg_ey_edx = griddata.createVariable('tg_ey_edx', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
+    tg_ex_edy = griddata.createVariable('tg_ex_edy', 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+    tg_ey_edy = griddata.createVariable('tg_ey_edy', 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+
+    elon_edx = griddata.createVariable('elon_edx', 'f8', ('ix' , 'jy2', 'panel', 'r3dim'))
+    elat_edx = griddata.createVariable('elat_edx', 'f8', ('ix' , 'jy2', 'panel', 'r3dim'))
+    elon_edy = griddata.createVariable('elon_edy', 'f8', ('ix2', 'jy' , 'panel', 'r3dim'))
+    elat_edy = griddata.createVariable('elat_edy', 'f8', ('ix2', 'jy' , 'panel', 'r3dim'))
 
     # Geometric properties
-    areas           = griddata.createVariable('areas'          , 'f8', ('ix2', 'jy2', 'panel'))
-    length_x        = griddata.createVariable('length_x'       , 'f8', ('ix2', 'jy' , 'panel'))
-    length_y        = griddata.createVariable('length_y'       , 'f8', ('ix' , 'jy2', 'panel'))
-    length_diag     = griddata.createVariable('length_diag'    , 'f8', ('ix2', 'jy2', 'panel'))
-    length_antidiag = griddata.createVariable('length_antidiag', 'f8', ('ix2', 'jy2', 'panel'))
-    angles          = griddata.createVariable('angles'         , 'f8', ('ix2', 'jy2', 'panel', 'ed'))   
+    areas                   = griddata.createVariable('areas'                , 'f8', ('ix2', 'jy2', 'panel'))
+    length_x                = griddata.createVariable('length_x'             , 'f8', ('ix2', 'jy' , 'panel'))
+    length_y                = griddata.createVariable('length_y'             , 'f8', ('ix' , 'jy2', 'panel'))
+    length_diag             = griddata.createVariable('length_diag'          , 'f8', ('ix2', 'jy2', 'panel'))
+    length_antidiag         = griddata.createVariable('length_antidiag'      , 'f8', ('ix2', 'jy2', 'panel'))
+    length_edx              = griddata.createVariable('length_edx'           , 'f8', ('ix2', 'jy2', 'panel'))
+    length_edy              = griddata.createVariable('length_edy'           , 'f8', ('ix2', 'jy2', 'panel'))
+    angles                  = griddata.createVariable('angles'               , 'f8', ('ix2', 'jy2', 'panel', 'ed'))  
+
+    metric_tensor_centers   = griddata.createVariable('metric_tensor_centers', 'f8', ('ix2', 'jy2', 'panel')) 
+    metric_tensor_edx       = griddata.createVariable('metric_tensor_edx'    , 'f8', ('ix' , 'jy2', 'panel'))
+    metric_tensor_edy       = griddata.createVariable('metric_tensor_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
+
+    prod_ex_elon_edx          = griddata.createVariable('prod_ex_elon_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
+    prod_ex_elat_edx          = griddata.createVariable('prod_ex_elat_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
+    prod_ey_elon_edx          = griddata.createVariable('prod_ey_elon_edx'    , 'f8', ('ix', 'jy2' , 'panel'))    
+    prod_ey_elat_edx          = griddata.createVariable('prod_ey_elat_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
+    determinant_ll2contra_edx = griddata.createVariable('determinant_ll2contra_edx', 'f8', ('ix', 'jy2' , 'panel'))
+
+    prod_ex_elon_edy          = griddata.createVariable('prod_ex_elon_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
+    prod_ex_elat_edy          = griddata.createVariable('prod_ex_elat_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
+    prod_ey_elon_edy          = griddata.createVariable('prod_ey_elon_edy'    , 'f8', ('ix2', 'jy' , 'panel'))    
+    prod_ey_elat_edy          = griddata.createVariable('prod_ey_elat_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
+    determinant_ll2contra_edy = griddata.createVariable('determinant_ll2contra_edy', 'f8', ('ix2', 'jy' , 'panel'))
 
     # Values attribution
     vertices[:,:,:,0] = grid.vertices.X
@@ -305,6 +377,47 @@ def save_grid_netcdf4(grid):
     centers[:,:,:,3] = grid.centers.lon
     centers[:,:,:,4] = grid.centers.lat
 
+    edx[:,:,:,0] = grid.edx.X
+    edx[:,:,:,1] = grid.edx.Y
+    edx[:,:,:,2] = grid.edx.Z
+    edx[:,:,:,3] = grid.edx.lon
+    edx[:,:,:,4] = grid.edx.lat
+
+    edy[:,:,:,0] = grid.edy.X
+    edy[:,:,:,1] = grid.edy.Y
+    edy[:,:,:,2] = grid.edy.Z
+    edy[:,:,:,3] = grid.edy.lon
+    edy[:,:,:,4] = grid.edy.lat
+
+    tg_ex_edx[:,:,:,0] = grid.tg_ex_edx.X
+    tg_ex_edx[:,:,:,1] = grid.tg_ex_edx.Y
+    tg_ex_edx[:,:,:,2] = grid.tg_ex_edx.Z
+    tg_ex_edx[:,:,:,3] = grid.tg_ex_edx.lon
+    tg_ex_edx[:,:,:,4] = grid.tg_ex_edx.lat
+
+    tg_ey_edx[:,:,:,0] = grid.tg_ey_edx.X
+    tg_ey_edx[:,:,:,1] = grid.tg_ey_edx.Y
+    tg_ey_edx[:,:,:,2] = grid.tg_ey_edx.Z
+    tg_ey_edx[:,:,:,3] = grid.tg_ey_edx.lon
+    tg_ey_edx[:,:,:,4] = grid.tg_ey_edx.lat
+
+    tg_ex_edy[:,:,:,0] = grid.tg_ex_edy.X
+    tg_ex_edy[:,:,:,1] = grid.tg_ex_edy.Y
+    tg_ex_edy[:,:,:,2] = grid.tg_ex_edy.Z
+    tg_ex_edy[:,:,:,3] = grid.tg_ex_edy.lon
+    tg_ex_edy[:,:,:,4] = grid.tg_ex_edy.lat
+
+    tg_ey_edy[:,:,:,0] = grid.tg_ey_edy.X
+    tg_ey_edy[:,:,:,1] = grid.tg_ey_edy.Y
+    tg_ey_edy[:,:,:,2] = grid.tg_ey_edy.Z
+    tg_ey_edy[:,:,:,3] = grid.tg_ey_edy.lon
+    tg_ey_edy[:,:,:,4] = grid.tg_ey_edy.lat
+
+    elon_edx[:,:,:,:] = grid.elon_edx
+    elat_edx[:,:,:,:] = grid.elat_edx
+    elon_edy[:,:,:,:] = grid.elon_edy
+    elat_edy[:,:,:,:] = grid.elat_edy
+
     angles[:,:,:,0] = grid.angles[:,:,:,0]
     angles[:,:,:,1] = grid.angles[:,:,:,1]
     angles[:,:,:,2] = grid.angles[:,:,:,2]
@@ -315,6 +428,24 @@ def save_grid_netcdf4(grid):
     length_y[:,:,:]        = grid.length_y[:,:,:]
     length_diag[:,:,:]     = grid.length_diag[:,:,:]
     length_antidiag[:,:,:] = grid.length_antidiag[:,:,:]
+    length_edx[:,:,:]      = grid.length_edx[:,:,:]
+    length_edy[:,:,:]      = grid.length_edy[:,:,:]
+
+    metric_tensor_centers[:,:,:] = grid.metric_tensor_centers[:,:,:]
+    metric_tensor_edx[:,:,:]     = grid.metric_tensor_edx[:,:,:]
+    metric_tensor_edy[:,:,:]     = grid.metric_tensor_edy[:,:,:]
+
+    prod_ex_elon_edx[:,:,:]          = grid.prod_ex_elon_edx[:,:,:]
+    prod_ex_elat_edx[:,:,:]          = grid.prod_ex_elat_edx[:,:,:]
+    prod_ey_elon_edx[:,:,:]          = grid.prod_ey_elon_edx[:,:,:]
+    prod_ey_elat_edx[:,:,:]          = grid.prod_ey_elat_edx[:,:,:]
+    determinant_ll2contra_edx[:,:,:] = grid.determinant_ll2contra_edx[:,:,:]
+
+    prod_ex_elon_edy[:,:,:]          = grid.prod_ex_elon_edy[:,:,:]    
+    prod_ex_elat_edy[:,:,:]          = grid.prod_ex_elat_edy[:,:,:]
+    prod_ey_elon_edy[:,:,:]          = grid.prod_ey_elon_edy[:,:,:]
+    prod_ey_elat_edy[:,:,:]          = grid.prod_ey_elat_edy[:,:,:]
+    determinant_ll2contra_edy[:,:,:] = grid.determinant_ll2contra_edy[:,:,:]
 
     griddata.close()
     print("Done.")
