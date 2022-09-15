@@ -147,7 +147,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
 
     # Figure quality
     dpi = 100
-   
+
     # Map projection
     if map_projection == "mercator":
         plateCr = ccrs.PlateCarree()
@@ -218,6 +218,124 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
     print('Figure has been saved in '+graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format+"\n")
     plt.close()  
 
+####################################################################################
+# This routine plots the scalar field "field" and given in the latlon_grid
+# and vector field (ulon, vlat) at edges midpoints on the cubed sphere
+####################################################################################
+def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, name, cs_grid, latlon_grid, map_projection):
+    print("Plotting scalar field",name,"...")
+
+    # Figure quality
+    dpi = 100
+
+    # Map projection
+    if map_projection == "mercator":
+        plateCr = ccrs.PlateCarree()
+        plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
+    elif map_projection == "sphere":
+        plateCr = ccrs.Orthographic(central_longitude=-60.0, central_latitude=0.0)      
+        plt.figure(figsize=(800/dpi, 800/dpi), dpi=dpi)
+    else:
+        print('ERROR: Invalid projection.')
+        exit()
+
+    plateCr._threshold = plateCr._threshold/10.
+    ax = plt.axes(projection=plateCr)
+    ax.stock_img()
+
+    # Plot auxiliary cubed-sphere grid
+    if cs_grid.N <= 10:
+        cs_grid_aux = cs_grid
+    else:
+        cs_grid_aux = cubed_sphere(1, cs_grid.projection, False, False)
+
+    # Interior cells index (we are ignoring ghost cells)
+    i0   = cs_grid_aux.i0
+    iend = cs_grid_aux.iend
+    j0   = cs_grid_aux.j0
+    jend = cs_grid_aux.jend
+
+    # Plot CS grid
+    for p in range(0, nbfaces):
+        lons = cs_grid_aux.vertices.lon[:,:,p]*rad2deg
+        lats = cs_grid_aux.vertices.lat[:,:,p]*rad2deg
+
+        # Plot vertices
+        A_lon, A_lat = lons[i0:iend, j0:jend], lats[i0:iend, j0:jend]
+        A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
+      
+        B_lon, B_lat = lons[i0+1:iend+1, j0:jend], lats[i0+1:iend+1, j0:jend]
+        B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
+      
+        C_lon, C_lat = lons[i0+1:iend+1, j0+1:jend+1], lats[i0+1:iend+1, j0+1:jend+1]
+        C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
+
+        D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
+        D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
+
+        plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+
+    ax.coastlines()
+
+    if map_projection == 'mercator':
+        ax.gridlines(draw_labels=True)
+
+    # Plot the scalar field
+    plt.contourf(latlon_grid.lon*rad2deg,latlon_grid.lat*rad2deg,field,cmap='jet', transform=ccrs.PlateCarree())
+
+    # Plot colorbar
+    if map_projection == 'mercator':
+        plt.colorbar(orientation='horizontal',fraction=0.046, pad=0.04)
+    elif map_projection == 'sphere':
+        plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)   
+
+    # Plot vector field at edges midpoints
+    if map_projection == 'mercator':
+        i0   = cs_grid.i0
+        iend = cs_grid.iend
+        j0   = cs_grid.j0
+        jend = cs_grid.jend
+        N = cs_grid.N
+        if cs_grid.N>10:
+            step = int(N/10) 
+        else:
+            step = 1
+
+        for p in range(0, nbfaces):
+            # Edges in x direction
+            lon_edx = cs_grid.edx.lon[i0:iend+1:step, j0:jend:step,p]*rad2deg
+            lat_edx = cs_grid.edx.lat[i0:iend+1:step, j0:jend:step,p]*rad2deg
+            lon_edx, lat_edx = np.ndarray.flatten(lon_edx), np.ndarray.flatten(lat_edx)
+
+            # Edges in y direction
+            lon_edy = cs_grid.edy.lon[i0:iend:step, j0:jend+1:step,p]*rad2deg
+            lat_edy = cs_grid.edy.lat[i0:iend:step, j0:jend+1:step,p]*rad2deg
+            lon_edy, lat_edy = np.ndarray.flatten(lon_edy), np.ndarray.flatten(lat_edy)
+
+
+            # Vector field at edges in x direction
+            vec_edx_lon = ulon_edx[0:N+1:step,0:N:step,p]
+            vec_edx_lat = vlat_edx[0:N+1:step,0:N:step,p]
+            vec_edx_lat, vec_edx_lon = np.ndarray.flatten(vec_edx_lat), np.ndarray.flatten(vec_edx_lon)
+
+            # Vector field at edges in y direction
+            vec_edy_lon = ulon_edy[0:N:step,0:N+1:step,p]
+            vec_edy_lat = vlat_edy[0:N:step,0:N+1:step,p]
+            vec_edy_lat, vec_edy_lon = np.ndarray.flatten(vec_edy_lat), np.ndarray.flatten(vec_edy_lon)
+
+            # Plot tangent vector at edge points in x dir
+            plt.quiver(lon_edx, lat_edx, vec_edx_lon, vec_edx_lat, width = 0.001)
+            #plt.quiver(lon_edy, lat_edy, vec_edy_lon, vec_edy_lat, width = 0.001)
+
+    # Save the figure
+    plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)   
+
+    print('Figure has been saved in '+graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format+"\n")
+    plt.close()
+ 
 ####################################################################################
 # Create a netcdf file using the fields given in the list fields_ll
 ####################################################################################  
