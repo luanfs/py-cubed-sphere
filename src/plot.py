@@ -331,6 +331,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
             #plt.quiver(lon_edy, lat_edy, vec_edy_lon, vec_edy_lat, width = 0.001)
 
     # Save the figure
+    #ax.coastlines()
     plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)   
 
     print('Figure has been saved in '+graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format+"\n")
