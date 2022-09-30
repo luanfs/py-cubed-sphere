@@ -1,5 +1,5 @@
 ####################################################################################
-# 
+#
 # Module for plotting routines.
 #
 # Luan da Fonseca Santos - January 2022
@@ -32,12 +32,12 @@ def plot_grid(grid, map_projection):
     colors = ('blue','red','blue','red','green','green')
 
     print("--------------------------------------------------------")
-    print('Plotting '+grid.name+' cubed-sphere grid using '+map_projection+' projection...')   
+    print('Plotting '+grid.name+' cubed-sphere grid using '+map_projection+' projection...')
     if map_projection == "mercator":
         plateCr = ccrs.PlateCarree()
         plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
     elif map_projection == 'sphere':
-        plateCr = ccrs.Orthographic(central_longitude=0.0, central_latitude=0.0)   
+        plateCr = ccrs.Orthographic(central_longitude=0.0, central_latitude=0.0)
         plt.figure(figsize=(800/dpi, 800/dpi), dpi=dpi)
     else:
         print('ERROR: Invalid map projection.')
@@ -46,7 +46,7 @@ def plot_grid(grid, map_projection):
     plateCr._threshold = plateCr._threshold/10.
     ax = plt.axes(projection=plateCr)
     ax.stock_img()
-  
+
     for p in range(0, nbfaces):
     #for p in range(0, 1):
         # Vertices
@@ -97,7 +97,7 @@ def plot_grid(grid, map_projection):
         plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
         plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
         plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
- 
+
         # Plot center and edge points
         if map_projection == 'mercator':
             center_lon, center_lat = lonc[i0:iend, j0:jend], latc[i0:iend, j0:jend]
@@ -107,7 +107,7 @@ def plot_grid(grid, map_projection):
             center_lon, center_lat = np.ndarray.flatten(center_lon),np.ndarray.flatten(center_lat)
             #for i in range(0, np.shape(center_lon)[0]):
             #    plt.plot(center_lon[i], center_lat[i], marker='.',color = 'black')
- 
+
             edges_xdir_lon, edges_xdir_lat  = lon_edx[i0:iend+1, j0:jend], lat_edx[i0:iend+1, j0:jend]
             #for i in range(0,grid.N+1):
             #    for j in range(0,grid.N):
@@ -131,12 +131,12 @@ def plot_grid(grid, map_projection):
             #plt.quiver(lon_edy, lat_edy, vec_tgy_edy_lon, vec_tgy_edy_lat, width = 0.001)
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
-      
+
     # Save the figure
     #plt.show()
     plt.savefig(graphdir+grid.name+"_"+map_projection+'.'+fig_format, format=fig_format)
     print('Figure has been saved in '+graphdir+grid.name+"_"+map_projection+'.'+fig_format)
-    print("--------------------------------------------------------\n")    
+    print("--------------------------------------------------------\n")
     plt.close()
 
 ####################################################################################
@@ -153,7 +153,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
         plateCr = ccrs.PlateCarree()
         plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
     elif map_projection == "sphere":
-        plateCr = ccrs.Orthographic(central_longitude=-60.0, central_latitude=0.0)      
+        plateCr = ccrs.Orthographic(central_longitude=-60.0, central_latitude=0.0)
         plt.figure(figsize=(800/dpi, 800/dpi), dpi=dpi)
     else:
         print('ERROR: Invalid projection.')
@@ -183,10 +183,10 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
         # Plot vertices
         A_lon, A_lat = lons[i0:iend, j0:jend], lats[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
-      
+
         B_lon, B_lat = lons[i0+1:iend+1, j0:jend], lats[i0+1:iend+1, j0:jend]
         B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
-      
+
         C_lon, C_lat = lons[i0+1:iend+1, j0+1:jend+1], lats[i0+1:iend+1, j0+1:jend+1]
         C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
 
@@ -210,19 +210,19 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
     if map_projection == 'mercator':
         plt.colorbar(orientation='horizontal',fraction=0.046, pad=0.04)
     elif map_projection == 'sphere':
-        plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)   
+        plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)
 
     # Save the figure
-    plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)   
+    plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)
 
     print('Figure has been saved in '+graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format+"\n")
-    plt.close()  
+    plt.close()
 
 ####################################################################################
 # This routine plots the scalar field "field" and given in the latlon_grid
 # and vector field (ulon, vlat) at edges midpoints on the cubed sphere
 ####################################################################################
-def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, name, cs_grid, latlon_grid, map_projection):
+def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, name, cs_grid, latlon_grid, map_projection, colormap, qmin, qmax):
     print("Plotting scalar field",name,"...")
 
     # Figure quality
@@ -233,7 +233,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
         plateCr = ccrs.PlateCarree()
         plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
     elif map_projection == "sphere":
-        plateCr = ccrs.Orthographic(central_longitude=-60.0, central_latitude=0.0)      
+        plateCr = ccrs.Orthographic(central_longitude=-60.0, central_latitude=0.0)
         plt.figure(figsize=(800/dpi, 800/dpi), dpi=dpi)
     else:
         print('ERROR: Invalid projection.')
@@ -263,34 +263,38 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
         # Plot vertices
         A_lon, A_lat = lons[i0:iend, j0:jend], lats[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
-      
+
         B_lon, B_lat = lons[i0+1:iend+1, j0:jend], lats[i0+1:iend+1, j0:jend]
         B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
-      
+
         C_lon, C_lat = lons[i0+1:iend+1, j0+1:jend+1], lats[i0+1:iend+1, j0+1:jend+1]
         C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
 
         D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
 
     ax.coastlines()
 
-    if map_projection == 'mercator':
-        ax.gridlines(draw_labels=True)
+    #if map_projection == 'mercator':
+    #    ax.gridlines(draw_labels=True)
 
     # Plot the scalar field
-    plt.contourf(latlon_grid.lon*rad2deg,latlon_grid.lat*rad2deg,field,cmap='jet', transform=ccrs.PlateCarree())
+    plt.contourf(latlon_grid.lon*rad2deg,latlon_grid.lat*rad2deg,field,cmap=colormap, transform=ccrs.PlateCarree())
+
+    # Color bar range
+    plt.clim(qmin, qmax)
 
     # Plot colorbar
     if map_projection == 'mercator':
         plt.colorbar(orientation='horizontal',fraction=0.046, pad=0.04)
     elif map_projection == 'sphere':
-        plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)   
+        plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)
+
 
     # Plot vector field at edges midpoints
     if map_projection == 'mercator':
@@ -300,7 +304,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
         jend = cs_grid.jend
         N = cs_grid.N
         if cs_grid.N>10:
-            step = int(N/10) 
+            step = int(N/10)
         else:
             step = 1
 
@@ -314,7 +318,6 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
             lon_edy = cs_grid.edy.lon[i0:iend:step, j0:jend+1:step,p]*rad2deg
             lat_edy = cs_grid.edy.lat[i0:iend:step, j0:jend+1:step,p]*rad2deg
             lon_edy, lat_edy = np.ndarray.flatten(lon_edy), np.ndarray.flatten(lat_edy)
-
 
             # Vector field at edges in x direction
             vec_edx_lon = ulon_edx[0:N+1:step,0:N:step,p]
@@ -332,14 +335,14 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
 
     # Save the figure
     #ax.coastlines()
-    plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)   
+    plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)
 
     print('Figure has been saved in '+graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format+"\n")
     plt.close()
- 
+
 ####################################################################################
 # Create a netcdf file using the fields given in the list fields_ll
-####################################################################################  
+####################################################################################
 def open_netcdf4(fields_cs, ts, name):
     # Open a netcdf file
     print("--------------------------------------------------------")
@@ -348,19 +351,19 @@ def open_netcdf4(fields_cs, ts, name):
 
     # Name
     data.title = name
-   
+
     # Size of lat-lon grid
     m, n = Nlon, Nlat
 
     # Number of time steps
     nt = len(ts)
 
-    # Create dimensions (horizontal, time,...)   
+    # Create dimensions (horizontal, time,...)
     time = data.createDimension('time', nt)
     lat  = data.createDimension('lat' , n)
     lon  = data.createDimension('lon' , m)
 
-    # Create variables (horizontal, time,...)   
+    # Create variables (horizontal, time,...)
     times = data.createVariable('time' ,'f8',('time',))
     lats  = data.createVariable('lat'  ,'f8',('lat',))
     lons  = data.createVariable('lon'  ,'f8',('lon',))
@@ -372,7 +375,7 @@ def open_netcdf4(fields_cs, ts, name):
         #print(fields_cs[l].name)
 
     # Values
-    times[:] = ts    
+    times[:] = ts
     lats[:]  = np.linspace( -90.0,  90.0, n)
     lons[:]  = np.linspace(-180.0, 180.0, m)
 
@@ -382,7 +385,7 @@ def open_netcdf4(fields_cs, ts, name):
 
 ####################################################################################
 # Create a netcdf file using the fields given in the list fields_ll
-####################################################################################  
+####################################################################################
 def save_grid_netcdf4(grid):
     # Open a netcdf file
     print("--------------------------------------------------------")
@@ -390,11 +393,11 @@ def save_grid_netcdf4(grid):
     griddata = nc.Dataset(grid.netcdfdata_filename, mode='w', format='NETCDF4_CLASSIC')
 
     # Name
-    griddata.title = grid.name 
-   
+    griddata.title = grid.name
+
     # Cell in each panel axis
     n = grid.N+grid.nghost
-    
+
     # Grid spacing
     dx  = griddata.createVariable('dx','f8')
     dy  = griddata.createVariable('dy','f8')
@@ -421,7 +424,7 @@ def save_grid_netcdf4(grid):
     jend[:] = grid.jend
 
     # Create dimensions
-    # Panels 
+    # Panels
     panel = griddata.createDimension('panel', nbfaces)
 
     # Panel xy coordinates
@@ -433,7 +436,7 @@ def save_grid_netcdf4(grid):
 
     # R3 dimension + S2 (sphere in R3) dimension (x,y,z + lat,lon coordinates)
     coorddim = griddata.createDimension('coorddim', 5)
-    
+
     # R3 dimension
     r3dim = griddata.createDimension('r3dim', 3)
 
@@ -445,7 +448,7 @@ def save_grid_netcdf4(grid):
     centers  = griddata.createVariable('centers' , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
     edx      = griddata.createVariable('edx'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     edy      = griddata.createVariable('edy'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
-    
+
     # Tangent vectors
     tg_ex_edx = griddata.createVariable('tg_ex_edx', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     tg_ey_edx = griddata.createVariable('tg_ey_edx', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
@@ -465,21 +468,21 @@ def save_grid_netcdf4(grid):
     length_antidiag         = griddata.createVariable('length_antidiag'      , 'f8', ('ix2', 'jy2', 'panel'))
     length_edx              = griddata.createVariable('length_edx'           , 'f8', ('ix2', 'jy2', 'panel'))
     length_edy              = griddata.createVariable('length_edy'           , 'f8', ('ix2', 'jy2', 'panel'))
-    angles                  = griddata.createVariable('angles'               , 'f8', ('ix2', 'jy2', 'panel', 'ed'))  
+    angles                  = griddata.createVariable('angles'               , 'f8', ('ix2', 'jy2', 'panel', 'ed'))
 
-    metric_tensor_centers   = griddata.createVariable('metric_tensor_centers', 'f8', ('ix2', 'jy2', 'panel')) 
+    metric_tensor_centers   = griddata.createVariable('metric_tensor_centers', 'f8', ('ix2', 'jy2', 'panel'))
     metric_tensor_edx       = griddata.createVariable('metric_tensor_edx'    , 'f8', ('ix' , 'jy2', 'panel'))
     metric_tensor_edy       = griddata.createVariable('metric_tensor_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
 
     prod_ex_elon_edx          = griddata.createVariable('prod_ex_elon_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
     prod_ex_elat_edx          = griddata.createVariable('prod_ex_elat_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
-    prod_ey_elon_edx          = griddata.createVariable('prod_ey_elon_edx'    , 'f8', ('ix', 'jy2' , 'panel'))    
+    prod_ey_elon_edx          = griddata.createVariable('prod_ey_elon_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
     prod_ey_elat_edx          = griddata.createVariable('prod_ey_elat_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
     determinant_ll2contra_edx = griddata.createVariable('determinant_ll2contra_edx', 'f8', ('ix', 'jy2' , 'panel'))
 
     prod_ex_elon_edy          = griddata.createVariable('prod_ex_elon_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
     prod_ex_elat_edy          = griddata.createVariable('prod_ex_elat_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
-    prod_ey_elon_edy          = griddata.createVariable('prod_ey_elon_edy'    , 'f8', ('ix2', 'jy' , 'panel'))    
+    prod_ey_elon_edy          = griddata.createVariable('prod_ey_elon_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
     prod_ey_elat_edy          = griddata.createVariable('prod_ey_elat_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
     determinant_ll2contra_edy = griddata.createVariable('determinant_ll2contra_edy', 'f8', ('ix2', 'jy' , 'panel'))
 
@@ -560,7 +563,7 @@ def save_grid_netcdf4(grid):
     prod_ey_elat_edx[:,:,:]          = grid.prod_ey_elat_edx[:,:,:]
     determinant_ll2contra_edx[:,:,:] = grid.determinant_ll2contra_edx[:,:,:]
 
-    prod_ex_elon_edy[:,:,:]          = grid.prod_ex_elon_edy[:,:,:]    
+    prod_ex_elon_edy[:,:,:]          = grid.prod_ex_elon_edy[:,:,:]
     prod_ex_elat_edy[:,:,:]          = grid.prod_ex_elat_edy[:,:,:]
     prod_ey_elon_edy[:,:,:]          = grid.prod_ey_elon_edy[:,:,:]
     prod_ey_elat_edy[:,:,:]          = grid.prod_ey_elat_edy[:,:,:]
@@ -569,10 +572,10 @@ def save_grid_netcdf4(grid):
     griddata.close()
     print("Done.")
     print("--------------------------------------------------------\n")
-   
+
 ####################################################################################
 # Create a netcdf file for the latlon 2 cubed sphere indexes
-####################################################################################  
+####################################################################################
 def ll2cs_netcdf(i, j, panel_list, cs_grid):
     # Open a netcdf file
     print("--------------------------------------------------------")
@@ -599,7 +602,7 @@ def ll2cs_netcdf(i, j, panel_list, cs_grid):
     # Values
     I[:,:] = i[:,:]
     J[:,:] = j[:,:]
-    P[:,:] = panel_list[:,:]      
+    P[:,:] = panel_list[:,:]
 
     data.close()
     print("Done.")
