@@ -412,9 +412,9 @@ def metric_tensor(x, y, R, projection):
         r = np.sqrt(a*a + x*x + y*y)
         G = R*R*a/r**3
     elif projection == 'gnomonic_equiangular' or 'conformal':
-        atanx, atany = a*np.tan(x), a*np.tan(y)
-        r = np.sqrt(a*a + atanx*atanx + atany*atany)
-        G = R*R*a/r**3
+        tanx, tany = np.tan(x), np.tan(y)
+        r = np.sqrt(1 + tanx*tanx + tany*tany)
+        G = R*R/r**3
         G = G/(np.cos(x)*np.cos(y))**2
     else:
         print("Error in metric_tensor from sphgeo.py: Invalid map projection")
