@@ -1,0 +1,17 @@
+#Divergence test case parameters 
+#Vector field 
+3
+#Test case to be done
+2
+#Monotonization method (0 or 1)
+0
+#-----------Description of parameters -------------------------------------
+#Possible vector fields
+#  case(1) - zonal wind (divergence free)
+#  case(2) - rotated zonal wind (divergence free)
+#Possible test cases
+#  case(1) - divergence computation and error
+#  case(2) - error convergence
+#Possible monotonization methods
+#  case(0) - none
+#  case(1) - Woodward and Collela 84 (WC84)

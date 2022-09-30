@@ -1,0 +1,23 @@
+#Advection test case parameters 
+#Total period definition (seconds)
+1036800
+#Time step (seconds)
+800
+#Initial condition
+2
+#Test case
+2
+#Monotonization method (0 or 1)
+0
+#-----------Description of parameters -------------------------------------
+#Possible initial conditions
+#  case(1) - constant flow - non divergent zonal wind
+#  case(2) - constant flow - rotated non divergent zonal wind
+#  case(3) - gaussian hill - non divergent zonal wind
+#  case(4) - gaussian hill - rotated non divergent zonal wind
+#Possible test cases
+#  case(1) - Advection simulation
+#  case(2) - Convergence of error for advection equation
+#Possible monotonization methods
+#  case(0) - none
+#  case(1) - Woodward and Collela 84 (WC84)
