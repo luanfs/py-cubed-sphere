@@ -10,7 +10,7 @@ import math
 # Physical parameters
 day2sec        = 24.0*3600.0    # Days in seconds
 sec2day        = 1.0/day2sec    # Seconds in days
-erad           = 6371.0         # Earth mean radius (km)
+erad           = 6371.0*10**3   # Earth mean radius (m)
 eradi          = 1.0/erad       # Inverse of erad
 rotation_speed = 7.29212e-5     # Angular speed of rotation of the Earth (radians/s)
 grav           = 9.80616        # Gravitational acceleration of the Earth (m s^-2)
