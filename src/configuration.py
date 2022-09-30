@@ -14,7 +14,7 @@ def get_parameters():
    # The standard grid file configuration.par must exist in par/ directory
    file_path = pardir+"configuration.par"
 
-    if os.path.exists(file_path): # The file exists
+   if os.path.exists(file_path): # The file exists
       # Open the grid file
       confpar = open(file_path, "r")
 
