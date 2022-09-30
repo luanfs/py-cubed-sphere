@@ -15,7 +15,7 @@ sys.path.append(srcdir)
 
 # Imports
 from miscellaneous      import createDirs
-from configuration      import get_parameters, get_advection_parameters
+from configuration      import get_parameters, get_div_parameters, get_advection_parameters
 from cs_datastruct      import cubed_sphere, latlon_grid
 from interpolation      import ll2cs
 from gridquality        import grid_quality
@@ -23,6 +23,8 @@ from plot               import plot_grid, save_grid_netcdf4
 from constants          import Nlat, Nlon
 from advection_ic       import adv_simulation_par
 from advection_sphere   import adv_sphere
+from advection_error    import error_analysis_adv
+from divergence         import div_simulation_par, div_sphere, error_analysis_div
 
 def main():
     # Create the directories
@@ -32,14 +34,14 @@ def main():
     N, transformation, showonscreen, gridload, test_case, map_projection = get_parameters()
 
     # Select test case
-    if test_case == 1:    
+    if test_case == 1:
         print("Test case 1: cubed-sphere generation and plotting.\n")
         # Create CS mesh
         cs_grid = cubed_sphere(N, transformation, showonscreen, gridload)
 
-        # Mesh plot      
+        # Mesh plot
         plot_grid(cs_grid, map_projection)
-      
+
         # Save grid in netcdf format
         if not(os.path.isfile(cs_grid.netcdfdata_filename)) or (os.path.isfile(cs_grid.netcdfdata_filename) and gridload==False):
             save_grid_netcdf4(cs_grid)
@@ -52,7 +54,7 @@ def main():
         if not(os.path.isfile(cs_grid.netcdfdata_filename)) or (os.path.isfile(cs_grid.netcdfdata_filename) and gridload==False):
             save_grid_netcdf4(cs_grid)
 
-        # Create the latlon mesh (for plotting)  
+        # Create the latlon mesh (for plotting)
         ll_grid = latlon_grid(Nlat, Nlon)
         ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
         if test_case == 2:
@@ -61,17 +63,32 @@ def main():
             grid_quality(cs_grid, ll_grid, map_projection)
 
         elif test_case == 3:
+            # Call divergence test case
+            print("Test case 3: Divergence test case.\n")
+            tc, ic, mono = get_div_parameters()
+            simulation = div_simulation_par(ic, tc, mono)
+
+            if simulation.tc == 1: # Divergence on the sphere
+                plot = True
+                div_sphere(cs_grid, ll_grid, simulation, map_projection, plot)
+
+            elif simulation.tc == 2: # Convergence analysis
+                plot = True
+                error_analysis_div(simulation, map_projection, plot, transformation, showonscreen, gridload)
+
+        elif test_case == 4:
             # Call advection test case
-            print("Test case 3: Advection test case.\n")
+            print("Test case 4: Advection test case.\n")
             dt, Tf, tc, ic, mono = get_advection_parameters()
             simulation = adv_simulation_par(dt, Tf, ic, tc, mono)
 
-            if simulation.tc == 1: # Advection on the sphere simalution
+            if simulation.tc == 1: # Advection on the sphere simulation
                 plot = True
                 adv_sphere(cs_grid, ll_grid, simulation, map_projection, plot)
 
             elif simulation.tc == 2: # Convergence analysis
-                print('Not implemented yet =(')
+                plot = False
+                error_analysis_adv(simulation, map_projection, plot, transformation, showonscreen, gridload)
 
             else:
                 print('Invalid advection testcase.\n')
