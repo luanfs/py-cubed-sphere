@@ -21,7 +21,7 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
 
     # Plot step
     #plotstep = int(Nsteps/1000)
-    plotstep = 1
+    plotstep = 250
 
     # Number of time steps
     Nsteps = int(Tf/dt)
