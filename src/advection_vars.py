@@ -10,8 +10,9 @@ from cs_datastruct          import scalar_field
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
 from stencil                import flux_ppm_x_stencil_coefficients, flux_ppm_y_stencil_coefficients
+from interpolation          import lagrange_poly_ghostcells
 
-def init_vars_adv(cs_grid, simulation, N, nghost, Nsteps):
+def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     # Interior cells index (ignoring ghost cells)
     i0   = cs_grid.i0
     iend = cs_grid.iend
@@ -67,7 +68,7 @@ def init_vars_adv(cs_grid, simulation, N, nghost, Nsteps):
     ey_elat_edy = cs_grid.prod_ey_elat_edy
     det_edy     = cs_grid.determinant_ll2contra_edy
     ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy)
-    ulon_edy2, vlat_edy2 = contravariant_to_latlon(ucontra_edy, vcontra_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy)
+    #ulon_edy2, vlat_edy2 = contravariant_to_latlon(ucontra_edy, vcontra_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy)
 
     # CFL at edges - x direction
     cx, cx2 = cfl_x(ucontra_edx, cs_grid, simulation)
@@ -102,6 +103,10 @@ def init_vars_adv(cs_grid, simulation, N, nghost, Nsteps):
     # Exact field
     q_exact = scalar_field(cs_grid, 'q_exact', 'center')
 
+    # Get Lagrange polynomials
+    interpol_method = 1
+    lagrange_poly, lagrange_poly_flipped, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, transformation, interpol_method)
+
     # Error variables
     error_linf = np.zeros(Nsteps+1)
     error_l1   = np.zeros(Nsteps+1)
@@ -112,7 +117,20 @@ def init_vars_adv(cs_grid, simulation, N, nghost, Nsteps):
     G_gQ  = np.zeros((N+nghost, N+nghost, nbfaces))
     GF_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
     FG_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
-    
-    return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
-           error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
-           ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric
+
+    if simulation.vf <= 2:
+        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+               error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
+               ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
+               lagrange_poly, lagrange_poly_flipped, Kmin, Kmax, interpol_method
+
+    elif simulation.vf >= 3: #extra varaibles for time dependent velocity
+        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+               error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
+               ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
+               lagrange_poly, lagrange_poly_flipped, Kmin, Kmax, interpol_method, \
+               ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx, \
+               ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy, \
+               ulon_edx, vlat_edx, edx_lon, edx_lat, \
+               ulon_edy, vlat_edy, edy_lon, edy_lat
+

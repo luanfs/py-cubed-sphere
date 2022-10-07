@@ -21,6 +21,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     # Initial condition
     ic = simulation.ic
 
+    # Velocity field
+    vf = simulation.vf
+
     # Monotonization method
     mono = simulation.mono
 
@@ -44,12 +47,13 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, mono = get_advection_parameters()
+    dt, Tf, tc, ic, vf, mono = get_advection_parameters()
 
-    if ic >= 1 and ic <= 4:
-        Tf = 12.0*day2sec   # Period
-        u0 = 2.0*erad*pi/(12.0*day2sec) # maximum velocity
-
+    Tf = 5.0   # Period
+    if vf <= 2:
+        u0 = 2.0*pi/5.0 # maximum velocity
+    else:
+        u0 = 4.0
     # Time step
     dts = np.zeros(Ntest)
 
@@ -57,7 +61,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     CFL = 0.5
 
     for i in range(0, Ntest):
-        simulation = adv_simulation_par(dt, Tf, ic, tc, mono)
+        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, mono)
         N = int(Nc[i])
 
         # Create CS mesh
@@ -72,7 +76,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
         ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
         # Get advection error
-        error_linf[i], error_l1[i], error_l2[i] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False)
+        error_linf[i], error_l1[i], error_l2[i] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False)
 
         # Print errors
         print_errors_simul(error_linf, error_l1, error_l2, i)
@@ -80,10 +84,10 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     # Outputs
     # Convergence rate
     title = "Convergence rate - advection equation"
-    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_cr_rate_"+transformation+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_cr_rate_"+transformation+"_mono_"+simulation.monot+"_"+simulation.fvmethod
     plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
 
     # Error convergence
     title = "Convergence of error  - advection equation"
-    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_error_convergence_"+transformation+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_error_convergence_"+transformation+"_mono_"+simulation.monot+"_"+simulation.fvmethod
     plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)

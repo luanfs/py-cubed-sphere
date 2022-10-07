@@ -1,14 +1,18 @@
 #Divergence test case parameters 
 #Vector field 
-3
+1
 #Test case to be done
-2
+1
 #Monotonization method (0 or 1)
 0
 #-----------Description of parameters -------------------------------------
 #Possible vector fields
 #  case(1) - zonal wind (divergence free)
 #  case(2) - rotated zonal wind (divergence free)
+#  case(3) - trigonometric field
+#  case(4) - Non divergent field 1 from Nair and Lauritzen 2010
+#  case(5) - Non divergent field 2 from Nair and Lauritzen 2010
+#  case(6) - Non divergent field 4 from Nair and Lauritzen 2010
 #Possible test cases
 #  case(1) - divergence computation and error
 #  case(2) - error convergence
