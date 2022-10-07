@@ -1,0 +1,12 @@
+#Interpolation test case parameters 
+#Scalar field 
+3
+#Test case to be done
+1
+#-----------Description of parameters -------------------------------------
+#Possible vector fields
+#  case(1) - spherical harmonic
+#  case(2) - rotated zonal wind (divergence free)
+#Possible interpolation methods
+#  case(0) - none
+#  case(1) - Woodward and Collela 84 (WC84)
