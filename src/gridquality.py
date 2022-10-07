@@ -11,7 +11,7 @@ import numpy as np
 from cs_datastruct import scalar_field, latlon_grid
 from plot          import plot_scalar_field, open_netcdf4
 from interpolation import ll2cs, nearest_neighbour
-from constants     import pio2, rad2deg, datadir
+from constants     import pio2, rad2deg, datadir, erad
 
 ####################################################################################
 # This routine compute grid quality measures and save it as a netcdf file
@@ -64,7 +64,7 @@ def areas(grid):
     j0   = grid.j0
     jend = grid.jend
     areas = scalar_field(grid, 'areas', 'center')
-    areas.f = grid.areas[i0:iend,j0:jend,:]/10**6
+    areas.f = grid.areas[i0:iend,j0:jend,:]*erad*erad/10**6
     #areas.f = np.sqrt(areas.f)
     #print((np.sum(grid.areas)-4*np.pi)/4*np.pi)
     return areas
@@ -115,7 +115,7 @@ def mean_lengths(grid):
     length_y = 0.5*length_y
    
     # Mean length
-    length.f = ((length_x + length_y)*0.5)/10**3
+    length.f = ((length_x + length_y)*0.5)*erad/10**3
     #length.f = erad*grid.length_x[:,0:grid.N,:]
     return length
 

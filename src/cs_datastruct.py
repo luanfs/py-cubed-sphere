@@ -36,8 +36,8 @@ class cubed_sphere:
         self.N = N
 
         # Sphere radius
-        self.R = erad
-        #self.R = 1.0
+        #self.R = erad
+        self.R = 1.0
 
         # Grid name
         self.projection = transformation
@@ -632,14 +632,14 @@ class cubed_sphere:
 
         if showonscreen==True:
             # Print some grid properties
-            print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_x[i0:iend+1,j0:jend,:])/10**3))
-            print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_x[i0:iend+1,j0:jend,:]/10**3)))
-            print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_x[i0:iend+1,j0:jend,:]/10**3)))
+            print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_x[i0:iend+1,j0:jend,:])*erad/10**3))
+            print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_x[i0:iend+1,j0:jend,:])*erad/10**3))
+            print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_x[i0:iend+1,j0:jend,:])*erad/10**3))
             print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_x[i0:iend+1,j0:jend,:])/np.amin(self.length_x[i0:iend+1,j0:jend+1,:])))
 
-            print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas[i0:iend,j0:jend,:])/10**6))
-            print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])/10**6))
-            print("Mean area (km2)        : ","{:.2e}".format(np.mean(self.areas[i0:iend,j0:jend,:])/10**6))
+            print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
+            print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
+            print("Mean area (km2)        : ","{:.2e}".format(np.mean(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
             print("Ratio max/min area     : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])/np.amin(self.areas[i0:iend,j0:jend,:])))
 
             print("Min  angle (degrees)   : ","{:.2e}".format(np.amin(self.angles[i0:iend+1,j0:jend+1,:]*rad2deg)))
