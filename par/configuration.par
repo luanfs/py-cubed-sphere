@@ -4,16 +4,17 @@
 #Transformation?  1-equidistant; 2-equiangular
 2
 #Loadable grid? 0-No; 1-Yes
-1
+0
 #Show ongoing process details on screen? 0-No; 1-Yes
 1
 #Test case to be done
-4
-# Map projection (for plotting): 1-mercator; 2-sphere 
+1
+#Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------
 #Possible test cases
 #  case(1) - Cubed-sphere generation and plotting
 #  case(2) - Grid quality testing
-#  case(3) - Divergence computation on the sphere (see divergence.par)
-#  case(4) - Advection on the sphere (see advection.par)
+#  case(3) - Interpolation testing
+#  case(4) - Divergence computation on the sphere (see divergence.par)
+#  case(5) - Advection on the sphere (see advection.par)
