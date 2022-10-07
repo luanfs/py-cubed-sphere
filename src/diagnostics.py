@@ -81,17 +81,19 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
             # Q exact
             Q_exact_ll = nearest_neighbour(q_exact, cs_grid, ll_grid)
             colormap = 'jet'
-            qmin = -0.2
-            qmax =  1.1
-            #plot_scalar_and_vector_field(Q_exact_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+q_exact.name+'_ic'+str(simulation.ic)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+            #if simulation.ic>=2:
+            #    qmin = -0.2
+            #    qmax =  1.2
+            #    colormap = 'jet'
+            #    plot_scalar_and_vector_field(Q_exact_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+q_exact.name+'_ic'+str(simulation.ic)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
 
             # Q
             Q_ll = nearest_neighbour(Q, cs_grid, ll_grid)
-            if simulation.ic>=3 and simulation.ic<=4:
+            if simulation.ic>=2:
                 qmin = -0.2
                 qmax =  1.2
                 colormap = 'jet'
-                plot_scalar_and_vector_field(Q_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+Q.name+'_ic'+str(simulation.ic)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+                plot_scalar_and_vector_field(Q_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+Q.name+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
 
             # Q error
             Q_error_ll =  Q_exact_ll - Q_ll
@@ -100,4 +102,4 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
             qmax = np.amax(Q_error_ll)
             #qmin = -0.005
             #qmax =  0.005
-            plot_scalar_and_vector_field(Q_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+'Q_error'+'_ic'+str(simulation.ic)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+            plot_scalar_and_vector_field(Q_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+'Q_error'+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
