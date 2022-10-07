@@ -13,7 +13,7 @@ def cfl_x(u_edges, cs_grid, simulation):
     return cx, cx2
 
 ####################################################################################
-# CFL number in x direction
+# CFL number in y direction
 ####################################################################################
 def cfl_y(v_edges, cs_grid, simulation):
     cy = np.sign(v_edges)*v_edges*simulation.dt/cs_grid.dy
