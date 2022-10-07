@@ -116,7 +116,7 @@ def qexact_adv(lon, lat, t, simulation):
             if simulation.vf == 1:
                 alpha =   0.0*deg2rad # Rotation angle
             if simulation.vf == 2:
-                alpha = -55.0*deg2rad # Rotation angle
+                alpha = -45.0*deg2rad # Rotation angle
             # Wind speed
             u0 =  2.0*pi/5.0 # Wind speed
             ws = -u0
@@ -176,7 +176,7 @@ def velocity_adv(lon, lat, t, simulation):
         if simulation.vf == 1:
            alpha = 0.0*deg2rad   # Rotation angle
         elif simulation.vf == 2:
-           alpha = -55.0*deg2rad # Rotation angle
+           alpha = -45.0*deg2rad # Rotation angle
         u0    =  2.0*pi/5.0 # Wind speed
         ulon  =  u0*(np.cos(lat)*np.cos(alpha) + np.sin(lat)*np.cos(lon)*np.sin(alpha))
         vlat  = -u0*np.sin(lon)*np.sin(alpha)
