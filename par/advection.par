@@ -4,11 +4,11 @@
 #Time step (seconds)
 0.004
 #Initial condition
-2
+3
 #Vector field 
-6
+3
 #Test case
-1
+2
 #Monotonization method (0 or 1)
 0
 #Ghost cells interpolation degree (>=0)
@@ -21,10 +21,9 @@
 #Possible vector fields
 #  case(1) - zonal wind (divergence free)
 #  case(2) - rotated zonal wind (divergence free)
-#  case(3) - Non divergent field 1 from Nair and Lauritzen 2010
-#  case(4) - Non divergent field 2 from Nair and Lauritzen 2010
-#  case(5) - Non divergent field 4 from Nair and Lauritzen 2010
-#  case(6) - Divergent field 3 from Nair and Lauritzen 2010
+#  case(3) - Non divergent field 2 from Nair and Lauritzen 2010
+#  case(4) - Non divergent field 4 from Nair and Lauritzen 2010
+#  case(5) - Divergent field 3 from Nair and Lauritzen 2010
 #Possible test cases
 #  case(1) - Advection simulation
 #  case(2) - Convergence of error for advection equation

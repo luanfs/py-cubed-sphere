@@ -37,7 +37,7 @@ class adv_simulation_par:
         # Monotonization
         self.mono = mono
 
-        # Interpolation degree
+        # Degree
         self.degree = degree
 
         # Define the initial condition name
@@ -60,12 +60,10 @@ class adv_simulation_par:
         elif vf == 2:
             name = 'Rotated zonal wind'
         elif vf == 3:
-            name = 'Non divergent field 1 from Nair and Lauritzen 2010'
-        elif vf == 4:
             name = 'Non divergent field 2 from Nair and Lauritzen 2010'
-        elif vf == 5:
+        elif vf == 4:
             name = 'Non divergent field 4 from Nair and Lauritzen 2010'
-        elif vf == 6:
+        elif vf == 5:
             name = 'Divergent field 3 from Nair and Lauritzen 2010'
         else:
             print("Error - invalid vector field")
@@ -153,11 +151,11 @@ def qexact_adv(lon, lat, t, simulation):
     # Two Gaussian hills
     elif simulation.ic == 3:
         X, Y, Z = sph2cart(lon, lat)
-        if simulation.vf == 1 or simulation.vf == 2 or simulation.vf == 3:
+        if simulation.vf == 1 or simulation.vf == 2:
             # Gaussian hill centers
             lon1, lat1 = 0,  pi/3.0
             lon2, lat2 = 0, -pi/3.0
-        elif simulation.vf == 4 or  simulation.vf == 5 or  simulation.vf == 6:
+        elif simulation.vf == 3 or  simulation.vf == 4 or  simulation.vf == 5:
             # Gaussian hill centers
             lon1, lat1 = -pi/6.0, 0
             lon2, lat2 =  pi/6.0, 0
@@ -184,26 +182,20 @@ def velocity_adv(lon, lat, t, simulation):
         ulon  =  u0*(np.cos(lat)*np.cos(alpha) + np.sin(lat)*np.cos(lon)*np.sin(alpha))
         vlat  = -u0*np.sin(lon)*np.sin(alpha)
 
-    elif simulation.vf == 3: # Non divergent field 1 from Nair and Lauritzen 2010
-        T = 5.0 # Period
-        k = 2.0
-        ulon =  k     * np.sin((lon+pi)/2.0)**2 * np.sin(2.0*lat) * np.cos(pi*t/T)
-        vlat =  k/2.0 * np.sin(lon+pi)          * np.cos(lat)     * np.cos(pi*t/T)
-
-    elif simulation.vf == 4: # Non divergent field 2 from Nair and Lauritzen 2010
+    elif simulation.vf == 3: # Non divergent field 2 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
         ulon = k*np.sin(lon+pi)**2 * np.sin(2.0*lat) * np.cos(pi*t/T)
         vlat = k*np.sin(2*(lon+pi)) * np.cos(lat) * np.cos(pi*t/T)
 
-    elif simulation.vf == 5: # Non divergent field 4 from Nair and Lauritzen 2010
+    elif simulation.vf == 4: # Non divergent field 4 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
         lonp = lon-2*pi*t/T
         ulon = k*(np.sin((lonp+pi))**2)*(np.sin(2.*lat))*(np.cos(pi*t/T))+2.*pi*np.cos(lat)/T
         vlat = k*(np.sin(2*(lonp+pi)))*(np.cos(lat))*(np.cos(pi*t/T))
 
-    elif simulation.vf == 6: # Divergent field 3 from Nair and Lauritzen 2010
+    elif simulation.vf == 5: # Divergent field 3 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 1.0
         ulon = -k*(np.sin((lon+pi)/2.0)**2)*(np.sin(2.0*lat))*(np.cos(lat)**2)*(np.cos(pi*t/T))
