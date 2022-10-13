@@ -22,7 +22,7 @@ def F_operator(F, Q, u_edges, flux_x, ax, cs_grid, simulation):
     N = cs_grid.N
     i0 = cs_grid.i0
     iend = cs_grid.iend
-    compute_flux_x(flux_x, Q, u_edges, ax, cs_grid, simulation)
+    #compute_flux_x(flux_x, Q, u_edges, ax, cs_grid, simulation)
     F[3:N+3,:,:] = -(simulation.dt/cs_grid.areas[i0:iend,:,:])*cs_grid.dy*(u_edges[4:N+4,:,:]*flux_x[4:N+4,:,:] - u_edges[3:N+3,:,:]*flux_x[3:N+3,:,:])
 
 ####################################################################################
@@ -36,10 +36,51 @@ def G_operator(G, Q, v_edges, flux_y, ay, cs_grid, simulation):
     j0 = cs_grid.j0
     jend = cs_grid.jend
 
-    compute_flux_y(flux_y, Q, v_edges, ay, cs_grid, simulation)
+    #compute_flux_y(flux_y, Q, v_edges, ay, cs_grid, simulation)
     G[:, 3:M+3,:] = -(simulation.dt/cs_grid.areas[:,j0:jend,:])*cs_grid.dx*(v_edges[:,4:M+4,:]*flux_y[:,4:M+4,:] - v_edges[:,3:M+3,:]*flux_y[:,3:M+3,:])
 
 
+
+####################################################################################
+def fix_splitting_operator_ghost_cells(F, G, cs_grid):
+    i0 = cs_grid.i0
+    iend = cs_grid.iend
+    j0 = cs_grid.j0
+    jend = cs_grid.jend
+    ngl = cs_grid.nghost_left
+    ngr = cs_grid.nghost_right
+
+    # Fix F and G at Panel 1/ Panel 4 ghost cells
+    F[i0:iend,jend:jend+ngr,1] = G[i0:iend,jend:jend+ngr,1]
+
+    # Fix F at Panel 1/ Panel 5 ghost cells
+    F[i0:iend,0:ngl,1] = G[i0:iend,0:ngl,1]
+
+    # Fix F at Panel 3/ Panel 4 ghost cells
+    F[i0:iend,jend:jend+ngr,3] = G[i0:iend,jend:jend+ngr,3]
+
+    # Fix F at Panel 3/ Panel 5 ghost cells
+    F[i0:iend,0:ngl,3] = G[i0:iend,0:ngl,3]
+
+    # Fix G at Panel 4/ Panel 1 ghost cells
+    G[iend:iend+ngr,j0:jend,4] = F[iend:iend+ngr,j0:jend,4]
+
+    # Fix G at Panel 4/ Panel 3 ghost cells
+    G[0:ngl,j0:jend,4] = F[0:ngl,j0:jend,4]
+
+    # Fix G at Panel 5/ Panel 3 ghost cells
+    G[iend:iend+ngr,j0:jend,5] = F[iend:iend+ngr,j0:jend,5]
+
+    # Fix G at Panel 5/ Panel 1 ghost cells
+    G[0:ngl,j0:jend,5] = F[0:ngl,j0:jend,5]
+
+
+    #exit()
+
+
+####################################################################################
+####################################################################################
+# Flux operator in y direction
 ####################################################################################
 # Flux operator in y direction
 # Inputs: Q (average values),

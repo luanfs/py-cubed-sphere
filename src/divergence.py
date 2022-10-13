@@ -5,8 +5,8 @@
 # Luan da Fonseca Santos - September 2022
 # (luan.santos@usp.br)
 #
-# Test cases are based in the paper "A class of deformational ﬂow test cases for linear 
-# transport problems  on the sphere", 2010, Ramachandran D. Nair and Peter H. Lauritzen 
+# Test cases are based in the paper "A class of deformational ﬂow test cases for linear
+# transport problems  on the sphere", 2010, Ramachandran D. Nair and Peter H. Lauritzen
 #
 ####################################################################################
 
@@ -14,7 +14,8 @@ import numpy as np
 from constants import*
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid
-from dimension_splitting    import F_operator, G_operator
+from dimension_splitting    import F_operator, G_operator, fix_splitting_operator_ghost_cells
+from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
 from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation, lagrange_poly_ghostcells
 from plot                   import plot_scalar_and_vector_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
@@ -26,7 +27,7 @@ from stencil                import flux_ppm_x_stencil_coefficients, flux_ppm_y_s
 # Divergence simulation class
 ####################################################################################
 class div_simulation_par:
-    def __init__(self, vf, tc, mono):
+    def __init__(self, vf, tc, mono, degree):
         # Vector field
         self.vf = vf
 
@@ -38,6 +39,9 @@ class div_simulation_par:
 
         # Monotonization
         self.mono = mono
+
+        # Interpolation at ghost cells degree
+        self.degree = degree
 
         # Define the vector field name
         if vf == 1:
@@ -165,17 +169,19 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
     ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
     ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ, \
-    lagrange_poly, lagrange_poly_flipped, Kmin, Kmax, interpol_method = init_vars_div(cs_grid, simulation, transformation, N, nghost) 
+    lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
+    Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south, degree\
+    = init_vars_div(cs_grid, simulation, transformation, N, nghost)
+
+    # Compute fluxes
+    compute_fluxes(gQ, gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
 
     # Applies F and G operators in each panel
     F_operator(F_gQ, gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
     G_operator(G_gQ, gQ, vcontra_edy, flux_y, ay, cs_grid, simulation)
 
-    # Interpolate the F_operator at ghost cells  
-    ghost_cells_lagrange_interpolation(F_gQ, cs_grid, transformation, simulation, interpol_method, lagrange_poly, lagrange_poly_flipped, Kmin, Kmax)
-
-    # Interpolate the G_operator at ghost cells    
-    ghost_cells_lagrange_interpolation(G_gQ, cs_grid, transformation, simulation, interpol_method, lagrange_poly, lagrange_poly_flipped, Kmin, Kmax)
+    # Compute the fluxes
+    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
 
     # Applies F and G operators in each panel again
     F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
@@ -240,6 +246,9 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
+    # Interpolation degree
+    degree = simulation.degree
+
     # Get edges position in lat/lon system
     edx_lon = cs_grid.edx.lon
     edx_lat = cs_grid.edx.lat
@@ -302,14 +311,20 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     G_gQ_exact   = np.zeros((N+nghost, N+nghost, nbfaces))
 
     # Scalar field
-    Q = np.ones((N+nghost, N+nghost, nbfaces))
+    Q = np.zeros((N+nghost, N+nghost, nbfaces))
+    Q[i0:iend, j0:jend, :] = 1.0
 
     # Get Lagrange polynomials
-    interpol_method = 3
-    lagrange_poly, lagrange_poly_flipped, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, transformation, interpol_method)
+    lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
+    Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
+    = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
-    # Interpolate the scalar field    
-    ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, interpol_method, lagrange_poly, lagrange_poly_flipped, Kmin, Kmax)
+    # Interpolate the scalar field
+    ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, \
+                                       lagrange_poly_east , lagrange_poly_west,\
+                                       lagrange_poly_north, lagrange_poly_south,\
+                                       Kmin_west , Kmax_west , Kmin_east , Kmax_east ,\
+                                       Kmin_north, Kmax_north, Kmin_south, Kmax_south)
 
     # Multiply the field Q (=1) by metric tensor
     gQ = g_metric*Q
@@ -338,8 +353,9 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     return div_exact, div_numerical, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
            F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
            ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
-           ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ, \
-           lagrange_poly, lagrange_poly_flipped, Kmin, Kmax, interpol_method
+           ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ,\
+           lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
+           Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south, degree\
 
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
@@ -371,10 +387,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    tc, vf, mono = get_div_parameters()
+    tc, vf, mono, degree = get_div_parameters()
 
     for i in range(0, Ntest):
-        simulation = div_simulation_par(vf, tc, mono)
+        simulation = div_simulation_par(vf, tc, mono, degree)
         N = int(Nc[i])
 
         # Create CS mesh

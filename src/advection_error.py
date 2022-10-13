@@ -47,7 +47,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, mono = get_advection_parameters()
+    dt, Tf, tc, ic, vf, mono, degree = get_advection_parameters()
 
     Tf = 5.0   # Period
     if vf <= 2:
@@ -61,7 +61,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     CFL = 0.5
 
     for i in range(0, Ntest):
-        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, mono)
+        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, mono, degree)
         N = int(Nc[i])
 
         # Create CS mesh

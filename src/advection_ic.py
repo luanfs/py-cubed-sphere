@@ -5,8 +5,8 @@
 # Luan da Fonseca Santos - September 2022
 # (luan.santos@usp.br)
 #
-# Test cases are based in the paper "A class of deformational ﬂow test cases for linear 
-# transport problems  on the sphere", 2010, Ramachandran D. Nair and Peter H. Lauritzen 
+# Test cases are based in the paper "A class of deformational ﬂow test cases for linear
+# transport problems  on the sphere", 2010, Ramachandran D. Nair and Peter H. Lauritzen
 #
 ####################################################################################
 import numpy as np
@@ -18,7 +18,7 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, mono):
+    def __init__(self, dt, Tf, ic, vf, tc, mono, degree):
         # Initial condition
         self.ic = ic
 
@@ -36,6 +36,9 @@ class adv_simulation_par:
 
         # Monotonization
         self.mono = mono
+
+        # Interpolation degree
+        self.degree = degree
 
         # Define the initial condition name
         if ic == 1:
@@ -134,13 +137,13 @@ def qexact_adv(lon, lat, t, simulation):
 
             rotX = (coswt*cos2a+sin2a)*X -sinwt*cosa*Y + (coswt*cosa*sina-cosa*sina)*Z
             rotY =  sinwt*cosa*X + coswt*Y + sina*sinwt*Z
-            rotZ = (coswt*sina*cosa-sina*cosa)*X -sinwt*sina*Y + (coswt*sin2a+cos2a)*Z 
+            rotZ = (coswt*sina*cosa-sina*cosa)*X -sinwt*sina*Y + (coswt*sin2a+cos2a)*Z
 
             lon0, lat0 = 0.0, 0.0
             X0, Y0, Z0 = sph2cart(lon0, lat0)
             b0 = 10.0
             q = np.exp(-b0*((rotX-X0)**2+ (rotY-Y0)**2 + (rotZ-Z0)**2))
-        else: 
+        else:
             X, Y, Z = sph2cart(lon, lat)
             lon0, lat0 = 0.0, 0.0
             X0, Y0, Z0 = sph2cart(lon0, lat0)

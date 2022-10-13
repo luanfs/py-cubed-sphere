@@ -1,12 +1,9 @@
 #Interpolation test case parameters 
 #Scalar field 
-3
-#Test case to be done
-1
-#-----------Description of parameters -------------------------------------
-#Possible vector fields
+2
+#Ghost cells interpolation degree (>=0)
+2
+#Possible scalar fields
 #  case(1) - spherical harmonic
-#  case(2) - rotated zonal wind (divergence free)
-#Possible interpolation methods
-#  case(0) - none
-#  case(1) - Woodward and Collela 84 (WC84)
+#  case(2) - rotated zonal spherical harmonic
+#  case(3) - trigonometric field divergence

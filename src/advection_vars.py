@@ -104,8 +104,9 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     q_exact = scalar_field(cs_grid, 'q_exact', 'center')
 
     # Get Lagrange polynomials
-    interpol_method = 1
-    lagrange_poly, lagrange_poly_flipped, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, transformation, interpol_method)
+    lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
+    Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
+    = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
     # Error variables
     error_linf = np.zeros(Nsteps+1)
@@ -122,13 +123,15 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
         return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
                error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
                ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
-               lagrange_poly, lagrange_poly_flipped, Kmin, Kmax, interpol_method
+               lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
+               Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south
 
     elif simulation.vf >= 3: #extra varaibles for time dependent velocity
         return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
                error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
                ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
-               lagrange_poly, lagrange_poly_flipped, Kmin, Kmax, interpol_method, \
+               lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
+               Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south,\
                ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx, \
                ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy, \
                ulon_edx, vlat_edx, edx_lon, edx_lat, \

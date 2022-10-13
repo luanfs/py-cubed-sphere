@@ -1,10 +1,12 @@
 #Divergence test case parameters 
 #Vector field 
-1
+5
 #Test case to be done
-1
+2
 #Monotonization method (0 or 1)
 0
+#Ghost cells interpolation degree (>=0)
+2
 #-----------Description of parameters -------------------------------------
 #Possible vector fields
 #  case(1) - zonal wind (divergence free)

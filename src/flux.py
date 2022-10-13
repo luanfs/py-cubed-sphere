@@ -26,7 +26,7 @@ def numerical_flux_x(Q, q_R, q_L, dq, q6, u_edges, flux_x, ax, cs_grid, simulati
     if simulation.mono == 1: # Monotonization
         numerical_flux_ppm_x(q_R, q_L, dq, q6, u_edges, flux_x, cs_grid, simulation)
 
-    elif simulation.mono == 0: # No monotonization 
+    elif simulation.mono == 0: # No monotonization
         if simulation.fvmethod == 'PPM':
             flux_ppm_x_stencil(Q, u_edges, flux_x, ax, cs_grid, simulation)
 
@@ -79,7 +79,7 @@ def numerical_flux_y(Q, q_R, q_L, dq, q6, v_edges, flux_y, ay, cs_grid, simulati
     if simulation.mono == 1: # Monotonization
         numerical_flux_ppm_y(q_R, q_L, dq, q6, v_edges, flux_y, cs_grid, simulation)
 
-    elif simulation.mono == 0: # No monotonization 
+    elif simulation.mono == 0: # No monotonization
         if simulation.fvmethod == 'PPM':
             flux_ppm_y_stencil(Q, v_edges, flux_y, ay, cs_grid, simulation)
 
@@ -141,3 +141,124 @@ def flux_ppm_y_stencil(Q, v_edges, flux_y, ay, cs_grid, simulation):
                             ay[5,:,j0:jend+1,:]*Q[:,j0+2:jend+3,:]
 
     flux_y[:,j0:jend+1,:] = flux_y[:,j0:jend+1,:]/12.0
+
+####################################################################################
+# Flux operator in y direction
+# Inputs: Q (average values),
+# v_edges (velocity in y direction at edges)
+# Formula 2.8 from Lin and Rood 1996
+####################################################################################
+def compute_fluxes(Qx, Qy, u_edges, v_edges, flux_x, flux_y, ax, ay, cs_grid, simulation):
+    N = cs_grid.N
+    M = cs_grid.N
+    i0 = cs_grid.i0
+    j0 = cs_grid.j0
+    iend = cs_grid.iend
+    jend = cs_grid.jend
+
+    # Compute the fluxes in x direction
+    compute_flux_x(flux_x, Qx, u_edges, ax, cs_grid, simulation)
+
+    # Compute the fluxes in y direction
+    compute_flux_y(flux_y, Qy, v_edges, ay, cs_grid, simulation)
+
+
+####################################################################################
+####################################################################################
+def average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid):
+    i0 = cs_grid.i0
+    j0 = cs_grid.j0
+    iend = cs_grid.iend
+    jend = cs_grid.jend
+
+    # Panel 0 and 1
+    flux_x[iend,j0:jend,0] = (flux_x[iend,j0:jend,0] + flux_x[i0,j0:jend,1] )*0.5
+    flux_x[i0,j0:jend,1] = flux_x[iend,j0:jend,0]
+
+    # Panel 1 and 2
+    flux_x[iend,j0:jend,1] = (flux_x[iend,j0:jend,1] + flux_x[i0,j0:jend,2] )*0.5
+    flux_x[i0,j0:jend,2] = flux_x[iend,j0:jend,1]
+
+    # Panel 2 and 3
+    flux_x[iend,j0:jend,2] = (flux_x[iend,j0:jend,2] + flux_x[i0,j0:jend,3] )*0.5
+    flux_x[i0,j0:jend,3] = flux_x[iend,j0:jend,2]
+
+    # Panel 3 and 0
+    flux_x[iend,j0:jend,3] = (flux_x[iend,j0:jend,3] + flux_x[i0,j0:jend,0] )*0.5
+    flux_x[i0,j0:jend,0] = flux_x[iend,j0:jend,3]
+
+    # Panel 4 and 0
+    flux_y[i0:iend,j0,4] = (flux_y[i0:iend,j0,4] + flux_y[i0:iend,jend,0])*0.5
+    flux_y[i0:iend,jend,0] =  flux_y[i0:iend,j0,4]
+
+    # Panel 4 and 1
+    flux_x[iend,j0:jend,4] = (flux_x[iend,j0:jend,4] + flux_y[i0:iend,jend,1])*0.5
+    flux_y[i0:iend,jend,1] = flux_x[iend,j0:jend,4]
+
+    # Panel 4 and 2
+    flux_y[i0:iend,jend,4] = (flux_y[i0:iend,jend,4] + np.flip(flux_y[i0:iend,jend,2]))*0.5
+    flux_y[i0:iend,jend,2] =  np.flip(flux_y[i0:iend,jend,4])
+
+    # Panel 4 and 3
+    flux_x[i0,j0:jend,4] = (flux_x[i0,j0:jend,4] + np.flip(flux_y[i0:iend,jend,3]))*0.5
+    flux_y[i0:iend,jend,3] = np.flip(flux_x[i0,j0:jend,4])
+
+    # Panel 5 and 0
+    flux_y[i0:iend,jend,5] = (flux_y[i0:iend,jend,5] + flux_y[i0:iend,j0,0])*0.5
+    flux_y[i0:iend,j0,0] = flux_y[i0:iend,jend,5]
+
+    # Panel 5 and 1
+    flux_x[iend,j0:jend,5] = (flux_x[iend,j0:jend,5] + np.flip(flux_y[i0:iend,j0,1]))*0.5
+    flux_y[i0:iend,j0,1] = np.flip(flux_x[iend,j0:jend,5])
+
+    # Panel 5 and 2
+    flux_y[i0:iend,j0,5] = (flux_y[i0:iend,j0,5] + np.flip(flux_y[i0:iend,j0,2]))*0.5
+    flux_y[i0:iend,j0,2] = np.flip(flux_y[i0:iend,j0,5])
+
+    # Panel 5 and 3
+    flux_x[i0,j0:jend,5] = (flux_x[i0,j0:jend,5] + flux_y[i0:iend,j0,3])*0.5
+    flux_y[i0:iend,j0,3] = flux_x[i0,j0:jend,5]
+
+####################################################################################
+####################################################################################
+def fix_fluxes_at_cube_edges(flux_x, flux_y, cs_grid):
+    i0 = cs_grid.i0
+    j0 = cs_grid.j0
+    iend = cs_grid.iend
+    jend = cs_grid.jend
+
+    # Panel 0 and 1
+    flux_x[iend,j0:jend,0] = flux_x[i0,j0:jend,1]
+
+    # Panel 1 and 2
+    flux_x[iend,j0:jend,1] = flux_x[i0,j0:jend,2]
+
+    # Panel 2 and 3
+    flux_x[iend,j0:jend,2] = flux_x[i0,j0:jend,3]
+
+    # Panel 3 and 0
+    flux_x[iend,j0:jend,3] = flux_x[i0,j0:jend,0]
+
+    # Panel 4 and 0
+    flux_y[i0:iend,j0,4] = flux_y[i0:iend,jend,0]
+
+    # Panel 4 and 1
+    flux_x[iend,j0:jend,4] = flux_y[i0:iend,jend,1]
+
+    # Panel 4 and 2
+    flux_y[i0:iend,jend,4] = np.flip(flux_y[i0:iend,jend,2])
+
+    # Panel 4 and 3
+    flux_x[i0,j0:jend,4] = np.flip(flux_y[i0:iend,jend,3])
+
+    # Panel 5 and 0
+    flux_y[i0:iend,jend,5] = flux_y[i0:iend,j0,0]
+
+    # Panel 5 and 1
+    flux_x[iend,j0:jend,5] = np.flip(flux_y[i0:iend,j0,1])
+
+    # Panel 5 and 2
+    flux_y[i0:iend,j0,5] = np.flip(flux_y[i0:iend,j0,2])
+
+    # Panel 5 and 3
+    flux_x[i0,j0:jend,5] = flux_y[i0:iend,j0,3]

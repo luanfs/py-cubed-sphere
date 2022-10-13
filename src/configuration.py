@@ -109,6 +109,8 @@ def get_advection_parameters():
         confpar.readline()
         mono = confpar.readline()
         confpar.readline()
+        degree = confpar.readline()
+        confpar.readline()
 
         # Close the file
         confpar.close()
@@ -120,6 +122,7 @@ def get_advection_parameters():
         vf = int(vf)
         tc = int(tc)
         mono = int(mono)
+        degree = int(degree)
 
         #Print the parameters on the screen
         print("\n--------------------------------------------------------")
@@ -130,12 +133,13 @@ def get_advection_parameters():
         print("Vector field: ", vf)
         print("Adv test case: ", tc)
         print("Monotonization scheme: ", mono)
+        print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return dt, Tf, tc, ic, vf, mono
+    return dt, Tf, tc, ic, vf, mono, degree
 
 ####################################################################################
 # Get parameters for divergence test case
@@ -157,6 +161,8 @@ def get_div_parameters():
         confpar.readline()
         mono = confpar.readline()
         confpar.readline()
+        degree = confpar.readline()
+        confpar.readline()
 
         # Close the file
         confpar.close()
@@ -165,18 +171,20 @@ def get_div_parameters():
         vf = int(vf)
         tc = int(tc)
         mono = int(mono)
+        degree = int(degree)
 
         #Print the parameters on the screen
         print("\n--------------------------------------------------------")
         print("Parameters from file", file_path,"\n")
         print("Vector field: ", vf)
         print("Monotonization scheme: ", mono)
+        print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return tc, vf, mono
+    return tc, vf, mono, degree
 
 ####################################################################################
 # Get parameters for interpolation test case
@@ -194,20 +202,23 @@ def get_interpolation_parameters():
         confpar.readline()
         ic = confpar.readline()
         confpar.readline()
+        interpol_degree = confpar.readline()
+        confpar.readline()
 
         # Close the file
         confpar.close()
 
         # Convert from str to int
         ic = int(ic)
-
+        degree = int(interpol_degree)
         #Print the parameters on the screen
         print("\n--------------------------------------------------------")
         print("Parameters from file", file_path,"\n")
         print("Scalar field: ", ic)
+        print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return ic
+    return ic, degree

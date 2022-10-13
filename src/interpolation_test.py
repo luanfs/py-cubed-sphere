@@ -20,7 +20,7 @@ from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_m
 # Interpolation simulation class
 ####################################################################################
 class interpolation_simulation_par:
-    def __init__(self, ic):
+    def __init__(self, ic, degree):
         # Scalar field
         self.ic = ic
 
@@ -32,6 +32,9 @@ class interpolation_simulation_par:
         else:
             print("Error - invalid scalar field")
             exit()
+
+        # Order
+        self.degree = degree
 
         # IC name
         self.icname = name
@@ -95,21 +98,24 @@ def q_scalar_field(lon, lat, simulation):
     return q
 
 ###################################################################################
-# Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
+# Routine to compute the interpolation error convergence in L_inf, L1 and L2 norms
 ####################################################################################
 def error_analysis_interpolation(simulation, map_projection, transformation, showonscreen, gridload):
     # Initial condition
     ic = simulation.ic
 
+    # Order
+    degree = simulation.degree
+
     # Monotonization method
     #mono = simulation.mono
 
     # Number of tests
-    Ntest = 5
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
-    Nc[0] = 20
+    Nc[0] = 10
 
     # Compute number of cells for each simulation
     for i in range(1, Ntest):
@@ -121,10 +127,10 @@ def error_analysis_interpolation(simulation, map_projection, transformation, sho
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    ic = get_interpolation_parameters()
+    ic, degree = get_interpolation_parameters()
 
     for i in range(0, Ntest):
-        simulation = interpolation_simulation_par(ic)
+        simulation = interpolation_simulation_par(ic, degree)
         N = int(Nc[i])
 
         # Create CS mesh
@@ -149,18 +155,23 @@ def error_analysis_interpolation(simulation, map_projection, transformation, sho
 
         # Interpolated field
         Q_numerical = np.zeros(np.shape(Q_exact))
-        Q_numerical[:,:,:] = Q_exact[:,:,:]
+        Q_numerical[i0:iend,j0:jend,:] = Q_exact[i0:iend,j0:jend,:]
 
         Q_ll = nearest_neighbour(Qexact, cs_grid, ll_grid)
         name = 'interp_q_ic_'+str(simulation.ic)
         plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
 
-        interpol_method = 2
         # Get Lagrange polynomials
-        lagrange_poly, lagrange_poly_flipped, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, transformation, interpol_method)
+        lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south, \
+        Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
+        = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
         # Interpolate to ghost cells
-        ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, interpol_method, lagrange_poly, lagrange_poly_flipped, Kmin, Kmax )
+        ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, \
+                                          lagrange_poly_east, lagrange_poly_west, \
+                                          lagrange_poly_north, lagrange_poly_south,\
+                                          Kmin_west , Kmax_west , Kmin_east , Kmax_east,\
+                                          Kmin_north, Kmax_north, Kmin_south, Kmax_south)
 
         # Compute the errors
         error_linf[i], error_l1[i], error_l2[i] = compute_errors(Q_numerical, Q_exact)

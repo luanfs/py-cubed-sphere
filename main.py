@@ -68,15 +68,15 @@ def main():
         elif test_case == 3:
             # Call interpolation test case
             print("Test case 3: Interpolation test case.\n")
-            ic = get_interpolation_parameters()
-            simulation = interpolation_simulation_par(ic)
+            ic, degree = get_interpolation_parameters()
+            simulation = interpolation_simulation_par(ic, degree)
             error_analysis_interpolation(simulation, map_projection, transformation, showonscreen, True)
 
         elif test_case == 4:
             # Call divergence test case
             print("Test case 4: Divergence test case.\n")
-            tc, ic, mono = get_div_parameters()
-            simulation = div_simulation_par(ic, tc, mono)
+            tc, ic, mono, degree = get_div_parameters()
+            simulation = div_simulation_par(ic, tc, mono, degree)
 
             if simulation.tc == 1: # Divergence on the sphere
                 plot = True
@@ -89,8 +89,8 @@ def main():
         elif test_case == 5:
             # Call advection test case
             print("Test case 5: Advection test case.\n")
-            dt, Tf, tc, ic, vf, mono = get_advection_parameters()
-            simulation = adv_simulation_par(dt, Tf, ic, vf, tc, mono)
+            dt, Tf, tc, ic, vf, mono, degree = get_advection_parameters()
+            simulation = adv_simulation_par(dt, Tf, ic, vf, tc, mono, degree)
 
             if simulation.tc == 1: # Advection on the sphere simulation
                 plot = True
