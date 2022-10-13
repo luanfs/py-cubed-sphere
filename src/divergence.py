@@ -51,10 +51,8 @@ class div_simulation_par:
         elif vf == 3:
             name = 'Trigonometric vector field'
         elif vf == 4:
-            name = 'Non divergent field 1 from Nair and Lauritzen 2010'
-        elif vf == 5:
             name = 'Non divergent field 2 from Nair and Lauritzen 2010'
-        elif vf == 6:
+        elif vf == 5:
             name = 'Non divergent field 4 from Nair and Lauritzen 2010'
         else:
             print("Error - invalid vector field")
@@ -107,19 +105,14 @@ def vector_field(lon, lat, t, simulation):
         ulon = -m*(np.sin(lon)*np.sin(m*lon)*np.cos(n*lat)**3)#/np.cos(lat)
         vlat = -4*n*(np.cos(n*lat)**3)*np.sin(n*lat)*np.cos(m*lon)*np.sin(lon)
 
-    elif simulation.vf == 4: # Non divergent field 1 from Nair and Lauritzen 2010
-        T = 5.0 # Period
-        k = 2.0
-        ulon =  k     * np.sin((lon+pi)/2.0)**2 * np.sin(2.0*lat) * np.cos(pi*t/T)
-        vlat =  k/2.0 * np.sin(lon+pi)          * np.cos(lat)     * np.cos(pi*t/T)
 
-    elif simulation.vf == 5: # Non divergent field 2 from Nair and Lauritzen 2010
+    elif simulation.vf == 4: # Non divergent field 2 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
         ulon = k*np.sin(lon+pi)**2 * np.sin(2.0*lat) * np.cos(pi*t/T)
         vlat = k*np.sin(2*(lon+pi)) * np.cos(lat) * np.cos(pi*t/T)
 
-    elif simulation.vf == 6: # Non divergent field 4 from Nair and Lauritzen 2010
+    elif simulation.vf == 5: # Non divergent field 4 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
         lonp = lon-2*pi*t/T
