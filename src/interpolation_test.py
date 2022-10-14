@@ -163,15 +163,16 @@ def error_analysis_interpolation(simulation, map_projection, transformation, sho
 
         # Get Lagrange polynomials
         lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south, \
-        Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
+        Kmin_east, Kmax_east, Kmin_west, Kmax_west, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
         = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
         # Interpolate to ghost cells
         ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, \
                                           lagrange_poly_east, lagrange_poly_west, \
                                           lagrange_poly_north, lagrange_poly_south,\
-                                          Kmin_west , Kmax_west , Kmin_east , Kmax_east,\
+                                          Kmin_east , Kmax_east , Kmin_west , Kmax_west,\
                                           Kmin_north, Kmax_north, Kmin_south, Kmax_south)
+
 
         # Compute the errors
         error_linf[i], error_l1[i], error_l2[i] = compute_errors(Q_numerical, Q_exact)
