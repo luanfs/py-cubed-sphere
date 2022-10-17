@@ -48,7 +48,6 @@ def plot_grid(grid, map_projection):
     ax.stock_img()
 
     for p in range(0, nbfaces):
-    #for p in range(0, 1):
         # Vertices
         lon = grid.vertices.lon[:,:,p]*rad2deg
         lat = grid.vertices.lat[:,:,p]*rad2deg
@@ -98,37 +97,6 @@ def plot_grid(grid, map_projection):
         plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
         plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
 
-        # Plot center and edge points
-        if map_projection == 'mercator':
-            center_lon, center_lat = lonc[i0:iend, j0:jend], latc[i0:iend, j0:jend]
-            #for i in range(0,grid.N):
-            #    for j in range(0,1):
-            #        plt.plot(center_lon[i,j], center_lat[i,j], marker='.',color = 'black')
-            center_lon, center_lat = np.ndarray.flatten(center_lon),np.ndarray.flatten(center_lat)
-            #for i in range(0, np.shape(center_lon)[0]):
-            #    plt.plot(center_lon[i], center_lat[i], marker='.',color = 'black')
-
-            edges_xdir_lon, edges_xdir_lat  = lon_edx[i0:iend+1, j0:jend], lat_edx[i0:iend+1, j0:jend]
-            #for i in range(0,grid.N+1):
-            #    for j in range(0,grid.N):
-            #        plt.plot(edges_xdir_lon[i,j], edges_xdir_lat[i,j], marker='.',color = 'white')
-            edges_xdir_lon, edges_xdir_lat = np.ndarray.flatten(edges_xdir_lon), np.ndarray.flatten(edges_xdir_lat)
-            #for i in range(0, np.shape(edges_xdir_lon)[0]):
-            #    plt.plot(edges_xdir_lon[i], edges_xdir_lat[i], marker='.',color = 'white')
-
-            edges_ydir_lon, edges_ydir_lat  = lon_edy[i0:iend, j0:jend+1], lat_edy[i0:iend, j0:jend+1]
-            #for i in range(0,grid.N):
-            #    for j in range(0,grid.N+1):
-            #        plt.plot(edges_ydir_lon[i,j], edges_ydir_lat[i,j], marker='.',color = 'white')
-            edges_ydir_lon, edges_ydir_lat = np.ndarray.flatten(edges_ydir_lon), np.ndarray.flatten(edges_ydir_lat)
-            #for i in range(0, np.shape(edges_ydir_lon)[0]):
-            #    plt.plot(edges_ydir_lon[i], edges_ydir_lat[i], marker='.',color = 'white')
-
-            # Plot tangent vector at edge points in x dir
-            #plt.quiver(lon_edx, lat_edx, vec_tgx_edx_lon, vec_tgx_edx_lat, width = 0.001)
-            #plt.quiver(lon_edx, lat_edx, vec_tgy_edx_lon, vec_tgy_edx_lat, width = 0.001)
-            #plt.quiver(lon_edy, lat_edy, vec_tgx_edy_lon, vec_tgx_edy_lat, width = 0.001)
-            #plt.quiver(lon_edy, lat_edy, vec_tgy_edy_lon, vec_tgy_edy_lat, width = 0.001)
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
 
@@ -204,7 +172,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
         ax.gridlines(draw_labels=True)
 
     # Plot the scalar field
-    plt.contourf(latlon_grid.lon*rad2deg,latlon_grid.lat*rad2deg,field,cmap='jet', transform=ccrs.PlateCarree())
+    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg,field, cmap='jet', levels=100, transform=ccrs.PlateCarree())
 
     # Plot colorbar
     if map_projection == 'mercator':
@@ -273,21 +241,17 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
         D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        #plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        #plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        #plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        #plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        plt.plot([A_lon, B_lon], [A_lat, B_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        plt.plot([B_lon, C_lon], [B_lat, C_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        plt.plot([C_lon, D_lon], [C_lat, D_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        plt.plot([D_lon, A_lon], [D_lat, A_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
 
-    ax.coastlines()
 
     #if map_projection == 'mercator':
     #    ax.gridlines(draw_labels=True)
 
     # Plot the scalar field
-    plt.contourf(latlon_grid.lon*rad2deg,latlon_grid.lat*rad2deg,field,cmap=colormap, transform=ccrs.PlateCarree())
-
-    # Color bar range
-    plt.clim(qmin, qmax)
+    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
     # Plot colorbar
     if map_projection == 'mercator':
@@ -295,6 +259,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
     elif map_projection == 'sphere':
         plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)
 
+    #ax.coastlines()
 
     # Plot vector field at edges midpoints
     if map_projection == 'mercator':
@@ -304,7 +269,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
         jend = cs_grid.jend
         N = cs_grid.N
         if cs_grid.N>10:
-            step = int(N/10)
+            step = int(N/5)
         else:
             step = 1
 
