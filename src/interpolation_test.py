@@ -13,7 +13,8 @@ from plot                   import plot_scalar_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_interpolation_parameters
 from scipy.special          import sph_harm
-from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation, lagrange_poly_ghostcells
+from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
+from lagrange               import lagrange_poly_ghostcells
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
 
 ####################################################################################
@@ -162,17 +163,10 @@ def error_analysis_interpolation(simulation, map_projection, transformation, sho
         plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
 
         # Get Lagrange polynomials
-        lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south, \
-        Kmin_east, Kmax_east, Kmin_west, Kmax_west, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
-        = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+        lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
         # Interpolate to ghost cells
-        ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, \
-                                          lagrange_poly_east, lagrange_poly_west, \
-                                          lagrange_poly_north, lagrange_poly_south,\
-                                          Kmin_east , Kmax_east , Kmin_west , Kmax_west,\
-                                          Kmin_north, Kmax_north, Kmin_south, Kmax_south)
-
+        ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
         # Compute the errors
         error_linf[i], error_l1[i], error_l2[i] = compute_errors(Q_numerical, Q_exact)
@@ -187,6 +181,6 @@ def error_analysis_interpolation(simulation, map_projection, transformation, sho
     plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
 
     # Error convergence
-    title = "Convergence of error  - interpolation"
+    title = "Convergence of error - interpolation"
     filename = graphdir+"interpolation_ic"+str(ic)+"_error_convergence_"+transformation
     plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)

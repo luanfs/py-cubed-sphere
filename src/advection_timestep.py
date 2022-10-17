@@ -16,8 +16,7 @@ from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, ave
 def adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, ax, ay, cx, cx2, cy, cy2, \
                   flux_x, flux_y, ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
                   F_gQ, G_gQ, GF_gQ, FG_gQ, transformation,\
-                  lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
-                  Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south):
+                  lagrange_poly, Kmin, Kmax):
     # Interior cells index (ignoring ghost cells)
     i0   = cs_grid.i0
     iend = cs_grid.iend
@@ -26,8 +25,7 @@ def adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, ax, ay,
 
     # Interpolate on ghost cells
     ghost_cells_lagrange_interpolation(Q_old, cs_grid, transformation, simulation,\
-    lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south, \
-    Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south)
+                                      lagrange_poly, Kmin, Kmax)
 
     # Multiply the field Q by metric tensor
     gQ = Q_old*g_metric

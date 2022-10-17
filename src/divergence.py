@@ -16,7 +16,8 @@ from sphgeo                 import latlon_to_contravariant, contravariant_to_lat
 from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid
 from dimension_splitting    import F_operator, G_operator, fix_splitting_operator_ghost_cells
 from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
-from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation, lagrange_poly_ghostcells
+from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
+from lagrange               import lagrange_poly_ghostcells
 from plot                   import plot_scalar_and_vector_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_div_parameters
@@ -162,8 +163,7 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
     ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
     ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ, \
-    lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
-    Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south, degree\
+    lagrange_poly_east, Kmin, Kmax \
     = init_vars_div(cs_grid, simulation, transformation, N, nghost)
 
     # Compute fluxes
@@ -214,15 +214,15 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         #qmax =  5.0*10**(-6)
         qmin = np.amin(div_ll)
         qmax = np.amax(div_ll)
-        plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'div_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod, cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+        if  simulation.vf == 3:
+            plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'div_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod, cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
 
         # div error
         div_error_ll =  div_exact_ll - div_ll
         colormap = 'seismic'
-        qmin = np.amin(div_error_ll)
-        qmax = np.amax(div_error_ll)
-        #qmin = -7.6*10**(-5)
-        #qmax =  7.6*10**(-5)
+        qabs_max = np.amax(div_error_ll)
+        qmin = -qabs_max
+        qmax =  qabs_max
         plot_scalar_and_vector_field(div_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'div_error'+'_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod, cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
 
     # Compute the errors
@@ -308,16 +308,10 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     Q[i0:iend, j0:jend, :] = 1.0
 
     # Get Lagrange polynomials
-    lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
-    Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south\
-    = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+    lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
     # Interpolate the scalar field
-    ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, \
-                                       lagrange_poly_east , lagrange_poly_west,\
-                                       lagrange_poly_north, lagrange_poly_south,\
-                                       Kmin_west , Kmax_west , Kmin_east , Kmax_east ,\
-                                       Kmin_north, Kmax_north, Kmin_south, Kmax_south)
+    ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
     # Multiply the field Q (=1) by metric tensor
     gQ = g_metric*Q
@@ -347,8 +341,7 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
            F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
            ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
            ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ,\
-           lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south,\
-           Kmin_west, Kmax_west, Kmin_east, Kmax_east, Kmin_north, Kmax_north, Kmin_south, Kmax_south, degree\
+           lagrange_poly, Kmin, Kmax
 
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms

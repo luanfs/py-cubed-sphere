@@ -17,7 +17,7 @@ def plot_errors_loglog(N, error_linf, error_l1, error_l2, filename, title):
     plt.loglog(N, error_linf, color='green', marker='x', label = '$L_\infty$')
     plt.loglog(N, error_l1 , color='blue',  marker='o', label = '$L_1$')
     plt.loglog(N, error_l2 , color='red',   marker='D', label = '$L_2$')
-    plt.ylim(10.0**(-14),np.amax(10*error_linf))
+    #plt.ylim(10.0**(-3),np.amax(10*error_linf))
 
     # Reference lines
     nref   = len(N)
@@ -36,9 +36,9 @@ def plot_errors_loglog(N, error_linf, error_l1, error_l2, filename, title):
         order3[i] = order3[i-1]/8.0
         order4[i] = order4[i-1]/16.0
     plt.loglog(Norder, order1 , ':' , color='black', label = '1st order')
-    plt.loglog(Norder, order2 , '--', color='black', label = '2nd order')
-    plt.loglog(Norder, order3 , '-.', color='black', label = '3rd order')
-    plt.loglog(Norder, order4 , '--', color='black', label = '4rd order')
+    #plt.loglog(Norder, order2 , '--', color='black', label = '2nd order')
+    #plt.loglog(Norder, order3 , '-.', color='black', label = '3rd order')
+    #plt.loglog(Norder, order4 , '--', color='black', label = '4rd order')
     plt.xlabel('N (number of cells)')
     plt.ylabel('Error')
     plt.legend()
@@ -56,7 +56,7 @@ def plot_convergence_rate(N, error_linf, error_l1, error_l2, filename, title):
     CR_linf = np.abs(np.log(error_linf[1:n])-np.log(error_linf[0:n-1]))/np.log(2.0)
     CR_l1   = np.abs(np.log(error_l1[1:n])  -np.log(error_l1[0:n-1]))/np.log(2.0)
     CR_l2   = np.abs(np.log(error_l2[1:n])  -np.log(error_l2[0:n-1]))/np.log(2.0)
-    plt.ylim(0, 3.5)
+    #plt.ylim(0,2)
     plt.xscale('log')
     plt.plot(N[1:n], CR_linf, color='green', marker='x', label = '$L_\infty$')
     plt.plot(N[1:n], CR_l1, color='blue',  marker='o', label = '$L_1$')
