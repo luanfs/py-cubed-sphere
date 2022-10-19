@@ -5,7 +5,8 @@
 
 import numpy as np
 from constants import*
-from diagnostics            import mass_computation, output_adv
+from diagnostics            import mass_computation
+from output                 import output_adv
 from advection_vars         import init_vars_adv
 from advection_timestep     import adv_time_step
 from advection_ic           import velocity_adv
