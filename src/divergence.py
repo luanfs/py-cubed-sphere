@@ -215,7 +215,11 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         qmin = np.amin(div_ll)
         qmax = np.amax(div_ll)
         if  simulation.vf == 3:
-            plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'div_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod, cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+            title = ''
+            filename = 'div_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+            plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
+                                        filename, title, cs_grid, ll_grid, map_projection,\
+                                        colormap, qmin, qmax)
 
         # div error
         div_error_ll =  div_exact_ll - div_ll
@@ -223,7 +227,11 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         qabs_max = np.amax(div_error_ll)
         qmin = -qabs_max
         qmax =  qabs_max
-        plot_scalar_and_vector_field(div_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'div_error'+'_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod, cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+        title = ''
+        filename = 'div_error'+'_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+        plot_scalar_and_vector_field(div_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
+                                     filename, title, cs_grid, ll_grid, map_projection, \
+                                     colormap, qmin, qmax)
 
     # Compute the errors
     error_linf, error_l1, error_l2 = compute_errors(div_exact.f, div_numerical.f)

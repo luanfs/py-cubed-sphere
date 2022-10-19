@@ -73,7 +73,15 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
                     qmin = -0.2
                     qmax =  3.5
                 colormap = 'jet'
-                plot_scalar_and_vector_field(Q_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+Q.name+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+                q_min = str("{:.2e}".format(np.amin(Q.f)))
+                q_max = str("{:.2e}".format(np.amax(Q.f)))
+                time = str("{:.2e}".format(t))
+                filename = 'adv_'+Q.name+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
+                           "_interpol"+str(simulation.degree)+"_mono"+str(simulation.mono)+"_t"+str(k)
+                title = "Min = "+q_min+", Max = "+q_max+", Time = "+time
+                plot_scalar_and_vector_field(Q_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
+                                             filename, title, cs_grid, ll_grid, map_projection, \
+                                             colormap, qmin, qmax)
 
             # Q error
             Q_error_ll =  Q_exact_ll - Q_ll
@@ -81,5 +89,11 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
             qmax_abs = np.amax(abs(Q_error_ll))
             qmin = -qmax_abs
             qmax =  qmax_abs
+            time = str("{:.2e}".format(t))
+            filename = 'adv_'+'Q_error'+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
+                       "_interpol"+str(simulation.degree)+"_mono"+str(simulation.mono)+"_t"+str(k)
+            title = "Error - time = "+time
             if t>0:
-                plot_scalar_and_vector_field(Q_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 'adv_'+'Q_error'+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+"_t"+str(k), cs_grid, ll_grid, map_projection, colormap, qmin, qmax)
+                plot_scalar_and_vector_field(Q_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, \
+                                             filename, title, cs_grid, ll_grid, map_projection, \
+                                             colormap, qmin, qmax)

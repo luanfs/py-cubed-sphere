@@ -190,7 +190,9 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
 # This routine plots the scalar field "field" and given in the latlon_grid
 # and vector field (ulon, vlat) at edges midpoints on the cubed sphere
 ####################################################################################
-def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, name, cs_grid, latlon_grid, map_projection, colormap, qmin, qmax):
+def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, \
+                                 name, title, cs_grid, latlon_grid, map_projection, \
+                                 colormap, qmin, qmax):
     print("Plotting scalar field",name,"...")
 
     # Figure quality
@@ -252,6 +254,8 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
 
     # Plot the scalar field
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
+
+    plt.title(title)
 
     # Plot colorbar
     if map_projection == 'mercator':
