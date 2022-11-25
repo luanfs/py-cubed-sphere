@@ -9,26 +9,18 @@ from constants import nbfaces
 ####################################################################################
 def compute_flux_x(flux_x, Q, u_edges, ax, cs_grid, simulation):
     N = cs_grid.N
+    if simulation.flux_method_name == 'PPM_mono_CW84': # Applies PPM with monotonization
+        # Reconstructs the values of Q using a piecewise parabolic polynomial
+        dq, q6, q_L, q_R = rec.ppm_reconstruction_x(Q, cs_grid, simulation)
 
-    # Reconstructs the values of Q using a piecewise parabolic polynomial
-    dq, q6, q_L, q_R = rec.ppm_reconstruction_x(Q, cs_grid, simulation)
+        # Applies monotonization on the parabolas
+        monotonization_1d_x(Q, q_L, q_R, dq, q6, cs_grid, simulation)
 
-    # Applies monotonization on the parabolas
-    monotonization_1d_x(Q, q_L, q_R, dq, q6, cs_grid, simulation)
-
-    # Compute the fluxes
-    numerical_flux_x(Q, q_R, q_L, dq, q6, u_edges, flux_x, ax, cs_grid, simulation)
-
-####################################################################################
-# Routine to compute the correct flux in x direction
-####################################################################################
-def numerical_flux_x(Q, q_R, q_L, dq, q6, u_edges, flux_x, ax, cs_grid, simulation):
-    if simulation.mono == 1: # Monotonization
+        # Compute the fluxes
         numerical_flux_ppm_x(q_R, q_L, dq, q6, u_edges, flux_x, cs_grid, simulation)
 
-    elif simulation.mono == 0: # No monotonization
-        if simulation.fvmethod == 'PPM':
-            flux_ppm_x_stencil(Q, u_edges, flux_x, ax, cs_grid, simulation)
+    elif simulation.flux_method_name == 'PPM' or simulation.flux_method_name == 'PPM_hybrid': # PPM or hybrid PPM
+        flux_ppm_x_stencil(Q, u_edges, flux_x, ax, cs_grid, simulation)
 
 ####################################################################################
 # PPM flux in x direction
@@ -63,25 +55,18 @@ def numerical_flux_ppm_x(q_R, q_L, dq, q6, u_edges, flux_x, cs_grid, simulation)
 def compute_flux_y(flux_y, Q, v_edges, ay, cs_grid, simulation):
     M = cs_grid.N
 
-    # Reconstructs the values of Q using a piecewise parabolic polynomial
-    dq, q6, q_L, q_R = rec.ppm_reconstruction_y(Q, cs_grid, simulation)
+    if simulation.flux_method_name == 'PPM_mono_CW84': # Applies PPM with monotonization
+        # Reconstructs the values of Q using a piecewise parabolic polynomial
+        dq, q6, q_L, q_R = rec.ppm_reconstruction_y(Q, cs_grid, simulation)
 
-    # Applies monotonization on the parabolas
-    monotonization_1d_y(Q, q_L, q_R, dq, q6, cs_grid, simulation)
+        # Applies monotonization on the parabolas
+        monotonization_1d_y(Q, q_L, q_R, dq, q6, cs_grid, simulation)
 
-    # Compute the fluxes
-    numerical_flux_y(Q, q_R, q_L, dq, q6, v_edges, flux_y, ay, cs_grid, simulation)
-
-####################################################################################
-# Routine to compute the correct flux in x direction
-####################################################################################
-def numerical_flux_y(Q, q_R, q_L, dq, q6, v_edges, flux_y, ay, cs_grid, simulation):
-    if simulation.mono == 1: # Monotonization
+        # Compute the fluxes
         numerical_flux_ppm_y(q_R, q_L, dq, q6, v_edges, flux_y, cs_grid, simulation)
 
-    elif simulation.mono == 0: # No monotonization
-        if simulation.fvmethod == 'PPM':
-            flux_ppm_y_stencil(Q, v_edges, flux_y, ay, cs_grid, simulation)
+    elif simulation.flux_method_name == 'PPM' or simulation.flux_method_name == 'PPM_hybrid': # PPM or hybrid PPM
+        flux_ppm_y_stencil(Q, v_edges, flux_y, ay, cs_grid, simulation)
 
 ###############################################################################
 # PPM flux in y direction
@@ -123,8 +108,6 @@ def flux_ppm_x_stencil(Q, u_edges, flux_x, ax, cs_grid, simulation):
                             ax[4,i0:iend+1,:,:]*Q[i0+1:iend+2,:,:] +\
                             ax[5,i0:iend+1,:,:]*Q[i0+2:iend+3,:,:]
 
-    flux_x[i0:iend+1,:,:] = flux_x[i0:iend+1,:,:]/12.0
-
 ####################################################################################
 # Compute the 1d flux operator from PPM using its stencil
 # Inputs: Q (average values),  v_edges (zonal velocity at edges)
@@ -139,8 +122,6 @@ def flux_ppm_y_stencil(Q, v_edges, flux_y, ay, cs_grid, simulation):
                             ay[3,:,j0:jend+1,:]*Q[:,j0+0:jend+1,:] +\
                             ay[4,:,j0:jend+1,:]*Q[:,j0+1:jend+2,:] +\
                             ay[5,:,j0:jend+1,:]*Q[:,j0+2:jend+3,:]
-
-    flux_y[:,j0:jend+1,:] = flux_y[:,j0:jend+1,:]/12.0
 
 ####################################################################################
 # Flux operator in y direction

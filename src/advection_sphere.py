@@ -76,9 +76,11 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
             # Latlon to contravariant
             ucontra_edx, vcontra_edx = latlon_to_contravariant(ulon_edx, vlat_edx, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx)
             ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy)
+
             # CFL
             cx, cx2 = cfl_x(ucontra_edx, cs_grid, simulation)
             cy, cy2 = cfl_y(vcontra_edy, cs_grid, simulation)
+
             # Stencil coefs
             flux_ppm_x_stencil_coefficients(ucontra_edx, ax, cx, cx2, simulation)
             flux_ppm_y_stencil_coefficients(vcontra_edy, ay, cy, cy2, simulation)

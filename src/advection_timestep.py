@@ -33,12 +33,18 @@ def adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, ax, ay,
     # Compute the fluxes
     compute_fluxes(gQ, gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
 
+    # Fix flux for mass conservation
+    #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
+
     # Applies F and G operators in each panel
     F_operator(F_gQ, gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
     G_operator(G_gQ, gQ, vcontra_edy, flux_y, ay, cs_grid, simulation)
 
     # Compute the fluxes
     compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
+
+    # Fix flux for mass conservation
+    #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
 
     # Applies F and G operators in each panel again
     F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)

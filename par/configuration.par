@@ -4,11 +4,11 @@
 #Transformation?  1-equidistant; 2-equiangular
 2
 #Loadable grid? 0-No; 1-Yes
-1
+0
 #Show ongoing process details on screen? 0-No; 1-Yes
 1
 #Test case to be done
-4
+5
 #Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------

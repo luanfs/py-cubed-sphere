@@ -1,10 +1,10 @@
 #Divergence test case parameters 
 #Vector field 
-5
+3
 #Test case to be done
+1
+#Flux (1, 2 or 3)
 2
-#Monotonization method (0 or 1)
-0
 #Ghost cells interpolation degree (>=0)
 2
 #-----------Description of parameters -------------------------------------
@@ -12,12 +12,12 @@
 #  case(1) - zonal wind (divergence free)
 #  case(2) - rotated zonal wind (divergence free)
 #  case(3) - trigonometric field
-#  case(4) - Non divergent field 1 from Nair and Lauritzen 2010
-#  case(5) - Non divergent field 2 from Nair and Lauritzen 2010
-#  case(6) - Non divergent field 4 from Nair and Lauritzen 2010
+#  case(4) - Non divergent field 2 from Nair and Lauritzen 2010
+#  case(5) - Non divergent field 4 from Nair and Lauritzen 2010
 #Possible test cases
 #  case(1) - divergence computation and error
 #  case(2) - error convergence
-#Possible monotonization methods
-#  case(0) - none
-#  case(1) - Woodward and Collela 84 (WC84)
+#Possible flux methods
+#  case(1) - PPM
+#  case(2) - PPM with monotonization from Collela and Woodward 84 (CW84)
+#  case(3) - Hybrid PPM from Putman and Lin 2007(PL07)

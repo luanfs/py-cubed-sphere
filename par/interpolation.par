@@ -1,8 +1,8 @@
 #Interpolation test case parameters 
 #Scalar field 
-2
+1
 #Ghost cells interpolation degree (>=0)
-2
+1
 #Possible scalar fields
 #  case(1) - spherical harmonic
 #  case(2) - rotated zonal spherical harmonic

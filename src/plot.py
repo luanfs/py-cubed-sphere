@@ -121,7 +121,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
         plateCr = ccrs.PlateCarree()
         plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
     elif map_projection == "sphere":
-        plateCr = ccrs.Orthographic(central_longitude=-60.0, central_latitude=0.0)
+        plateCr = ccrs.Orthographic(central_longitude=0.0, central_latitude=0.0)
         plt.figure(figsize=(800/dpi, 800/dpi), dpi=dpi)
     else:
         print('ERROR: Invalid projection.')

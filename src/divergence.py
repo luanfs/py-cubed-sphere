@@ -28,7 +28,7 @@ from stencil                import flux_ppm_x_stencil_coefficients, flux_ppm_y_s
 # Divergence simulation class
 ####################################################################################
 class div_simulation_par:
-    def __init__(self, vf, tc, mono, degree):
+    def __init__(self, vf, tc, flux_method, degree):
         # Vector field
         self.vf = vf
 
@@ -38,8 +38,8 @@ class div_simulation_par:
         # Time step
         self.dt = 1.0
 
-        # Monotonization
-        self.mono = mono
+        # Flux method
+        self.flux_method = flux_method
 
         # Interpolation at ghost cells degree
         self.degree = degree
@@ -62,20 +62,19 @@ class div_simulation_par:
         # Vector field name
         self.vfname = name
 
-        # Monotonization:
-        if mono == 0:
-            monot = 'none'
-        elif mono == 1:
-            monot = 'CW84' # Woodward and Collela 84 paper
+        # Flux scheme
+        if flux_method == 1:
+            flux_method_name = 'PPM'
+        elif flux_method == 2:
+            flux_method_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
+        elif flux_method == 3:
+            flux_method_name = 'PPM_hybrid' # Hybrid PPM from PL07 paper
         else:
-           print("Error - invalid monotization method")
+           print("Error - invalid flux method")
            exit()
 
-        # Monotonization method
-        self.monot = monot
-
-        # Finite volume method
-        self.fvmethod = 'PPM'
+        # Flux method name
+        self.flux_method_name = flux_method_name
 
         # Simulation title
         if tc == 1:
@@ -149,7 +148,7 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     ng = cs_grid.nghost  # Number of ghost cells
     tc = simulation.tc
     vfname = simulation.vfname
-    mono   = simulation.mono  # Monotonization scheme
+    flux_method = simulation.flux_method
     nghost = cs_grid.nghost   # Number o ghost cells
 
     # Interior cells index (ignoring ghost cells)
@@ -169,12 +168,18 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     # Compute fluxes
     compute_fluxes(gQ, gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
 
+    # Fix flux at cube edges to ensure mass conservation
+    #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
+
     # Applies F and G operators in each panel
     F_operator(F_gQ, gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
     G_operator(G_gQ, gQ, vcontra_edy, flux_y, ay, cs_grid, simulation)
 
     # Compute the fluxes
     compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
+
+    # Fix flux at cube edges to ensure mass conservation
+    #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
 
     # Applies F and G operators in each panel again
     F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
@@ -216,7 +221,7 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         qmax = np.amax(div_ll)
         if  simulation.vf == 3:
             title = ''
-            filename = 'div_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+            filename = 'div_vf'+str(simulation.vf)+'_'+simulation.flux_method_name
             plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                         filename, title, cs_grid, ll_grid, map_projection,\
                                         colormap, qmin, qmax)
@@ -224,11 +229,13 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         # div error
         div_error_ll =  div_exact_ll - div_ll
         colormap = 'seismic'
-        qabs_max = np.amax(div_error_ll)
-        qmin = -qabs_max
-        qmax =  qabs_max
+        #qabs_max = np.amax(div_error_ll)
+        qmin = np.amin(div_error_ll)
+        qmax = np.amax(div_error_ll)
+        #qmin = -qabs_max
+        #qmax =  qabs_max
         title = ''
-        filename = 'div_error'+'_vf'+str(simulation.vf)+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+        filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.flux_method_name
         plot_scalar_and_vector_field(div_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                      filename, title, cs_grid, ll_grid, map_projection, \
                                      colormap, qmin, qmax)
@@ -358,8 +365,8 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     # Initial condition
     vf = simulation.vf
 
-    # Monotonization method
-    mono = simulation.mono
+    # Flux method
+    flux_method = simulation.flux_method
 
     # Test case
     tc = simulation.tc
@@ -381,10 +388,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    tc, vf, mono, degree = get_div_parameters()
+    tc, vf, flux_method, degree = get_div_parameters()
 
     for i in range(0, Ntest):
-        simulation = div_simulation_par(vf, tc, mono, degree)
+        simulation = div_simulation_par(vf, tc, flux_method, degree)
         N = int(Nc[i])
 
         # Create CS mesh
@@ -402,11 +409,11 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Outputs
     # Convergence rate
-    title = "Convergence rate - divergence operator"
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+    title = "Convergence rate - divergence operator, "+simulation.flux_method_name
+    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+'_'+simulation.flux_method_name
     plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
 
     # Error convergence
-    title = "Convergence of error  - divergence operator"
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+"_mono_"+simulation.monot+"_"+simulation.fvmethod
+    title = "Convergence of error  - divergence operator, "+simulation.flux_method_name
+    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+'_'+simulation.flux_method_name
     plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)

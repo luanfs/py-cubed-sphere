@@ -2,15 +2,15 @@
 #Total period definition (seconds)
 5
 #Time step (seconds)
-0.004
+0.002
 #Initial condition
 3
 #Vector field 
-3
+4
 #Test case
-2
-#Monotonization method (0 or 1)
-0
+1
+#Flux (1, 2 or 3)
+3
 #Ghost cells interpolation degree (>=0)
 2
 #-----------Description of parameters -------------------------------------
@@ -27,6 +27,7 @@
 #Possible test cases
 #  case(1) - Advection simulation
 #  case(2) - Convergence of error for advection equation
-#Possible monotonization methods
-#  case(0) - none
-#  case(1) - Collela and Woodward 84 (CW84)
+#Possible flux methods
+#  case(1) - PPM
+#  case(2) - PPM with monotonization from Collela and Woodward 84 (CW84)
+#  case(3) - Hybrid PPM from Putman and Lin 2007(PL07)

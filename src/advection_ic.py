@@ -18,7 +18,7 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, mono, degree):
+    def __init__(self, dt, Tf, ic, vf, tc, flux_method, degree):
         # Initial condition
         self.ic = ic
 
@@ -33,9 +33,6 @@ class adv_simulation_par:
 
         # Total period definition
         self.Tf = Tf
-
-        # Monotonization
-        self.mono = mono
 
         # Degree
         self.degree = degree
@@ -72,20 +69,20 @@ class adv_simulation_par:
         # IC name
         self.vfname = name
 
-        # Monotonization:
-        if mono == 0:
-            monot = 'none'
-        elif mono == 1:
-            monot = 'CW84' # Collela and Woodward 84 paper
+        # Flux scheme
+        if flux_method == 1:
+            flux_method_name = 'PPM'
+        elif flux_method == 2:
+            flux_method_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
+        elif flux_method == 3:
+            flux_method_name = 'PPM_hybrid' #Monotonization from Collela and Woodward 84 paper
         else:
-           print("Error - invalid monotization method")
+           print("Error - invalid flux method")
            exit()
 
-        # Monotonization method
-        self.monot = monot
-
-        # Finite volume method
-        self.fvmethod = 'PPM'
+        # Flux method
+        self.flux_method = flux_method
+        self.flux_method_name = flux_method_name
 
         # Simulation title
         if tc == 1:
