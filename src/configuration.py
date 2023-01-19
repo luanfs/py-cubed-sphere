@@ -107,7 +107,7 @@ def get_advection_parameters():
         confpar.readline()
         tc = confpar.readline()
         confpar.readline()
-        flux_method = confpar.readline()
+        recon = confpar.readline()
         confpar.readline()
         degree = confpar.readline()
         confpar.readline()
@@ -121,7 +121,7 @@ def get_advection_parameters():
         ic = int(ic)
         vf = int(vf)
         tc = int(tc)
-        flux_method = int(flux_method)
+        recon = int(recon)
         degree = int(degree)
 
         #Print the parameters on the screen
@@ -132,14 +132,14 @@ def get_advection_parameters():
         print("Initial condition: ", ic)
         print("Vector field: ", vf)
         print("Adv test case: ", tc)
-        print("Flux scheme: ", flux_method)
+        print("Reconstruction scheme: ", recon)
         print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return dt, Tf, tc, ic, vf, flux_method, degree
+    return dt, Tf, tc, ic, vf, recon, degree
 
 ####################################################################################
 # Get parameters for divergence test case
@@ -159,7 +159,7 @@ def get_div_parameters():
         confpar.readline()
         tc = confpar.readline()
         confpar.readline()
-        flux_method = confpar.readline()
+        recon = confpar.readline()
         confpar.readline()
         degree = confpar.readline()
         confpar.readline()
@@ -170,21 +170,21 @@ def get_div_parameters():
         # Convert from str to int
         vf = int(vf)
         tc = int(tc)
-        flux_method = int(flux_method)
+        recon = int(recon)
         degree = int(degree)
 
         #Print the parameters on the screen
         print("\n--------------------------------------------------------")
         print("Parameters from file", file_path,"\n")
         print("Vector field: ", vf)
-        print("Flux scheme: ", flux_method)
+        print("Reconstruction scheme: ", recon)
         print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return tc, vf, flux_method, degree
+    return tc, vf, recon, degree
 
 ####################################################################################
 # Get parameters for interpolation test case

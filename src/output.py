@@ -77,7 +77,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
                 q_max = str("{:.2e}".format(np.amax(Q.f)))
                 time = str("{:.2e}".format(t))
                 filename = 'adv_'+Q.name+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
-                           "_interpol"+str(simulation.degree)+"_"+str(simulation.flux_method_name)+"_t"+str(k)
+                           "_interpol"+str(simulation.degree)+"_"+str(simulation.recon_name)+"_t"+str(k)
                 title = "Min = "+q_min+", Max = "+q_max+", Time = "+time
                 plot_scalar_and_vector_field(Q_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                              filename, title, cs_grid, ll_grid, map_projection, \
@@ -91,7 +91,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
             qmax =  qmax_abs
             time = str("{:.2e}".format(t))
             filename = 'adv_'+'Q_error'+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
-                       "_interpol"+str(simulation.degree)+"_"+str(simulation.flux_method_name)+"_t"+str(k)
+                       "_interpol"+str(simulation.degree)+"_"+str(simulation.recon_name)+"_t"+str(k)
             title = "Error - time = "+time
             if t>0:
                 plot_scalar_and_vector_field(Q_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, \

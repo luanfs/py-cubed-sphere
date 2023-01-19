@@ -25,7 +25,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     vf = simulation.vf
 
     # Flux method
-    flux_method = simulation.flux_method
+    recon = simulation.recon
 
     # Test case
     tc = simulation.tc
@@ -47,7 +47,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, flux_method, degree = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, degree = get_advection_parameters()
 
     Tf = 5.0   # Period
     if vf <= 2:
@@ -61,7 +61,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     CFL = 0.5
 
     for i in range(0, Ntest):
-        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, flux_method, degree)
+        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, degree)
         N = int(Nc[i])
 
         # Create CS mesh
@@ -83,11 +83,11 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
 
     # Outputs
     # Convergence rate
-    title = "Convergence rate - advection equation, "+ simulation.flux_method_name
-    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_cr_rate_"+transformation+"_"+simulation.flux_method_name
+    title = "Convergence rate - advection equation, "+ simulation.recon_name
+    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_cr_rate_"+transformation+"_"+simulation.recon_name
     plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
 
     # Error convergence
-    title = "Convergence of error  - advection equation, "+ simulation.flux_method_name
-    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_error_convergence_"+transformation+"_"+simulation.flux_method_name
+    title = "Convergence of error  - advection equation, "+ simulation.recon_name
+    filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_error_convergence_"+transformation+"_"+simulation.recon_name
     plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)

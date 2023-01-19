@@ -18,7 +18,7 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, flux_method, degree):
+    def __init__(self, dt, Tf, ic, vf, tc, recon, degree):
         # Initial condition
         self.ic = ic
 
@@ -45,7 +45,7 @@ class adv_simulation_par:
         elif ic == 3:
             name = 'Two gaussian hills'
         else:
-            print("Error - invalid initial condition")
+            print("Error in adv_simulation_par - invalid initial condition")
             exit()
 
         # IC name
@@ -63,26 +63,28 @@ class adv_simulation_par:
         elif vf == 5:
             name = 'Divergent field 3 from Nair and Lauritzen 2010'
         else:
-            print("Error - invalid vector field")
+            print("Error in adv_simulation_par- invalid vector field")
             exit()
 
         # IC name
         self.vfname = name
 
         # Flux scheme
-        if flux_method == 1:
-            flux_method_name = 'PPM'
-        elif flux_method == 2:
-            flux_method_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
-        elif flux_method == 3:
-            flux_method_name = 'PPM_hybrid' #Monotonization from Collela and Woodward 84 paper
+        if recon == 1:
+            recon_name = 'PPM'
+        elif recon == 2:
+            recon_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
+        elif recon == 3:
+            recon_name = 'PPM_hybrid' # Hybrid PPM from PL07 paper
+        elif recon == 4:
+            recon_name = 'PPM_mono_L04' #Monotonization from Lin 04 paper
         else:
            print("Error - invalid flux method")
            exit()
 
         # Flux method
-        self.flux_method = flux_method
-        self.flux_method_name = flux_method_name
+        self.recon = recon
+        self.recon_name = recon_name
 
         # Simulation title
         if tc == 1:
@@ -90,7 +92,7 @@ class adv_simulation_par:
         elif tc == 2:
             self.title = '2D advection errors '
         else:
-            print("Error - invalid test case")
+            print("Error in adv_simulation_par- invalid test case")
             exit()
 
 ####################################################################################

@@ -1,5 +1,5 @@
 ####################################################################################
-# Dimension splitting operators implementation
+# Operator splitting implementation
 # Luan da Fonseca Santos - June 2022
 #
 # References:
@@ -18,12 +18,12 @@ from flux import  compute_flux_x, compute_flux_y
 # u_edges (velocity in x direction at edges)
 # Formula 2.7 from Lin and Rood 1996
 ####################################################################################
-def F_operator(F, Q, u_edges, flux_x, ax, cs_grid, simulation):
+def F_operator(F, Q, u_edges, flux_x, cs_grid, simulation):
     N = cs_grid.N
     i0 = cs_grid.i0
     iend = cs_grid.iend
-    #compute_flux_x(flux_x, Q, u_edges, ax, cs_grid, simulation)
-    F[3:N+3,:,:] = -(simulation.dt/cs_grid.areas[i0:iend,:,:])*cs_grid.dy*(u_edges[4:N+4,:,:]*flux_x[4:N+4,:,:] - u_edges[3:N+3,:,:]*flux_x[3:N+3,:,:])
+
+    F[i0:iend,:,:] = -(simulation.dt/cs_grid.areas[i0:iend,:,:])*cs_grid.dy*(u_edges[i0+1:iend+1,:,:]*flux_x[i0+1:iend+1,:,:] - u_edges[i0:iend,:,:]*flux_x[i0:iend,:,:])
 
 ####################################################################################
 # Flux operator in y direction
@@ -31,14 +31,12 @@ def F_operator(F, Q, u_edges, flux_x, ax, cs_grid, simulation):
 # v_edges (velocity in y direction at edges)
 # Formula 2.8 from Lin and Rood 1996
 ####################################################################################
-def G_operator(G, Q, v_edges, flux_y, ay, cs_grid, simulation):
+def G_operator(G, Q, v_edges, flux_y, cs_grid, simulation):
     M = cs_grid.N
     j0 = cs_grid.j0
     jend = cs_grid.jend
 
-    #compute_flux_y(flux_y, Q, v_edges, ay, cs_grid, simulation)
-    G[:, 3:M+3,:] = -(simulation.dt/cs_grid.areas[:,j0:jend,:])*cs_grid.dx*(v_edges[:,4:M+4,:]*flux_y[:,4:M+4,:] - v_edges[:,3:M+3,:]*flux_y[:,3:M+3,:])
-
+    G[:, j0:jend,:] = -(simulation.dt/cs_grid.areas[:,j0:jend,:])*cs_grid.dx*(v_edges[:,j0+1:jend+1,:]*flux_y[:,j0+1:jend+1,:] - v_edges[:,j0:jend,:]*flux_y[:,j0:jend,:])
 
 
 ####################################################################################

@@ -14,7 +14,7 @@ import numpy as np
 from constants import*
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid
-from dimension_splitting    import F_operator, G_operator, fix_splitting_operator_ghost_cells
+from operator_splitting     import F_operator, G_operator, fix_splitting_operator_ghost_cells
 from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
 from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
 from lagrange               import lagrange_poly_ghostcells
@@ -22,13 +22,12 @@ from plot                   import plot_scalar_and_vector_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_div_parameters
 from cfl                    import cfl_x, cfl_y
-from stencil                import flux_ppm_x_stencil_coefficients, flux_ppm_y_stencil_coefficients
 
 ####################################################################################
 # Divergence simulation class
 ####################################################################################
 class div_simulation_par:
-    def __init__(self, vf, tc, flux_method, degree):
+    def __init__(self, vf, tc, recon, degree):
         # Vector field
         self.vf = vf
 
@@ -39,7 +38,7 @@ class div_simulation_par:
         self.dt = 1.0
 
         # Flux method
-        self.flux_method = flux_method
+        self.recon = recon
 
         # Interpolation at ghost cells degree
         self.degree = degree
@@ -56,25 +55,27 @@ class div_simulation_par:
         elif vf == 5:
             name = 'Non divergent field 4 from Nair and Lauritzen 2010'
         else:
-            print("Error - invalid vector field")
+            print("Error in div_simulation_par - invalid vector field")
             exit()
 
         # Vector field name
         self.vfname = name
 
         # Flux scheme
-        if flux_method == 1:
-            flux_method_name = 'PPM'
-        elif flux_method == 2:
-            flux_method_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
-        elif flux_method == 3:
-            flux_method_name = 'PPM_hybrid' # Hybrid PPM from PL07 paper
+        if recon == 1:
+            recon_name = 'PPM'
+        elif recon == 2:
+            recon_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
+        elif recon == 3:
+            recon_name = 'PPM_hybrid' # Hybrid PPM from PL07 paper
+        elif recon == 4:
+            recon_name = 'PPM_mono_L04' #Monotonization from Lin 04 paper
         else:
-           print("Error - invalid flux method")
+           print("Error in div_simulation_par - invalid reconstruction method")
            exit()
 
         # Flux method name
-        self.flux_method_name = flux_method_name
+        self.recon_name = recon_name
 
         # Simulation title
         if tc == 1:
@@ -82,7 +83,7 @@ class div_simulation_par:
         elif tc == 2:
             self.title = 'Divergence errors '
         else:
-            print("Error - invalid test case")
+            print("Error  in div_simulation_par - invalid test case")
             exit()
 
 ####################################################################################
@@ -94,7 +95,7 @@ def vector_field(lon, lat, t, simulation):
         if simulation.vf == 1:
             alpha = 0.0*deg2rad # Rotation angle
         else:
-            alpha = -55.0*deg2rad # Rotation angle
+            alpha = -45.0*deg2rad # Rotation angle
         u0 = 2.0*pi/5.0 # Wind speed
         ulon  =  u0*(np.cos(lat)*np.cos(alpha) + np.sin(lat)*np.cos(lon)*np.sin(alpha))
         vlat  = -u0*np.sin(lon)*np.sin(alpha)
@@ -148,7 +149,7 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     ng = cs_grid.nghost  # Number of ghost cells
     tc = simulation.tc
     vfname = simulation.vfname
-    flux_method = simulation.flux_method
+    recon = simulation.recon
     nghost = cs_grid.nghost   # Number o ghost cells
 
     # Interior cells index (ignoring ghost cells)
@@ -158,7 +159,7 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     jend = cs_grid.jend
 
     # Initialize the variables
-    div_exact, div_numerical, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+    div_exact, div_numerical, flux_x, flux_y, cx, cy, \
     F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
     ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
     ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ, \
@@ -166,36 +167,31 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     = init_vars_div(cs_grid, simulation, transformation, N, nghost)
 
     # Compute fluxes
-    compute_fluxes(gQ, gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
+    compute_fluxes(gQ, gQ, cx, cy, flux_x, flux_y, cs_grid, simulation)
 
     # Fix flux at cube edges to ensure mass conservation
     #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
 
     # Applies F and G operators in each panel
-    F_operator(F_gQ, gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
-    G_operator(G_gQ, gQ, vcontra_edy, flux_y, ay, cs_grid, simulation)
+    F_operator(F_gQ, gQ, ucontra_edx, flux_x, cs_grid, simulation)
+    G_operator(G_gQ, gQ, vcontra_edy, flux_y, cs_grid, simulation)
 
     # Compute the fluxes
-    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, ax, ay, cs_grid, simulation)
+    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, cx, cy, flux_x, flux_y, cs_grid, simulation)
 
     # Fix flux at cube edges to ensure mass conservation
     #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
 
     # Applies F and G operators in each panel again
-    F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, ax, cs_grid, simulation)
-    G_operator(GF_gQ, gQ+0.5*F_gQ, vcontra_edy, flux_y, ay, cs_grid, simulation)
+    F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, cs_grid, simulation)
+    G_operator(GF_gQ, gQ+0.5*F_gQ, vcontra_edy, flux_y, cs_grid, simulation)
 
     div_numerical.f = -(FG_gQ[i0:iend,j0:jend] + GF_gQ[i0:iend,j0:jend])/simulation.dt
-
-    # Exact operators
-    #F_gQ_exact[:,:,:] = (dy/cs_grid.areas[:,:,:])*(ucontra_edx[1:N+ng+1,:,:]*cs_grid.metric_tensor_edx[1:N+ng+1,:,:] - ucontra_edx[0:N+ng,:,:]*cs_grid.metric_tensor_edx[0:N+ng,:,:])
-    #G_gQ_exact[:,:,:] = (dx/cs_grid.areas[:,:,:])*(vcontra_edy[:,1:N+ng+1,:]*cs_grid.metric_tensor_edy[:,1:N+ng+1,:] - vcontra_edy[:,0:N+ng,:]*cs_grid.metric_tensor_edy[:,0:N+ng,:])
-    #FG_gQ_exact = G_gQ_exact + F_gQ_exact
-    #div_numerical.f = FG_gQ_exact[i0:iend,j0:jend]
 
     error_linf, error_l1, error_l2 = output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
                                                 ulon_edx, vlat_edx, ulon_edy, vlat_edy, simulation, map_projection)
 
+    #print(error_linf, error_l1, error_l2)
     return error_linf, error_l1, error_l2
 
 ####################################################################################
@@ -221,7 +217,7 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         qmax = np.amax(div_ll)
         if  simulation.vf == 3:
             title = ''
-            filename = 'div_vf'+str(simulation.vf)+'_'+simulation.flux_method_name
+            filename = 'div_vf'+str(simulation.vf)+'_'+simulation.recon_name
             plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                         filename, title, cs_grid, ll_grid, map_projection,\
                                         colormap, qmin, qmax)
@@ -235,7 +231,7 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         #qmin = -qabs_max
         #qmax =  qabs_max
         title = ''
-        filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.flux_method_name
+        filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.recon_name
         plot_scalar_and_vector_field(div_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                      filename, title, cs_grid, ll_grid, map_projection, \
                                      colormap, qmin, qmax)
@@ -332,27 +328,20 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     gQ = g_metric*Q
 
     # Time step for CFL = 0.5
-    simulation.dt = 0.5*cs_grid.dx/np.amax(abs(ucontra_edx))
+    simulation.dt = 0.5*cs_grid.dx/np.amax(abs(ucontra_edx[i0:iend+1, j0:jend,:]))
 
     # CFL at edges - x direction
-    cx, cx2 = cfl_x(ucontra_edx, cs_grid, simulation)
+    cx = cfl_x(ucontra_edx, cs_grid, simulation)
 
     # CFL at edges - y direction
-    cy, cy2 = cfl_y(vcontra_edy, cs_grid, simulation)
+    cy = cfl_y(vcontra_edy, cs_grid, simulation)
 
     # Flux at edges
-    flux_x = np.zeros((N+7, N+6, nbfaces))
-    flux_y = np.zeros((N+6, N+7, nbfaces))
+    flux_x = np.zeros((N+nghost+1, N+nghost  , nbfaces))
+    flux_y = np.zeros((N+nghost  , N+nghost+1, nbfaces))
 
-    # Stencil coefficients
-    ax = np.zeros((6, N+7, N+6, nbfaces))
-    ay = np.zeros((6, N+6, N+7, nbfaces))
 
-    # Compute the coefficients
-    flux_ppm_x_stencil_coefficients(ucontra_edx, ax, cx, cx2, simulation)
-    flux_ppm_y_stencil_coefficients(vcontra_edy, ay, cy, cy2, simulation)
-
-    return div_exact, div_numerical, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+    return div_exact, div_numerical, flux_x, flux_y, cx, cy, \
            F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
            ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
            ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ,\
@@ -366,7 +355,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     vf = simulation.vf
 
     # Flux method
-    flux_method = simulation.flux_method
+    recon = simulation.recon
 
     # Test case
     tc = simulation.tc
@@ -376,7 +365,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
-    Nc[0] = 20
+    Nc[0] = 16
 
     # Compute number of cells for each simulation
     for i in range(1, Ntest):
@@ -388,10 +377,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    tc, vf, flux_method, degree = get_div_parameters()
+    tc, vf, recon, degree = get_div_parameters()
 
     for i in range(0, Ntest):
-        simulation = div_simulation_par(vf, tc, flux_method, degree)
+        simulation = div_simulation_par(vf, tc, recon, degree)
         N = int(Nc[i])
 
         # Create CS mesh
@@ -409,11 +398,11 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Outputs
     # Convergence rate
-    title = "Convergence rate - divergence operator, "+simulation.flux_method_name
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+'_'+simulation.flux_method_name
+    title = "Convergence rate - divergence operator, "+simulation.recon_name
+    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+'_'+simulation.recon_name
     plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
 
     # Error convergence
-    title = "Convergence of error  - divergence operator, "+simulation.flux_method_name
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+'_'+simulation.flux_method_name
+    title = "Convergence of error  - divergence operator, "+simulation.recon_name
+    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+'_'+simulation.recon_name
     plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)

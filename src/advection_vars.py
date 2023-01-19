@@ -9,7 +9,6 @@ from advection_ic           import velocity_adv, q0_adv
 from cs_datastruct          import scalar_field
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
-from stencil                import flux_ppm_x_stencil_coefficients, flux_ppm_y_stencil_coefficients
 from lagrange               import lagrange_poly_ghostcells
 
 def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
@@ -59,7 +58,6 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     ey_elat_edx = cs_grid.prod_ey_elat_edx
     det_edx    = cs_grid.determinant_ll2contra_edx
     ucontra_edx, vcontra_edx = latlon_to_contravariant(ulon_edx, vlat_edx, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx)
-    #ulon_edx2, vlat_edx2 = contravariant_to_latlon(ucontra_edx, vcontra_edx, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx)
 
     # Convert latlon to contravariant at ed_y
     ex_elon_edy = cs_grid.prod_ex_elon_edy
@@ -68,13 +66,12 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     ey_elat_edy = cs_grid.prod_ey_elat_edy
     det_edy     = cs_grid.determinant_ll2contra_edy
     ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy)
-    #ulon_edy2, vlat_edy2 = contravariant_to_latlon(ucontra_edy, vcontra_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy)
 
     # CFL at edges - x direction
-    cx, cx2 = cfl_x(ucontra_edx, cs_grid, simulation)
+    cx = cfl_x(ucontra_edx, cs_grid, simulation)
 
     # CFL at edges - y direction
-    cy, cy2 = cfl_y(vcontra_edy, cs_grid, simulation)
+    cy = cfl_y(vcontra_edy, cs_grid, simulation)
 
     # CFL number
     CFL_x = np.amax(cx)
@@ -84,16 +81,8 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     #exit()
 
     # Flux at edges
-    flux_x = np.zeros((N+7, N+6, nbfaces))
-    flux_y = np.zeros((N+6, N+7, nbfaces))
-
-    # Stencil coefficients
-    ax = np.zeros((6, N+7, N+6, nbfaces))
-    ay = np.zeros((6, N+6, N+7, nbfaces))
-
-    # Compute the coefficients
-    flux_ppm_x_stencil_coefficients(ucontra_edx, ax, cx, cx2, simulation)
-    flux_ppm_y_stencil_coefficients(vcontra_edy, ay, cy, cy2, simulation)
+    flux_x = np.zeros((N+nghost+1, N+nghost, nbfaces))
+    flux_y = np.zeros((N+nghost, N+nghost+1, nbfaces))
 
     # Compute average values of Q (initial condition) at cell centers
     Q = scalar_field(cs_grid, 'Q', 'center')
@@ -118,13 +107,13 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     FG_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
 
     if simulation.vf <= 2:
-        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, cx, cy, \
                error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
                ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
                lagrange_poly, Kmin, Kmax
 
-    elif simulation.vf >= 3: #extra varaibles for time dependent velocity
-        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+    elif simulation.vf >= 3: #extra variables for time dependent velocity
+        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, cx, cy, \
                error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
                ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
                lagrange_poly, Kmin, Kmax, \

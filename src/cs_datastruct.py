@@ -244,8 +244,8 @@ class cubed_sphere:
 
             # Ghost cells for each panel
             if transformation == "gnomonic_equiangular" or transformation == "gnomonic_equidistant":
-                nghost_left  = 3
-                nghost_right = 3
+                nghost_left  = 4
+                nghost_right = 4
             #elif transformation == "conformal":
             #    nghost_left  = 0
             #    nghost_right = 0

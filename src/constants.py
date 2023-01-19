@@ -1,5 +1,5 @@
 ####################################################################################
-# 
+#
 # This module contains all the constants needed for the other modules
 #
 # Luan da Fonseca Santos - January 2022
@@ -33,5 +33,5 @@ graphdir = "graphs/"            # Graphs directory
 pardir   = "par/"               # Parameter files directory
 
 # Plotting parameters
-Nlat = 1000                     # Number of points in the latlon grid used for plotting
+Nlat = 1250                     # Number of points in the latlon grid used for plotting
 Nlon = 2*Nlat

@@ -11,7 +11,6 @@ from advection_vars         import init_vars_adv
 from advection_timestep     import adv_time_step
 from advection_ic           import velocity_adv
 from cfl                    import cfl_x, cfl_y
-from stencil                import flux_ppm_x_stencil_coefficients, flux_ppm_y_stencil_coefficients
 from sphgeo                 import latlon_to_contravariant
 
 def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plot):
@@ -25,18 +24,17 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
 
     # Plot step
     plotstep = int(Nsteps/5)
-    #plotstep = 10
 
     # Initialize the variables
     if simulation.vf <= 2:
-        Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+        Q_new, Q_old, Q, q_exact, flux_x, flux_y, cx, cy, \
         error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
         ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
         g_metric, lagrange_poly, Kmin, Kmax\
         = init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps)
 
     elif simulation.vf >= 3: # Extra variables needed only for time dependent velocity
-        Q_new, Q_old, Q, q_exact, flux_x, flux_y, ax, ay, cx, cy, cx2, cy2, \
+        Q_new, Q_old, Q, q_exact, flux_x, flux_y, cx, cy, \
         error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
         ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
         g_metric,\
@@ -59,7 +57,7 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
         t = k*dt
 
         # Compute a timestep
-        adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, ax, ay, cx, cx2, cy, cy2, \
+        adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, cx, cy, \
                       flux_x, flux_y, ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
                       F_gQ, G_gQ, GF_gQ, FG_gQ, transformation,\
                       lagrange_poly, Kmin, Kmax)
@@ -78,12 +76,8 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
             ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy)
 
             # CFL
-            cx, cx2 = cfl_x(ucontra_edx, cs_grid, simulation)
-            cy, cy2 = cfl_y(vcontra_edy, cs_grid, simulation)
-
-            # Stencil coefs
-            flux_ppm_x_stencil_coefficients(ucontra_edx, ax, cx, cx2, simulation)
-            flux_ppm_y_stencil_coefficients(vcontra_edy, ay, cy, cy2, simulation)
+            cx = cfl_x(ucontra_edx, cs_grid, simulation)
+            cy = cfl_y(vcontra_edy, cs_grid, simulation)
 
         # Update solution
         Q_old = Q_new
