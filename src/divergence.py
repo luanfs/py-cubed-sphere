@@ -328,7 +328,9 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     gQ = g_metric*Q
 
     # Time step for CFL = 0.5
-    simulation.dt = 0.5*cs_grid.dx/np.amax(abs(ucontra_edx[i0:iend+1, j0:jend,:]))
+    simulation.dt = 0.5*cs_grid.dx/np.amax(abs(ucontra_edx[:, :,:]))
+    print(simulation.dt)
+    #exit()
 
     # CFL at edges - x direction
     cx = cfl_x(ucontra_edx, cs_grid, simulation)
