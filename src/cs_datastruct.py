@@ -742,3 +742,57 @@ def cs_time_test():
     plt.savefig(graphdir+'execution_time'+'.eps', format='eps')
     plt.show()
     plt.close()
+
+
+
+####################################################################################
+#  Parabola class
+####################################################################################
+class ppm_parabola:
+    def __init__(self, cs_grid, simulation, direction):
+        # Number of cells
+        N  = cs_grid.N
+        M  = N
+        ng = cs_grid.nghost
+
+        # reconstruction name
+        self.recon_name = simulation.recon_name
+
+        # parabola coefficients
+        # Notation from Colella and  Woodward 1984
+        # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]
+        self.q_L = np.zeros((N+ng, M+ng, nbfaces))
+        self.q_R = np.zeros((N+ng, M+ng, nbfaces))
+        self.dq  = np.zeros((N+ng, M+ng, nbfaces))
+        self.q6  = np.zeros((N+ng, M+ng, nbfaces))
+
+        if direction == 'x':
+            # parabola fluxes
+            self.f_L = np.zeros((N+ng+1, M+ng, nbfaces))  # flux from left
+            self.f_R = np.zeros((N+ng+1, M+ng, nbfaces))  # flux from right
+            self.f_upw = np.zeros((N+ng+1, M+ng, nbfaces)) # upwind flux
+
+            # Extra variables for each schem
+            if simulation.recon_name == 'PPM' or simulation.recon_name == 'PPM_mono_CW84' or simulation.recon_name == 'PPM_mono_L04':
+                self.Q_edges =  np.zeros((N+ng+1, M+ng, nbfaces))
+        elif direction == 'y':
+            # parabola fluxes
+            self.f_L = np.zeros((N+ng, M+ng+1, nbfaces))   # flux from left
+            self.f_R = np.zeros((N+ng, M+ng+1, nbfaces))   # flux from right
+            self.f_upw = np.zeros((N+ng, M+ng+1, nbfaces)) # upwind flux
+
+            # Extra variables for each schem
+            if simulation.recon_name == 'PPM' or simulation.recon_name == 'PPM_mono_CW84' or simulation.recon_name == 'PPM_mono_L04':
+                self.Q_edges =  np.zeros((N+ng, M+ng+1, nbfaces))
+
+        if simulation.recon_name == 'PPM_mono_CW84':
+            self.dQ  = np.zeros((N+ng, M+ng, nbfaces))
+            self.dQ0 = np.zeros((N+ng, M+ng, nbfaces))
+            self.dQ1 = np.zeros((N+ng, M+ng, nbfaces))
+            self.dQ2 = np.zeros((N+ng, M+ng, nbfaces))
+
+        if simulation.recon_name == 'PPM_mono_L04':
+            self.dQ      = np.zeros((N+ng, M+ng, nbfaces))
+            self.dQ_min  = np.zeros((N+ng, M+ng, nbfaces))
+            self.dQ_max  = np.zeros((N+ng, M+ng, nbfaces))
+            self.dQ_mono = np.zeros((N+ng, M+ng, nbfaces))

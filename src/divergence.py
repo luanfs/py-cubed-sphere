@@ -13,7 +13,7 @@
 import numpy as np
 from constants import*
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
-from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid
+from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola
 from operator_splitting     import F_operator, G_operator, fix_splitting_operator_ghost_cells
 from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
 from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
@@ -159,32 +159,27 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
     jend = cs_grid.jend
 
     # Initialize the variables
-    div_exact, div_numerical, flux_x, flux_y, cx, cy, \
+    div_exact, div_numerical, px, py, cx, cy, \
     F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
     ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
-    ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ, \
-    lagrange_poly_east, Kmin, Kmax \
+    ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ \
     = init_vars_div(cs_grid, simulation, transformation, N, nghost)
 
     # Compute fluxes
-    compute_fluxes(gQ, gQ, cx, cy, flux_x, flux_y, cs_grid, simulation)
-
-    # Fix flux at cube edges to ensure mass conservation
-    #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
+    compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel
-    F_operator(F_gQ, gQ, ucontra_edx, flux_x, cs_grid, simulation)
-    G_operator(G_gQ, gQ, vcontra_edy, flux_y, cs_grid, simulation)
+    #print(np.amax(cx))
+    F_operator(F_gQ, gQ, ucontra_edx, px.f_upw, cs_grid, simulation)
+    G_operator(G_gQ, gQ, vcontra_edy, py.f_upw, cs_grid, simulation)
 
+   #exit()
     # Compute the fluxes
-    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, cx, cy, flux_x, flux_y, cs_grid, simulation)
-
-    # Fix flux at cube edges to ensure mass conservation
-    #average_fluxes_at_cube_edges(flux_x, flux_y, cs_grid)
+    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel again
-    F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, cs_grid, simulation)
-    G_operator(GF_gQ, gQ+0.5*F_gQ, vcontra_edy, flux_y, cs_grid, simulation)
+    F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, px.f_upw, cs_grid, simulation)
+    G_operator(GF_gQ, gQ+0.5*F_gQ, vcontra_edy, py.f_upw, cs_grid, simulation)
 
     div_numerical.f = -(FG_gQ[i0:iend,j0:jend] + GF_gQ[i0:iend,j0:jend])/simulation.dt
 
@@ -315,22 +310,13 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     G_gQ_exact   = np.zeros((N+nghost, N+nghost, nbfaces))
 
     # Scalar field
-    Q = np.zeros((N+nghost, N+nghost, nbfaces))
-    Q[i0:iend, j0:jend, :] = 1.0
-
-    # Get Lagrange polynomials
-    lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
-
-    # Interpolate the scalar field
-    ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+    Q = np.ones((N+nghost, N+nghost, nbfaces))
 
     # Multiply the field Q (=1) by metric tensor
     gQ = g_metric*Q
 
     # Time step for CFL = 0.5
     simulation.dt = 0.5*cs_grid.dx/np.amax(abs(ucontra_edx[:, :,:]))
-    print(simulation.dt)
-    #exit()
 
     # CFL at edges - x direction
     cx = cfl_x(ucontra_edx, cs_grid, simulation)
@@ -338,16 +324,14 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     # CFL at edges - y direction
     cy = cfl_y(vcontra_edy, cs_grid, simulation)
 
-    # Flux at edges
-    flux_x = np.zeros((N+nghost+1, N+nghost  , nbfaces))
-    flux_y = np.zeros((N+nghost  , N+nghost+1, nbfaces))
+    # PPM parabolas
+    px = ppm_parabola(cs_grid,simulation,'x')
+    py = ppm_parabola(cs_grid,simulation,'y')
 
-
-    return div_exact, div_numerical, flux_x, flux_y, cx, cy, \
+    return div_exact, div_numerical, px, py, cx, cy, \
            F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
            ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
-           ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ,\
-           lagrange_poly, Kmin, Kmax
+           ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ
 
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms

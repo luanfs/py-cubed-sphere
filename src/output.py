@@ -30,6 +30,10 @@ def output_adv(cs_grid, ll_grid, simulation, Q, Q_new, q_exact, ucontra_edx, vco
         # Relative errors in different metrics
         error_linf[k], error_l1[k], error_l2[k] = compute_errors(Q.f, q_exact.f)
 
+        if(error_linf[k]>100.0):
+            print('Stopping due to large errors.')
+            exit()
+
         # Diagnostic - mass
         total_mass, mass_change = mass_computation(Q.f, cs_grid, total_mass0)
 

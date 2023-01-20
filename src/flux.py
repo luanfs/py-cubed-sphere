@@ -6,77 +6,66 @@ from constants import nbfaces
 # Compute the 1d flux operator
 # Inputs: Q (average values),  u_edges (velocity at edges)
 ####################################################################################
-def compute_flux_x(flux_x, Q, cx, cs_grid, simulation):
-    N = cs_grid.N
+def compute_flux_x(Q, px, cx, cs_grid, simulation):
     # Reconstructs the values of Q using a piecewise parabolic polynomial
-    dq, q6, q_L, q_R = rec.ppm_reconstruction_x(Q, cs_grid, simulation)
-
+    rec.ppm_reconstruction_x(Q, px, cs_grid, simulation)
     # Compute the fluxes
-    numerical_flux_ppm_x(q_R, q_L, dq, q6, cx, flux_x, cs_grid, simulation)
+    numerical_flux_ppm_x(px, cx, cs_grid, simulation)
 
 ####################################################################################
 # PPM flux in x direction
 ####################################################################################
-def numerical_flux_ppm_x(q_R, q_L, dq, q6, cx, flux_x, cs_grid, simulation):
+def numerical_flux_ppm_x(px, cx, cs_grid, simulation):
     N = cs_grid.N
     M = cs_grid.N
     ng = cs_grid.nghost
     i0 = cs_grid.i0
     iend = cs_grid.iend
 
-    # Numerical fluxes at edges
-    f_L = np.zeros((N+ng+1, M+ng, nbfaces)) # Left
-    f_R = np.zeros((N+ng+1, M+ng, nbfaces)) # Right
-
     # Compute the fluxes (formula 1.12 from Collela and Woodward 1984)
     # Flux at left edges
-    f_L[i0:iend+1,:,:] = q_R[i0-1:iend,:,:] - cx[i0:iend+1,:,:]*0.5*(dq[i0-1:iend,:,:] - (1.0-(2.0/3.0)*cx[i0:iend+1,:,:])*q6[i0-1:iend,:,:])
+    px.f_L[i0:iend+1,:,:] = px.q_R[i0-1:iend,:,:] - cx[i0:iend+1,:,:]*0.5*(px.dq[i0-1:iend,:,:] - (1.0-(2.0/3.0)*cx[i0:iend+1,:,:])*px.q6[i0-1:iend,:,:])
 
     # Flux at right edges
-    f_R[i0:iend+1,:,:] = q_L[i0:iend+1,:,:] - cx[i0:iend+1,:,:]*0.5*(dq[i0:iend+1,:,:] + (1.0+(2.0/3.0)*cx[i0:iend+1,:,:])*q6[i0:iend+1,:,:])
+    px.f_R[i0:iend+1,:,:] = px.q_L[i0:iend+1,:,:] - cx[i0:iend+1,:,:]*0.5*(px.dq[i0:iend+1,:,:] + (1.0+(2.0/3.0)*cx[i0:iend+1,:,:])*px.q6[i0:iend+1,:,:])
 
     # F - Formula 1.13 from Collela and Woodward 1984)
-    flux_x[cx[:,:,:] >= 0] = f_L[cx[:,:,:] >= 0]
-    flux_x[cx[:,:,:] <= 0] = f_R[cx[:,:,:] <= 0]
+    px.f_upw[cx[:,:,:] >= 0] = px.f_L[cx[:,:,:] >= 0]
+    px.f_upw[cx[:,:,:] <= 0] = px.f_R[cx[:,:,:] <= 0]
 
 
 ####################################################################################
 # Compute the 1d flux operator
 # Inputs: Q (average values),  v_edges (velocity at edges)
 ####################################################################################
-def compute_flux_y(flux_y, Q, cy, cs_grid, simulation):
-    M = cs_grid.N
-
+def compute_flux_y(Q, py, cy, cs_grid, simulation):
     # Reconstructs the values of Q using a piecewise parabolic polynomial
-    dq, q6, q_L, q_R = rec.ppm_reconstruction_y(Q, cs_grid, simulation)
+    rec.ppm_reconstruction_y(Q, py, cs_grid, simulation)
 
     # Compute the fluxes
-    numerical_flux_ppm_y(q_R, q_L, dq, q6, cy, flux_y, cs_grid, simulation)
+    numerical_flux_ppm_y(py, cy, cs_grid, simulation)
 
 ###############################################################################
 # PPM flux in y direction
 ####################################################################################
-def numerical_flux_ppm_y(q_R, q_L, dq, q6, cy, flux_y, cs_grid, simulation):
+def numerical_flux_ppm_y(py, cy, cs_grid, simulation):
     N = cs_grid.N
     M = cs_grid.N
     ng = cs_grid.nghost
     j0 = cs_grid.j0
     jend = cs_grid.jend
 
-    # Numerical fluxes at edges
-    g_L = np.zeros((N+ng, M+ng+1, nbfaces))# Left
-    g_R = np.zeros((N+ng, M+ng+1, nbfaces))# Rigth
-
     # Compute the fluxes (formula 1.12 from Collela and Woodward 1984)
     # Flux at left edges
-    g_L[:,j0:jend+1,:] = q_R[:,j0-1:jend,:] - cy[:,j0:jend+1,:]*0.5*(dq[:,j0-1:jend,:] - (1.0-2.0/3.0*cy[:,j0:jend+1,:])*q6[:,j0-1:jend,:])
+    py.f_L[:,j0:jend+1,:] = py.q_R[:,j0-1:jend,:] - cy[:,j0:jend+1,:]*0.5*(py.dq[:,j0-1:jend,:] - (1.0-2.0/3.0*cy[:,j0:jend+1,:])*py.q6[:,j0-1:jend,:])
 
     # Flux at right edges
-    g_R[:,j0:jend+1,:] = q_L[:,j0:jend+1,:] - cy[:,j0:jend+1,:]*0.5*(dq[:,j0:jend+1,:] + (1.0+2.0/3.0*cy[:,j0:jend+1,:])*q6[:,j0:jend+1,:])
+    py.f_R[:,j0:jend+1,:] = py.q_L[:,j0:jend+1,:] - cy[:,j0:jend+1,:]*0.5*(py.dq[:,j0:jend+1,:] + (1.0+2.0/3.0*cy[:,j0:jend+1,:])*py.q6[:,j0:jend+1,:])
 
     # G - Formula 1.13 from Collela and Woodward 1984)
-    flux_y[cy[:,:,:] >= 0] = g_L[cy[:,:,:] >= 0]
-    flux_y[cy[:,:,:] <= 0] = g_R[cy[:,:,:] <= 0]
+    py.f_upw[cy[:,:,:] >= 0] = py.f_L[cy[:,:,:] >= 0]
+    py.f_upw[cy[:,:,:] <= 0] = py.f_R[cy[:,:,:] <= 0]
+
 
 ####################################################################################
 # Flux operator in y direction
@@ -84,20 +73,12 @@ def numerical_flux_ppm_y(q_R, q_L, dq, q6, cy, flux_y, cs_grid, simulation):
 # v_edges (velocity in y direction at edges)
 # Formula 2.8 from Lin and Rood 1996
 ####################################################################################
-def compute_fluxes(Qx, Qy, cx, cy, flux_x, flux_y, cs_grid, simulation):
-    N = cs_grid.N
-    M = cs_grid.N
-    i0 = cs_grid.i0
-    j0 = cs_grid.j0
-    iend = cs_grid.iend
-    jend = cs_grid.jend
-
+def compute_fluxes(Qx, Qy, px, py, cx, cy, cs_grid, simulation):
     # Compute the fluxes in x direction
-    compute_flux_x(flux_x, Qx, cx, cs_grid, simulation)
+    compute_flux_x(Qx, px, cx, cs_grid, simulation)
 
     # Compute the fluxes in y direction
-    compute_flux_y(flux_y, Qy, cy, cs_grid, simulation)
-
+    compute_flux_y(Qy, py, cy, cs_grid, simulation)
 
 ####################################################################################
 ####################################################################################

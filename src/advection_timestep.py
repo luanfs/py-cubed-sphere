@@ -48,3 +48,19 @@ def adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, cx, cy,
 
     # Update
     Q_old = Q_new
+
+    # Updates for next time step - only for time dependent velocity
+    if simulation.vf >= 3:
+        # Velocity
+        ulon_edx[:,:,:], vlat_edx[:,:,:] = velocity_adv(edx_lon, edx_lat, t, simulation)
+        ulon_edy[:,:,:], vlat_edy[:,:,:] = velocity_adv(edy_lon, edy_lat, t, simulation)
+
+        # Latlon to contravariant
+        ucontra_edx, vcontra_edx = latlon_to_contravariant(ulon_edx, vlat_edx, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx)
+        ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy)
+
+        # CFL
+        cx[:,:,:] = cfl_x(ucontra_edx, cs_grid, simulation)
+        cy[:,:,:] = cfl_y(vcontra_edy, cs_grid, simulation)
+
+
