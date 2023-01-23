@@ -14,20 +14,18 @@ import numpy as np
 from constants import*
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola
-from operator_splitting     import F_operator, G_operator, fix_splitting_operator_ghost_cells
-from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
-from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
-from lagrange               import lagrange_poly_ghostcells
+from interpolation          import ll2cs, nearest_neighbour
 from plot                   import plot_scalar_and_vector_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_div_parameters
 from cfl                    import cfl_x, cfl_y
+from discrete_operators     import divergence
 
 ####################################################################################
 # Divergence simulation class
 ####################################################################################
 class div_simulation_par:
-    def __init__(self, vf, tc, recon, degree):
+    def __init__(self, vf, tc, recon, opsplit):
         # Vector field
         self.vf = vf
 
@@ -40,8 +38,8 @@ class div_simulation_par:
         # Flux method
         self.recon = recon
 
-        # Interpolation at ghost cells degree
-        self.degree = degree
+        # Splitting method
+        self.opsplit= opsplit
 
         # Define the vector field name
         if vf == 1:
@@ -73,6 +71,20 @@ class div_simulation_par:
         else:
            print("Error in div_simulation_par - invalid reconstruction method")
            exit()
+
+        # Operator splitting scheme
+        if opsplit == 1:
+            opsplit_name = 'L96' # Splitting from L96 paper
+        elif opsplit == 2:
+            opsplit_name = 'L04' # Splitting from L04 paper
+        elif opsplit == 3:
+            opsplit_name = 'PL07' #Splitting from Putman and Lin 07 paper
+        else:
+           print("Error in div_simulation_par - invalid operator splitting method")
+           exit()
+
+        # Splitting name
+        self.opsplit_name = opsplit_name
 
         # Flux method name
         self.recon_name = recon_name
@@ -160,33 +172,17 @@ def div_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
 
     # Initialize the variables
     div_exact, div_numerical, px, py, cx, cy, \
-    F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
     ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, \
     ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ \
     = init_vars_div(cs_grid, simulation, transformation, N, nghost)
 
-    # Compute fluxes
-    compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
-
-    # Applies F and G operators in each panel
-    #print(np.amax(cx))
-    F_operator(F_gQ, gQ, ucontra_edx, px.f_upw, cs_grid, simulation)
-    G_operator(G_gQ, gQ, vcontra_edy, py.f_upw, cs_grid, simulation)
-
-   #exit()
-    # Compute the fluxes
-    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, px, py, cx, cy, cs_grid, simulation)
-
-    # Applies F and G operators in each panel again
-    F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, px.f_upw, cs_grid, simulation)
-    G_operator(GF_gQ, gQ+0.5*F_gQ, vcontra_edy, py.f_upw, cs_grid, simulation)
-
-    div_numerical.f = -(FG_gQ[i0:iend,j0:jend] + GF_gQ[i0:iend,j0:jend])/simulation.dt
+    # Compute the divergence
+    divergence(gQ, ucontra_edx, vcontra_edy, px, py, cx, cy, cs_grid, simulation)
+    div_numerical.f = -(px.dF[i0:iend,j0:jend] + py.dF[i0:iend,j0:jend])/simulation.dt
 
     error_linf, error_l1, error_l2 = output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
                                                 ulon_edx, vlat_edx, ulon_edy, vlat_edy, simulation, map_projection)
 
-    #print(error_linf, error_l1, error_l2)
     return error_linf, error_l1, error_l2
 
 ####################################################################################
@@ -212,7 +208,8 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         qmax = np.amax(div_ll)
         if  simulation.vf == 3:
             title = ''
-            filename = 'div_vf'+str(simulation.vf)+'_'+simulation.recon_name
+            filename = 'div_vf'+str(simulation.vf)+'_'+simulation.recon_name+'_split'+simulation.opsplit_name
+
             plot_scalar_and_vector_field(div_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                         filename, title, cs_grid, ll_grid, map_projection,\
                                         colormap, qmin, qmax)
@@ -226,7 +223,8 @@ def output_div(cs_grid, ll_grid, plot, div_exact, div_numerical, \
         #qmin = -qabs_max
         #qmax =  qabs_max
         title = ''
-        filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.recon_name
+        filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.recon_name+'_split'+simulation.opsplit_name
+
         plot_scalar_and_vector_field(div_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
                                      filename, title, cs_grid, ll_grid, map_projection, \
                                      colormap, qmin, qmax)
@@ -244,9 +242,6 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     iend = cs_grid.iend
     j0   = cs_grid.j0
     jend = cs_grid.jend
-
-    # Interpolation degree
-    degree = simulation.degree
 
     # Get edges position in lat/lon system
     edx_lon = cs_grid.edx.lon
@@ -300,15 +295,6 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     # Numerical divergence
     div_numerical = scalar_field(cs_grid, 'div_numerical', 'center')
 
-    # Dimension splitting operators
-    F_gQ  = np.zeros((N+nghost, N+nghost, nbfaces))
-    G_gQ  = np.zeros((N+nghost, N+nghost, nbfaces))
-    GF_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
-    FG_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
-
-    F_gQ_exact   = np.zeros((N+nghost, N+nghost, nbfaces))
-    G_gQ_exact   = np.zeros((N+nghost, N+nghost, nbfaces))
-
     # Scalar field
     Q = np.ones((N+nghost, N+nghost, nbfaces))
 
@@ -329,7 +315,6 @@ def init_vars_div(cs_grid, simulation, transformation, N, nghost):
     py = ppm_parabola(cs_grid,simulation,'y')
 
     return div_exact, div_numerical, px, py, cx, cy, \
-           F_gQ, G_gQ, GF_gQ, FG_gQ, F_gQ_exact, G_gQ_exact, \
            ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
            ulon_edx, vlat_edx, ulon_edy, vlat_edy, gQ
 
@@ -363,10 +348,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros(Ntest)
 
     # Let us test and compute the error!
-    tc, vf, recon, degree = get_div_parameters()
+    tc, vf, recon, opsplit = get_div_parameters()
 
     for i in range(0, Ntest):
-        simulation = div_simulation_par(vf, tc, recon, degree)
+        simulation = div_simulation_par(vf, tc, recon, opsplit)
         N = int(Nc[i])
 
         # Create CS mesh
@@ -384,11 +369,11 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Outputs
     # Convergence rate
-    title = "Convergence rate - divergence operator, "+simulation.recon_name
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+'_'+simulation.recon_name
+    title = "Convergence rate - divergence operator, "+simulation.recon_name+', splitting = '+simulation.opsplit_name
+    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+'_'+simulation.recon_name+'_split'+simulation.opsplit_name
     plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
 
     # Error convergence
-    title = "Convergence of error  - divergence operator, "+simulation.recon_name
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+'_'+simulation.recon_name
+    title = "Convergence of error  - divergence operator, "+simulation.recon_name+', splitting = '+simulation.opsplit_name
+    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+'_'+simulation.recon_name+'_split'+simulation.opsplit_name
     plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)

@@ -4,9 +4,9 @@
 #Test case to be done
 2
 #Reconstruction(1, 2, 3, 4)
-1
-#Ghost cells interpolation degree (>=0)
-2
+4
+#Operator splitting(1, 2, 3)
+3
 #-----------Description of parameters -------------------------------------
 #Possible vector fields
 #  case(1) - zonal wind (divergence free)
@@ -22,3 +22,7 @@
 #  case(2) - PPM with monotonization from Collela and Woodward 84 (CW84)
 #  case(3) - Hybrid PPM from Putman and Lin 2007(PL07)
 #  case(4) - PPM with monotonization from Lin 2004 (L04)
+#Possible 2d operator splitting schemes
+#  case(1) - Splitting from Lin and Rood 1996 (L96)
+#  case(2) - Splitting from Lin 2004 (L04)
+#  case(3) - Splitting from Putman and Lin 2007(PL07)

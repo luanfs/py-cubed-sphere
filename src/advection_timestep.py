@@ -5,7 +5,6 @@
 
 import numpy as np
 from constants import*
-from operator_splitting    import F_operator, G_operator, fix_splitting_operator_ghost_cells
 from interpolation          import ghost_cells_lagrange_interpolation
 from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
 
@@ -29,20 +28,6 @@ def adv_time_step(cs_grid, simulation, g_metric, Q_old, Q_new, k, dt, t, cx, cy,
 
     # Multiply the field Q by metric tensor
     gQ = Q_old*g_metric
-
-    # Compute the fluxes
-    compute_fluxes(gQ, gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, cs_grid, simulation)
-
-    # Applies F and G operators in each panel
-    F_operator(F_gQ, gQ, ucontra_edx, flux_x, cs_grid, simulation)
-    G_operator(G_gQ, gQ, vcontra_edy, flux_y, cs_grid, simulation)
-
-    # Compute the fluxes
-    compute_fluxes(gQ+0.5*G_gQ, gQ+0.5*F_gQ, ucontra_edx, vcontra_edy, flux_x, flux_y, cs_grid, simulation)
-
-    # Applies F and G operators in each panel again
-    F_operator(FG_gQ, gQ+0.5*G_gQ, ucontra_edx, flux_x, cs_grid, simulation)
-    G_operator(GF_gQ, gQ+0.5*F_gQ, vcontra_edy, flux_y, cs_grid, simulation)
 
     Q_new[i0:iend,j0:jend,:] = Q_old[i0:iend,j0:jend,:] + FG_gQ[i0:iend,j0:jend,:] + GF_gQ[i0:iend,j0:jend,:]
 

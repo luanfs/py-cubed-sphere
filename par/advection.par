@@ -2,11 +2,11 @@
 #Total period definition (seconds)
 5
 #Time step (seconds)
-0.0001
+0.001
 #Initial condition
 2
 #Vector field 
-3
+5
 #Test case
 1
 #Reconstruction(1, 2, 3, 4)
