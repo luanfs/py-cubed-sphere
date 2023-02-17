@@ -6,15 +6,14 @@ date=` date +%F `
 version=` date +%y.%m.%d `
 echo "Today: " $date
 
-sourcefiles="src/*.py"
+sourcefiles="../src/*.py"
 
-parfiles="par/*.par "
+parfiles="../par/*.par "
 
-scripts="sh/*.sh "
+scripts="../sh/*.sh "
 
-others="main.py\
- README.* \
- backup.sh "
+others="../main.py\
+ ../README.*"
 
 files="$sourcefiles $parfiles $scripts $others"
 
