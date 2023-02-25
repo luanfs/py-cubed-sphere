@@ -2,14 +2,16 @@
 #Total period definition (seconds)
 5
 #Time step (seconds)
-0.001
+0.0025	
 #Initial condition
-2
+2	
 #Vector field 
-5
+1
 #Test case
 1
 #Reconstruction(1, 2, 3, 4)
+1
+#Operator splitting(1, 2, 3)
 1
 #Ghost cells interpolation degree (>=0)
 3
@@ -32,4 +34,10 @@
 #  case(2) - PPM with monotonization from Collela and Woodward 84 (CW84)
 #  case(3) - Hybrid PPM from Putman and Lin 2007(PL07)
 #  case(4) - PPM with monotonization from Lin 2004 (L04)
-
+# Possible departure point computation
+#  case(1) - Euler
+#  case(2) - Third-order Runge Kutta
+#Possible 2d operator splitting schemes
+#  case(1) - Average Lie-Trotter (AVLT)
+#  case(2) - Splitting from Lin 2004 (L04)
+#  case(3) - Splitting from Putman and Lin 2007(PL07)

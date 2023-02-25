@@ -773,7 +773,7 @@ class ppm_parabola:
             self.f_upw = np.zeros((N+ng+1, M+ng, nbfaces)) # upwind flux
 
             # Extra variables for each scheme
-            if simulation.recon_name == 'PPM' or simulation.recon_name == 'PPM_mono_CW84' or simulation.recon_name == 'PPM_mono_L04':
+            if simulation.recon_name == 'PPM-0' or simulation.recon_name == 'PPM-CW84' or simulation.recon_name == 'PPM-L04':
                 self.Q_edges =  np.zeros((N+ng+1, M+ng, nbfaces))
         elif direction == 'y':
             # parabola fluxes
@@ -782,18 +782,18 @@ class ppm_parabola:
             self.f_upw = np.zeros((N+ng, M+ng+1, nbfaces)) # upwind flux
 
             # Extra variables for each scheme
-            if simulation.recon_name == 'PPM' or simulation.recon_name == 'PPM_mono_CW84' or simulation.recon_name == 'PPM_mono_L04':
+            if simulation.recon_name == 'PPM-0' or simulation.recon_name == 'PPM-CW84' or simulation.recon_name == 'PPM-L04':
                 self.Q_edges =  np.zeros((N+ng, M+ng+1, nbfaces))
 
         self.dF = np.zeros((N+ng, M+ng, nbfaces)) # div flux
 
-        if simulation.recon_name == 'PPM_mono_CW84':
+        if simulation.recon_name == 'PPM-CW84':
             self.dQ  = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ0 = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ1 = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ2 = np.zeros((N+ng, M+ng, nbfaces))
 
-        if simulation.recon_name == 'PPM_mono_L04':
+        if simulation.recon_name == 'PPM-L04':
             self.dQ      = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ_min  = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ_max  = np.zeros((N+ng, M+ng, nbfaces))

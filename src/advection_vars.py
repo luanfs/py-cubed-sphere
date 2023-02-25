@@ -6,30 +6,24 @@
 import numpy as np
 from constants import*
 from advection_ic           import velocity_adv, q0_adv
-from cs_datastruct          import scalar_field
+from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
 from lagrange               import lagrange_poly_ghostcells
 
-def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
+####################################################################################
+# This routine initializates the advection routine variables
+####################################################################################
+def init_vars_adv(cs_grid, simulation, transformation):
     # Interior cells index (ignoring ghost cells)
     i0   = cs_grid.i0
     iend = cs_grid.iend
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
-    # Get edges position in lat/lon system
-    edx_lon = cs_grid.edx.lon
-    edx_lat = cs_grid.edx.lat
-    edy_lon = cs_grid.edy.lon
-    edy_lat = cs_grid.edy.lat
-
-    # Get center position in lat/lon system
-    center_lon = cs_grid.centers.lon
-    center_lat = cs_grid.centers.lat
-
-    # Metric tensor
-    g_metric = cs_grid.metric_tensor_centers
+    # other grid vars
+    N = cs_grid.N
+    nghost = cs_grid.nghost
 
     # Velocity (latlon) at edges
     ulon_edx = np.zeros((N+nghost+1, N+nghost  , nbfaces))
@@ -44,28 +38,16 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     vcontra_edy = np.zeros((N+nghost  , N+nghost+1, nbfaces))
 
     # Get velocities
-    ulon_edx[:,:,:], vlat_edx[:,:,:] = velocity_adv(edx_lon, edx_lat, 0.0, simulation)
-    ulon_edy[:,:,:], vlat_edy[:,:,:] = velocity_adv(edy_lon, edy_lat, 0.0, simulation)
-
-    # Integration variable
-    Q_old = np.zeros((N+nghost, N+nghost, nbfaces))
-    Q_new = np.zeros((N+nghost, N+nghost, nbfaces))
+    ulon_edx[:,:,:], vlat_edx[:,:,:] = velocity_adv(cs_grid.edx.lon, cs_grid.edx.lat, 0.0, simulation)
+    ulon_edy[:,:,:], vlat_edy[:,:,:] = velocity_adv(cs_grid.edy.lon, cs_grid.edy.lat, 0.0, simulation)
 
     # Convert latlon to contravariant at ed_x
-    ex_elon_edx = cs_grid.prod_ex_elon_edx
-    ex_elat_edx = cs_grid.prod_ex_elat_edx
-    ey_elon_edx = cs_grid.prod_ey_elon_edx
-    ey_elat_edx = cs_grid.prod_ey_elat_edx
-    det_edx    = cs_grid.determinant_ll2contra_edx
-    ucontra_edx, vcontra_edx = latlon_to_contravariant(ulon_edx, vlat_edx, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx)
+    ucontra_edx, vcontra_edx = latlon_to_contravariant(ulon_edx, vlat_edx, cs_grid.prod_ex_elon_edx, cs_grid.prod_ex_elat_edx,\
+                                                       cs_grid.prod_ey_elon_edx, cs_grid.prod_ey_elat_edx, cs_grid.determinant_ll2contra_edx)
 
     # Convert latlon to contravariant at ed_y
-    ex_elon_edy = cs_grid.prod_ex_elon_edy
-    ex_elat_edy = cs_grid.prod_ex_elat_edy
-    ey_elon_edy = cs_grid.prod_ey_elon_edy
-    ey_elat_edy = cs_grid.prod_ey_elat_edy
-    det_edy     = cs_grid.determinant_ll2contra_edy
-    ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy)
+    ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy,cs_grid.prod_ex_elon_edy, cs_grid.prod_ex_elat_edy,\
+                                                       cs_grid.prod_ey_elon_edy, cs_grid.prod_ey_elat_edy, cs_grid.determinant_ll2contra_edy)
 
     # CFL at edges - x direction
     cx = cfl_x(ucontra_edx, cs_grid, simulation)
@@ -76,49 +58,24 @@ def init_vars_adv(cs_grid, simulation, transformation, N, nghost, Nsteps):
     # CFL number
     CFL_x = np.amax(cx)
     CFL_y = np.amax(cy)
-    CFL = np.sqrt(CFL_x**2 + CFL_y**2)
-    #print('CFL number = ', CFL)
-    #exit()
+    CFL = max(abs(CFL_x),abs(CFL_y))
 
-    # Flux at edges
-    flux_x = np.zeros((N+nghost+1, N+nghost, nbfaces))
-    flux_y = np.zeros((N+nghost, N+nghost+1, nbfaces))
+    # PPM parabolas
+    px = ppm_parabola(cs_grid,simulation,'x')
+    py = ppm_parabola(cs_grid,simulation,'y')
 
     # Compute average values of Q (initial condition) at cell centers
-    Q = scalar_field(cs_grid, 'Q', 'center')
-    Q_old[i0:iend,j0:jend,:] = q0_adv(center_lon[i0:iend,j0:jend,:], center_lat[i0:iend,j0:jend,:], simulation)
-    Q.f[:,:,:] = Q_old[i0:iend,j0:jend,:]
+    Q = np.zeros((N+nghost, N+nghost, nbfaces))
+    gQ = np.zeros((N+nghost, N+nghost, nbfaces))
+    Q[i0:iend,j0:jend,:] = q0_adv(cs_grid.centers.lon[i0:iend,j0:jend,:], cs_grid.centers.lat[i0:iend,j0:jend,:], simulation)
 
-    # Exact field
-    q_exact = scalar_field(cs_grid, 'q_exact', 'center')
+    # Numerical divergence
+    div_numerical = np.zeros((N+nghost, N+nghost, nbfaces))
 
     # Get Lagrange polynomials
     lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
-    # Error variables
-    error_linf = np.zeros(Nsteps+1)
-    error_l1   = np.zeros(Nsteps+1)
-    error_l2   = np.zeros(Nsteps+1)
-
-    # Dimension splitting operators
-    F_gQ  = np.zeros((N+nghost, N+nghost, nbfaces))
-    G_gQ  = np.zeros((N+nghost, N+nghost, nbfaces))
-    GF_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
-    FG_gQ = np.zeros((N+nghost, N+nghost, nbfaces))
-
-    if simulation.vf <= 2:
-        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, cx, cy, \
-               error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
-               ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
-               lagrange_poly, Kmin, Kmax
-
-    elif simulation.vf >= 3: #extra variables for time dependent velocity
-        return Q_new, Q_old, Q, q_exact, flux_x, flux_y, cx, cy, \
-               error_linf, error_l1, error_l2, F_gQ, G_gQ, GF_gQ, FG_gQ, \
-               ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy, g_metric, \
-               lagrange_poly, Kmin, Kmax, \
-               ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx, det_edx, \
-               ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy, det_edy, \
-               ulon_edx, vlat_edx, edx_lon, edx_lat, \
-               ulon_edy, vlat_edy, edy_lon, edy_lat
-
+    return Q, gQ, div_numerical, px, py, cx, cy, \
+           ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
+           ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
+           lagrange_poly, Kmin, Kmax, CFL

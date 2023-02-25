@@ -90,4 +90,4 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     # Error convergence
     title = "Convergence of error  - advection equation, "+ simulation.recon_name
     filename = graphdir+"adv_tc"+str(tc)+"_ic"+str(ic)+"_vf"+str(vf)+"_error_convergence_"+transformation+"_"+simulation.recon_name
-    plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)
+    plot_errors_loglog(Nc, error_linf, error_l2, error_l2, filename, title)

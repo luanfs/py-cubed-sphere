@@ -109,6 +109,8 @@ def get_advection_parameters():
         confpar.readline()
         recon = confpar.readline()
         confpar.readline()
+        opsplit = confpar.readline()
+        confpar.readline()
         degree = confpar.readline()
         confpar.readline()
 
@@ -122,6 +124,7 @@ def get_advection_parameters():
         vf = int(vf)
         tc = int(tc)
         recon = int(recon)
+        opsplit = int(opsplit)
         degree = int(degree)
 
         #Print the parameters on the screen
@@ -133,58 +136,15 @@ def get_advection_parameters():
         print("Vector field: ", vf)
         print("Adv test case: ", tc)
         print("Reconstruction scheme: ", recon)
+        print("Splitting scheme: ", opsplit)
         print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return dt, Tf, tc, ic, vf, recon, degree
+    return dt, Tf, tc, ic, vf, recon, opsplit, degree
 
-####################################################################################
-# Get parameters for divergence test case
-####################################################################################
-def get_div_parameters():
-    # The standard grid file configuration.par must exist in par/ directory
-    file_path = pardir+"divergence.par"
-
-    if os.path.exists(file_path): # The file exists
-        # Open the grid file
-        confpar = open(file_path, "r")
-
-        # Read the grid file lines
-        confpar.readline()
-        confpar.readline()
-        vf = confpar.readline()
-        confpar.readline()
-        tc = confpar.readline()
-        confpar.readline()
-        recon = confpar.readline()
-        confpar.readline()
-        opsplit = confpar.readline()
-        confpar.readline()
-
-        # Close the file
-        confpar.close()
-
-        # Convert from str to int
-        vf = int(vf)
-        tc = int(tc)
-        recon = int(recon)
-        opsplit = int(opsplit)
-
-        #Print the parameters on the screen
-        print("\n--------------------------------------------------------")
-        print("Parameters from file", file_path,"\n")
-        print("Vector field: ", vf)
-        print("Reconstruction scheme: ", recon)
-        print("Splitting scheme: ", opsplit)
-        print("--------------------------------------------------------\n")
-
-    else:   # The file does not exist
-        print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
-        exit()
-    return tc, vf, recon, opsplit
 
 ####################################################################################
 # Get parameters for interpolation test case

@@ -18,23 +18,29 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, recon, degree):
+    def __init__(self, dt, Tf, ic, vf, tc, recon, opsplit, degree):
         # Initial condition
         self.ic = ic
 
         # Vector field
         self.vf = vf
 
-        # Advection test case
+        # Test case
         self.tc = tc
 
         # Time step
         self.dt = dt
 
+        # Flux method
+        self.recon = recon
+
+        # Splitting method
+        self.opsplit= opsplit
+
         # Total period definition
         self.Tf = Tf
 
-        # Degree
+        # Degree for interpolation
         self.degree = degree
 
         # Define the initial condition name
@@ -48,42 +54,57 @@ class adv_simulation_par:
             print("Error in adv_simulation_par - invalid initial condition")
             exit()
 
-        # IC name
-        self.icname = name
-
         # Define the vector field name
         if vf == 1:
-            name = 'Zonal wind'
+            name = 'Divergence free zonal wind'
         elif vf == 2:
-            name = 'Rotated zonal wind'
+            name = 'Divergence free rotated zonal wind'
         elif vf == 3:
             name = 'Non divergent field 2 from Nair and Lauritzen 2010'
         elif vf == 4:
             name = 'Non divergent field 4 from Nair and Lauritzen 2010'
         elif vf == 5:
-            name = 'Divergent field 3 from Nair and Lauritzen 2010'
+            name = 'Divergent field from Nair and Lauritzen 2010'
+        elif vf == 6:
+            name = 'Trigonometric vector field'
         else:
-            print("Error in adv_simulation_par- invalid vector field")
+            print("Error in div_simulation_par - invalid vector field")
             exit()
 
         # IC name
+        self.icname = name
+
+        # Vector field name
         self.vfname = name
 
         # Flux scheme
         if recon == 1:
-            recon_name = 'PPM'
+            recon_name = 'PPM-0'
         elif recon == 2:
-            recon_name = 'PPM_mono_CW84' #Monotonization from Collela and Woodward 84 paper
+            recon_name = 'PPM-CW84' #Monotonization from Collela and Woodward 84 paper
         elif recon == 3:
-            recon_name = 'PPM_hybrid' # Hybrid PPM from PL07 paper
+            recon_name = 'PPM-PL07' # Hybrid PPM from PL07 paper
         elif recon == 4:
-            recon_name = 'PPM_mono_L04' #Monotonization from Lin 04 paper
+            recon_name = 'PPM-L04' #Monotonization from Lin 04 paper
         else:
-           print("Error - invalid flux method")
+           print("Error in adv_simulation_par - invalid reconstruction method")
            exit()
 
-        # Flux method
-        self.recon = recon
+        # Operator splitting scheme
+        if opsplit == 1:
+            opsplit_name = 'SP-AVLT' # Average Lie-Trotter splitting
+        elif opsplit == 2:
+            opsplit_name = 'SP-L04'  # Splitting from L04 paper
+        elif opsplit == 3:
+            opsplit_name = 'SP-PL07' #Splitting from Putman and Lin 07 paper
+        else:
+           print("Error in adv_simulation_par - invalid operator splitting method")
+           exit()
+
+        # Splitting name
+        self.opsplit_name = opsplit_name
+
+        # Flux method name
         self.recon_name = recon_name
 
         # Simulation title
@@ -136,7 +157,10 @@ def qexact_adv(lon, lat, t, simulation):
             rotY =  sinwt*cosa*X + coswt*Y + sina*sinwt*Z
             rotZ = (coswt*sina*cosa-sina*cosa)*X -sinwt*sina*Y + (coswt*sin2a+cos2a)*Z
 
-            lon0, lat0 = 0.0, 0.0
+            if simulation.vf == 1:
+                lon0, lat0 = 0.0, 0.0
+            elif simulation.vf == 2:
+                lon0, lat0 = -45.0*deg2rad, 35.0*deg2rad
             X0, Y0, Z0 = sph2cart(lon0, lat0)
             b0 = 10.0
             q = np.exp(-b0*((rotX-X0)**2+ (rotY-Y0)**2 + (rotZ-Z0)**2))
@@ -154,7 +178,7 @@ def qexact_adv(lon, lat, t, simulation):
             # Gaussian hill centers
             lon1, lat1 = 0,  pi/3.0
             lon2, lat2 = 0, -pi/3.0
-        elif simulation.vf == 3 or  simulation.vf == 4 or  simulation.vf == 5:
+        elif simulation.vf >= 3:
             # Gaussian hill centers
             lon1, lat1 = -pi/6.0, 0
             lon2, lat2 =  pi/6.0, 0
@@ -168,16 +192,16 @@ def qexact_adv(lon, lat, t, simulation):
     return q
 
 ####################################################################################
-# Velocity field
+# Vector field
 # Return the wind components in geographical coordinates tangent vectors.
 ####################################################################################
 def velocity_adv(lon, lat, t, simulation):
     if simulation.vf == 1 or simulation.vf == 2:
         if simulation.vf == 1:
-           alpha = 0.0*deg2rad   # Rotation angle
-        elif simulation.vf == 2:
-           alpha = -45.0*deg2rad # Rotation angle
-        u0    =  2.0*pi/5.0 # Wind speed
+            alpha = 0.0*deg2rad # Rotation angle
+        else:
+            alpha = -45.0*deg2rad # Rotation angle
+        u0 = 2.0*pi/5.0 # Wind speed
         ulon  =  u0*(np.cos(lat)*np.cos(alpha) + np.sin(lat)*np.cos(lon)*np.sin(alpha))
         vlat  = -u0*np.sin(lon)*np.sin(alpha)
 
@@ -200,4 +224,27 @@ def velocity_adv(lon, lat, t, simulation):
         ulon = -k*(np.sin((lon+pi)/2.0)**2)*(np.sin(2.0*lat))*(np.cos(lat)**2)*(np.cos(pi*t/T))
         vlat = (k/2.0)*(np.sin((lon+pi)))*(np.cos(lat)**3)*(np.cos(pi*t/T))
 
+    elif simulation.vf == 6: # Trigonometric field
+        m = 1
+        n = 1
+        ulon = -m*(np.sin(lon)*np.sin(m*lon)*np.cos(n*lat)**3)#/np.cos(lat)
+        vlat = -4*n*(np.cos(n*lat)**3)*np.sin(n*lat)*np.cos(m*lon)*np.sin(lon)
+
+
     return ulon, vlat
+
+####################################################################################
+# Return the divergence of the velocity fields
+####################################################################################
+def div_exact(lon, lat, simulation):
+    if simulation.vf <= 5:
+        div = np.zeros(np.shape(lon))
+    else: # Trigonometric field
+        m = 1
+        n = 1
+        div = (-np.cos(lon) * np.sin(m * lon) * m * np.cos(n * lat) ** 4 / np.cos(lat) - \
+            np.sin(lon) * np.cos(m * lon) * m ** 2 * np.cos(n * lat) ** 4 / np.cos(lat) + \
+            12.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 2 * np.sin(n *lat) ** 2 * n ** 2 * np.cos(lat) - \
+            4.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 4 * n ** 2 * np.cos(lat) + \
+            4.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 3 * np.sin(n * lat) * n * np.sin(lat)) / np.cos(lat)
+    return div

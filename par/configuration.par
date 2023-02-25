@@ -1,6 +1,6 @@
 #Parameters
 #Number of cells N along a coordinates axis (total number of cells is 6*N*N)
-16
+50
 #Transformation?  1-equidistant; 2-equiangular
 2
 #Loadable grid? 0-No; 1-Yes
