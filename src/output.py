@@ -95,10 +95,10 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                             "_interp"+str(simulation.degree)+"_t"+str(k)
 
                 # Title
-                title = "Min = "+q_min+", Max = "+q_max+", Time = "+time+', N='+str(cs_grid.N)+\
-                ", ic ="+str(simulation.ic)+", vf = "+str(simulation.vf)+", CFL = "+cfl+'\n '\
+                title = "Min="+q_min+", Max="+q_max+", Time="+time+', N='+str(cs_grid.N)+\
+                ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
                 +simulation.opsplit_name+', '+simulation.recon_name +\
-                ', Interpolation degree = '+str(simulation.degree)
+                ', Interpolation degree='+str(simulation.degree)
 
                 plot_scalar_and_vector_field(Q_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat,\
                                              filename, title, cs_grid, ll_grid, map_projection, \
@@ -109,15 +109,15 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                     Q_error_ll =  Q_exact_ll - Q_ll
                     colormap = 'seismic'
                     qmax_abs = np.amax(abs(Q_error_ll))
-                    qmin = -qmax_abs
-                    qmax =  qmax_abs
+                    qmin = np.amin(Q_error_ll)
+                    qmax = np.amax(Q_error_ll)
                     time = str("{:.2e}".format(t))
                     filename = 'adv_Q_error'+'_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
                                "_interpol"+str(simulation.degree)+"_"+str(simulation.recon_name)+"_t"+str(k)
-                    title = "Error - Time = "+time+', N='+str(cs_grid.N)+\
-                    ", ic ="+str(simulation.ic)+", vf = "+str(simulation.vf)+", CFL = "+cfl+'\n '\
+                    title = "Error - Time="+time+', N='+str(cs_grid.N)+\
+                    ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
                     +simulation.opsplit_name+', '+simulation.recon_name +\
-                    ', Interpolation degree = '+str(simulation.degree)
+                    ', Interpolation degree='+str(simulation.degree)
                     plot_scalar_and_vector_field(Q_error_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
                                                  filename, title, cs_grid, ll_grid, map_projection, \
                                                  colormap, qmin, qmax)
@@ -133,7 +133,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                 error_d = dex_ll - d_ll
 
                 # Plot parameters
-                colormap = 'seismic'
+                colormap = 'jet'
                 dmin, dmax = np.amin(error_d), np.amax(error_d)
                 cfl = str("{:.2e}".format(CFL))
 
@@ -141,7 +141,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                 error_linf[k], error_l1[k], error_l2[k] = compute_errors(d.f, dex.f)
 
                 filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name
-                title = "Divergence error"+', N='+str(cs_grid.N)+", vf = "+str(simulation.vf)+", CFL = "+cfl+', '\
+                title = "Divergence error"+', N='+str(cs_grid.N)+", vf="+str(simulation.vf)+", CFL="+cfl+', '\
                 +simulation.opsplit_name+', '+simulation.recon_name
                 plot_scalar_and_vector_field(error_d, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
                                              filename, title, cs_grid, ll_grid, map_projection, \

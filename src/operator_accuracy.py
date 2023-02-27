@@ -1,6 +1,6 @@
 ####################################################################################
 #
-# Module for FV operators accuaracy testing
+# Module for FV operators accuracy testing
 #
 # Luan da Fonseca Santos - September 2022
 # (luan.santos@usp.br)
@@ -59,38 +59,74 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    error_linf = np.zeros(Ntest)
-    error_l1   = np.zeros(Ntest)
-    error_l2   = np.zeros(Ntest)
+    recons = (1,4)
+    deps = (1,)
+    split = (1,3)
+    #recons = (simulation.recon,)
+    #deps = (simulation.dp,)
+    #split = (simulation.opsplit,)
+    recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
+    dp_names = ['RK1', 'RK3']
+    sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
+    error_linf = np.zeros((Ntest, len(recons), len(split), len(deps)))
+    error_l1   = np.zeros((Ntest, len(recons), len(split), len(deps)))
+    error_l2   = np.zeros((Ntest, len(recons), len(split), len(deps)))
 
     # Let us test and compute the error!
     dt, Tf, tc, ic, vf, recon, opsplit, degree = get_advection_parameters()
+    # For divergence testing, we consider a constant field
     ic = 1
-    for i in range(0, Ntest):
-        dt = dts[i]
-        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit, degree)
-        N = int(Nc[i])
+    # Let us test and compute the error
+    d = 0
+    for dp in deps:
+        sp = 0
+        for opsplit in split:
+            rec = 0
+            for recon in recons:
+                for i in range(0, Ntest):
+                    dt = dts[i]
+                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit, degree)
+                    N = int(Nc[i])
 
-        # Create CS mesh
-        cs_grid = cubed_sphere(N, transformation, False, gridload)
+                    # Create CS mesh
+                    cs_grid = cubed_sphere(N, transformation, False, gridload)
 
-        # Create the latlon mesh (for plotting)
-        ll_grid = latlon_grid(Nlat, Nlon)
-        ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+                    # Create the latlon mesh (for plotting)
+                    ll_grid = latlon_grid(Nlat, Nlon)
+                    ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
-        # Get divergence error
-        error_linf[i], error_l1[i], error_l2[i] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, True)
+                    # Get divergence error
+                    error_linf[i,rec,sp,d], error_l1[i,rec,sp,d], error_l2[i,rec,sp,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, True)
+                    print('\nParameters: N = '+str(int(Nc[i]))+', dt = '+str(dts[i]),', recon = ', recon,', split = ',opsplit, ', dp = ', dp)
 
-        # Print errors
-        print_errors_simul(error_linf, error_l1, error_l2, i)
+                    # Print errors
+                    print_errors_simul(error_linf[:,rec,sp,d], error_l1[:,rec,sp,d], error_l2[:,rec,sp,d], i)
+                rec = rec+1
+            sp = sp+1
+        d = d+1
 
     # Outputs
-    # Convergence rate
-    title = "Convergence rate - divergence operator, "+simulation.opsplit_name+', '+simulation.recon_name
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_cr_rate_"+transformation+'_'+simulation.opsplit_name+'_'+simulation.recon_name
-    plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
+    # plot errors for different all schemes in  different norms
+    error_list = [error_linf, error_l1, error_l2]
+    norm_list  = ['linf','l1','l2']
+    norm_title  = [r'$L_{\infty}$',r'$L_1$',r'$L_2$']
 
-    # Error convergence
-    title = "Convergence of error  - divergence operator, "+simulation.opsplit_name+', '+simulation.recon_name
-    filename = graphdir+"div_tc"+str(tc)+"_vf"+str(vf)+"_error_convergence_"+transformation+'_'+simulation.opsplit_name+'_'+simulation.recon_name
-    plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)
+    e = 0
+    for error in error_list:
+        errors = []
+        dep_name = []
+        for d in range(0, len(deps)):
+            for sp in range(0, len(split)):
+                for r in range(0, len(recons)):
+                    errors.append(error[:,r,sp,d])
+                    dep_name.append(dp_names[deps[d]-1]+'/'+sp_names[sp-1]+'/'+recon_names[recons[r]-1])
+
+        title = 'Divergence error  - velocity='+ str(simulation.vf)+', norm='+norm_title[e]
+        filename = graphdir+'sphere_div_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
+        plot_errors_loglog(Nc, errors, dep_name, filename, title)
+
+        # Plot the convergence rate
+        title = 'Divergence error - convergence rate - velocity=' + str(simulation.vf)+', norm='+norm_title[e]
+        filename = graphdir+'sphere_div_vf'+str(vf)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
+        plot_convergence_rate(Nc, errors, dep_name, filename, title)
+        e = e+1
