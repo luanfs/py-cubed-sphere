@@ -10,6 +10,7 @@
 #
 ####################################################################################
 import numpy as np
+import numexpr as ne
 from constants import*
 from sphgeo import sph2cart, cart2sph
 from scipy.special import sph_harm
@@ -202,34 +203,33 @@ def velocity_adv(lon, lat, t, simulation):
         else:
             alpha = -45.0*deg2rad # Rotation angle
         u0 = 2.0*pi/5.0 # Wind speed
-        ulon  =  u0*(np.cos(lat)*np.cos(alpha) + np.sin(lat)*np.cos(lon)*np.sin(alpha))
-        vlat  = -u0*np.sin(lon)*np.sin(alpha)
+        ulon  = ne.evaluate("u0*(cos(lat)*cos(alpha) + sin(lat)*cos(lon)*sin(alpha))")
+        vlat  = ne.evaluate("-u0*sin(lon)*sin(alpha)")
 
     elif simulation.vf == 3: # Non divergent field 2 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
-        ulon = k*np.sin(lon+pi)**2 * np.sin(2.0*lat) * np.cos(pi*t/T)
-        vlat = k*np.sin(2*(lon+pi)) * np.cos(lat) * np.cos(pi*t/T)
+        ulon = ne.evaluate("k*sin(lon+pi)**2 * sin(2.0*lat) * cos(pi*t/T)")
+        vlat = ne.evaluate("k*sin(2*(lon+pi)) * cos(lat) * cos(pi*t/T)")
 
     elif simulation.vf == 4: # Non divergent field 4 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
-        lonp = lon-2*pi*t/T
-        ulon = k*(np.sin((lonp+pi))**2)*(np.sin(2.*lat))*(np.cos(pi*t/T))+2.*pi*np.cos(lat)/T
-        vlat = k*(np.sin(2*(lonp+pi)))*(np.cos(lat))*(np.cos(pi*t/T))
+        lonp = ne.evaluate("lon-2*pi*t/T")
+        ulon = ne.evaluate("k*(sin((lonp+pi))**2)*(sin(2.*lat))*(cos(pi*t/T))+2.*pi*cos(lat)/T")
+        vlat = ne.evaluate("k*(sin(2*(lonp+pi)))*(cos(lat))*(cos(pi*t/T))")
 
     elif simulation.vf == 5: # Divergent field 3 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 1.0
-        ulon = -k*(np.sin((lon+pi)/2.0)**2)*(np.sin(2.0*lat))*(np.cos(lat)**2)*(np.cos(pi*t/T))
-        vlat = (k/2.0)*(np.sin((lon+pi)))*(np.cos(lat)**3)*(np.cos(pi*t/T))
+        ulon = ne.evaluate("-k*(sin((lon+pi)/2.0)**2)*(sin(2.0*lat))*(cos(lat)**2)*(cos(pi*t/T))")
+        vlat = ne.evaluate("(k/2.0)*(sin((lon+pi)))*(cos(lat)**3)*(cos(pi*t/T))")
 
     elif simulation.vf == 6: # Trigonometric field
         m = 1
         n = 1
-        ulon = -m*(np.sin(lon)*np.sin(m*lon)*np.cos(n*lat)**3)#/np.cos(lat)
-        vlat = -4*n*(np.cos(n*lat)**3)*np.sin(n*lat)*np.cos(m*lon)*np.sin(lon)
-
+        ulon = ne.evaluate("-m*(sin(lon)*sin(m*lon)*cos(n*lat)**3)")#/np.cos(lat)
+        vlat = ne.evaluate("-4*n*(cos(n*lat)**3)*sin(n*lat)*cos(m*lon)*sin(lon)")
 
     return ulon, vlat
 
