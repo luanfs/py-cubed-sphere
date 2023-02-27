@@ -14,7 +14,6 @@ import numexpr as ne
 # The divergence is given by px.dF + py.dF
 ####################################################################################
 def divergence(gQ, div, u_edges, v_edges, px, py, cx, cy, cs_grid, simulation):
-    # Compute fluxes
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel
@@ -24,7 +23,7 @@ def divergence(gQ, div, u_edges, v_edges, px, py, cx, cy, cs_grid, simulation):
     N = cs_grid.N
     ng = cs_grid.nghost
 
-    # Splitting scheme
+   # Splitting scheme
     if simulation.opsplit==1:
         #Qx = gQ+0.5*px.dF
         #Qy = gQ+0.5*py.dF
@@ -65,7 +64,7 @@ def divergence(gQ, div, u_edges, v_edges, px, py, cx, cy, cs_grid, simulation):
     # Compute the divergence
     i0, j0, iend, jend  = cs_grid.i0, cs_grid.j0, cs_grid.iend, cs_grid.jend
 
-    div[i0:iend,j0:jend,:] = -(px.dF[i0:iend,j0:jend,:] + py.dF[i0:iend,j0:jend,:])/simulation.dt/cs_grid.metric_tensor_centers[i0:iend,j0:jend,:]
+    div[i0:iend,j0:jend,:] = -(px.dF[i0:iend,j0:jend,:] + py.dF[i0:iend,j0:jend,:])/simulation.dt#/cs_grid.metric_tensor_centers[i0:iend,j0:jend,:]
 
 
 
@@ -80,7 +79,7 @@ def F_operator(F, cx, u_edges, flux_x, cs_grid, simulation):
     i0 = cs_grid.i0
     iend = cs_grid.iend
 
-    F[i0:iend,:,:] = -(simulation.dt/cs_grid.dx)*(u_edges[i0+1:iend+1,:,:]*flux_x[i0+1:iend+1,:,:] - u_edges[i0:iend,:,:]*flux_x[i0:iend,:,:])
+    F[i0:iend,:,:] = -(simulation.dt/cs_grid.areas[i0:iend,:,:])*cs_grid.dy*(u_edges[i0+1:iend+1,:,:]*flux_x[i0+1:iend+1,:,:] - u_edges[i0:iend,:,:]*flux_x[i0:iend,:,:])
 
 ####################################################################################
 # Flux operator in y direction
@@ -93,7 +92,7 @@ def G_operator(G, cy, v_edges, flux_y, cs_grid, simulation):
     j0 = cs_grid.j0
     jend = cs_grid.jend
 
-    G[:, j0:jend,:] = -(simulation.dt/cs_grid.dx)*(v_edges[:,j0+1:jend+1,:]*flux_y[:,j0+1:jend+1,:] - v_edges[:,j0:jend,:]*flux_y[:,j0:jend,:])
+    G[:, j0:jend,:] = -(simulation.dt/cs_grid.areas[:,j0:jend,:])*cs_grid.dy*(v_edges[:,j0+1:jend+1,:]*flux_y[:,j0+1:jend+1,:] - v_edges[:,j0:jend,:]*flux_y[:,j0:jend,:])
     c1 = cy[:,j0+1:jend+1,:]
     c2 = cy[:,j0:jend,:]
     f1 = flux_y[:,j0+1:jend+1,:]

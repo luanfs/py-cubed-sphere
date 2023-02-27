@@ -6,7 +6,7 @@
 import numpy as np
 from constants import*
 from advection_ic           import velocity_adv, q0_adv
-from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola
+from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola, velocity_edges
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
 from lagrange               import lagrange_poly_ghostcells
@@ -25,35 +25,27 @@ def init_vars_adv(cs_grid, simulation, transformation):
     N = cs_grid.N
     nghost = cs_grid.nghost
 
-    # Velocity (latlon) at edges
-    ulon_edx = np.zeros((N+nghost+1, N+nghost  , nbfaces))
-    vlat_edx = np.zeros((N+nghost+1, N+nghost  , nbfaces))
-    ulon_edy = np.zeros((N+nghost  , N+nghost+1, nbfaces))
-    vlat_edy = np.zeros((N+nghost  , N+nghost+1, nbfaces))
-
-    # Velocity (contravariant) at edges
-    ucontra_edx = np.zeros((N+nghost+1, N+nghost  , nbfaces))
-    vcontra_edx = np.zeros((N+nghost+1, N+nghost  , nbfaces))
-    ucontra_edy = np.zeros((N+nghost  , N+nghost+1, nbfaces))
-    vcontra_edy = np.zeros((N+nghost  , N+nghost+1, nbfaces))
+    # Velocity at edges
+    U_pu = velocity_edges(cs_grid, 'pu')
+    U_pv = velocity_edges(cs_grid, 'pv')
 
     # Get velocities
-    ulon_edx[:,:,:], vlat_edx[:,:,:] = velocity_adv(cs_grid.edx.lon, cs_grid.edx.lat, 0.0, simulation)
-    ulon_edy[:,:,:], vlat_edy[:,:,:] = velocity_adv(cs_grid.edy.lon, cs_grid.edy.lat, 0.0, simulation)
+    U_pu.ulon[:,:,:], U_pu.vlat[:,:,:] = velocity_adv(cs_grid.edx.lon, cs_grid.edx.lat, 0.0, simulation)
+    U_pv.ulon[:,:,:], U_pv.vlat[:,:,:] = velocity_adv(cs_grid.edy.lon, cs_grid.edy.lat, 0.0, simulation)
 
-    # Convert latlon to contravariant at ed_x
-    ucontra_edx, vcontra_edx = latlon_to_contravariant(ulon_edx, vlat_edx, cs_grid.prod_ex_elon_edx, cs_grid.prod_ex_elat_edx,\
+    # Convert latlon to contravariant at pu
+    U_pu.ucontra[:,:,:], U_pu.vcontra[:,:,:] = latlon_to_contravariant(U_pu.ulon, U_pu.vlat, cs_grid.prod_ex_elon_edx, cs_grid.prod_ex_elat_edx,\
                                                        cs_grid.prod_ey_elon_edx, cs_grid.prod_ey_elat_edx, cs_grid.determinant_ll2contra_edx)
 
-    # Convert latlon to contravariant at ed_y
-    ucontra_edy, vcontra_edy = latlon_to_contravariant(ulon_edy, vlat_edy,cs_grid.prod_ex_elon_edy, cs_grid.prod_ex_elat_edy,\
+    # Convert latlon to contravariant at pv
+    U_pv.ucontra[:,:,:], U_pv.vcontra[:,:,:] = latlon_to_contravariant(U_pv.ulon, U_pv.vlat, cs_grid.prod_ex_elon_edy, cs_grid.prod_ex_elat_edy,\
                                                        cs_grid.prod_ey_elon_edy, cs_grid.prod_ey_elat_edy, cs_grid.determinant_ll2contra_edy)
 
     # CFL at edges - x direction
-    cx = cfl_x(ucontra_edx, cs_grid, simulation)
+    cx = cfl_x(U_pu.ucontra, cs_grid, simulation)
 
     # CFL at edges - y direction
-    cy = cfl_y(vcontra_edy, cs_grid, simulation)
+    cy = cfl_y(U_pv.vcontra, cs_grid, simulation)
 
     # CFL number
     CFL_x = np.amax(cx)
@@ -76,6 +68,4 @@ def init_vars_adv(cs_grid, simulation, transformation):
     lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
     return Q, gQ, div_numerical, px, py, cx, cy, \
-           ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
-           ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
-           lagrange_poly, Kmin, Kmax, CFL
+           U_pu, U_pv, lagrange_poly, Kmin, Kmax, CFL

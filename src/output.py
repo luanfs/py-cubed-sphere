@@ -18,10 +18,10 @@ def print_diagnostics_adv(error_linf, error_l1, error_l2, mass_change, t, Nsteps
 ####################################################################################
 # Output and plot for advection model
 ####################################################################################
-def output_adv(cs_grid, ll_grid, simulation, Q, div, \
-               ucontra_edx, vcontra_edx, ucontra_edy, vcontra_edy,\
+def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                error_linf, error_l1, error_l2, plot, k, t, Nsteps,\
                plotstep, total_mass0, map_projection, CFL, divtest_flag):
+
     if plot or k==Nsteps:
         # Interior cells index (ignoring ghost cells)
         i0   = cs_grid.i0
@@ -58,15 +58,14 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, \
             ex_elat_edx = cs_grid.prod_ex_elat_edx
             ey_elon_edx = cs_grid.prod_ey_elon_edx
             ey_elat_edx = cs_grid.prod_ey_elat_edx
-            ulon_edx, vlat_edx = contravariant_to_latlon(ucontra_edx, vcontra_edx, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx)
+            U_pu.ulon, U_pu.vlat = contravariant_to_latlon(U_pu.ucontra, U_pu.vcontra, ex_elon_edx, ex_elat_edx, ey_elon_edx, ey_elat_edx)
 
             # Convert latlon to contravariant at ed_y
             ex_elon_edy = cs_grid.prod_ex_elon_edy
             ex_elat_edy = cs_grid.prod_ex_elat_edy
             ey_elon_edy = cs_grid.prod_ey_elon_edy
             ey_elat_edy = cs_grid.prod_ey_elat_edy
-            ulon_edy, vlat_edy = contravariant_to_latlon(ucontra_edy, vcontra_edy, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy)
-
+            U_pv.ulon, U_pv.vlat = contravariant_to_latlon(U_pv.ucontra, U_pv.vcontra, ex_elon_edy, ex_elat_edy, ey_elon_edy, ey_elat_edy)
 
             # Plot scalar field
             if (not divtest_flag):
@@ -101,7 +100,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, \
                 +simulation.opsplit_name+', '+simulation.recon_name +\
                 ', Interpolation degree = '+str(simulation.degree)
 
-                plot_scalar_and_vector_field(Q_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy,\
+                plot_scalar_and_vector_field(Q_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat,\
                                              filename, title, cs_grid, ll_grid, map_projection, \
                                              colormap, qmin, qmax)
 
@@ -119,7 +118,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, \
                     ", ic ="+str(simulation.ic)+", vf = "+str(simulation.vf)+", CFL = "+cfl+'\n '\
                     +simulation.opsplit_name+', '+simulation.recon_name +\
                     ', Interpolation degree = '+str(simulation.degree)
-                    plot_scalar_and_vector_field(Q_error_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, \
+                    plot_scalar_and_vector_field(Q_error_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
                                                  filename, title, cs_grid, ll_grid, map_projection, \
                                                  colormap, qmin, qmax)
 
@@ -144,7 +143,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, \
                 filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name
                 title = "Divergence error"+', N='+str(cs_grid.N)+", vf = "+str(simulation.vf)+", CFL = "+cfl+', '\
                 +simulation.opsplit_name+', '+simulation.recon_name
-                plot_scalar_and_vector_field(error_d, ulon_edx, vlat_edx, ulon_edy, vlat_edy, \
+                plot_scalar_and_vector_field(error_d, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
                                              filename, title, cs_grid, ll_grid, map_projection, \
                                              colormap, dmin, dmax)
 
@@ -154,7 +153,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, \
                     filename = 'div_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name
                     title = "Divergence"+', N='+str(cs_grid.N)+", vf = "+str(simulation.vf)+", CFL = "+cfl+', '\
                     +simulation.opsplit_name+', '+simulation.recon_name
-                    plot_scalar_and_vector_field(d_ll, ulon_edx, vlat_edx, ulon_edy, vlat_edy, \
+                    plot_scalar_and_vector_field(d_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
                                                  filename, title, cs_grid, ll_grid, map_projection, \
                                                  colormap, dmin, dmax)
 

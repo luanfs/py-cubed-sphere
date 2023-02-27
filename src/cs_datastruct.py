@@ -798,3 +798,39 @@ class ppm_parabola:
             self.dQ_min  = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ_max  = np.zeros((N+ng, M+ng, nbfaces))
             self.dQ_mono = np.zeros((N+ng, M+ng, nbfaces))
+
+####################################################################################
+#  Velocity class
+#  The quadrilateral points are labeled as below
+#
+#  po-------pv--------po
+#  |                  |
+#  |                  |
+#  |                  |
+#  pu       pc        pu
+#  |                  |
+#  |                  |
+#  |                  |
+#  po--------pv-------po
+#
+####################################################################################
+class velocity_edges:
+    def __init__(self, cs_grid, pos):
+        N = cs_grid.N
+        ng = cs_grid.nghost
+
+        if pos == 'pu':
+            self.ulon = np.zeros((N+1+ng, N+ng, nbfaces))
+            self.vlat = np.zeros((N+1+ng, N+ng, nbfaces))
+            self.ucontra = np.zeros((N+1+ng, N+ng, nbfaces))
+            self.vcontra = np.zeros((N+1+ng, N+ng, nbfaces))
+            self.u_averaged = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
+        elif pos == 'pv':
+            self.ulon = np.zeros((N+ng, N+1+ng, nbfaces))
+            self.vlat = np.zeros((N+ng, N+1+ng, nbfaces))
+            self.ucontra = np.zeros((N+ng, N+1+ng, nbfaces))
+            self.vcontra = np.zeros((N+ng, N+1+ng, nbfaces))
+            self.v_averaged = np.zeros((N+ng, N+1+ng)) # used for departure point
+        else:
+            print('ERROR in  velocity class: invalid position, ', pos)
+

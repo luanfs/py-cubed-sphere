@@ -1,6 +1,6 @@
 ####################################################################################
-# 
-# This module contains all the spherical geometry routines 
+#
+# This module contains all the spherical geometry routines
 #
 # Luan da Fonseca Santos - January 2022
 # (luan.santos@usp.br)
@@ -11,14 +11,14 @@ import numpy as np
 from constants import pi, nbfaces
 
 ####################################################################################
-# Convert from spherical (lat,lon) to cartesian coordinates (x,y,z) 
+# Convert from spherical (lat,lon) to cartesian coordinates (x,y,z)
 # on the unit sphere.
 # Inputs: latitude (lat), longitude (lon)
 ####################################################################################
 def sph2cart(lon, lat):
     x = np.cos(lat)*np.cos(lon)
     y = np.cos(lat)*np.sin(lon)
-    z = np.sin(lat)   
+    z = np.sin(lat)
     return x, y, z
 
 ####################################################################################
@@ -33,7 +33,7 @@ def cart2sph(X, Y, Z):
     return lon, lat
 
 ####################################################################################
-# Compute the geodesic distance of the unit sphere points p1=(x1,y1,z1) and 
+# Compute the geodesic distance of the unit sphere points p1=(x1,y1,z1) and
 # p2=(x2,y2,z2) given in cartesian coordinates. First, it computes the inner product
 # r = <p1+p2,p1+p2> = <p1,p1> + 2*<p1,p2> + <p2,p2> = 2 + 2*<p1,p2>
 # Then, the distance is given by d = 2*arctan(sqrt((4-r)/r)).
@@ -42,12 +42,12 @@ def arclen(p1, p2):
     # <p1+p2,p1+p2>
     r = p1+p2
     r = r[0,:]*r[0,:] + r[1,:]*r[1,:] + r[2,:]*r[2,:]
-    d = 2.0*np.arctan(np.sqrt((4-r)/r))   
+    d = 2.0*np.arctan(np.sqrt((4-r)/r))
     #print(r)
     return d
 
 ####################################################################################
-# Compute the area of a geodesic triangle (on the unit sphere) with lengths a, b 
+# Compute the area of a geodesic triangle (on the unit sphere) with lengths a, b
 # and c using L'Huilier's Theorem
 ####################################################################################
 def tri_area(a, b, c):
@@ -57,7 +57,7 @@ def tri_area(a, b, c):
     return area
 
 ####################################################################################
-# Compute the area of a geodesic quadrilateral (on the unit sphere) with angles 
+# Compute the area of a geodesic quadrilateral (on the unit sphere) with angles
 # a1, a2, a3 and a4 using the spherical excess formula
 ####################################################################################
 def quad_area(a1, a2, a3, a4):
@@ -108,7 +108,7 @@ def tangent_projection(P, Q):
 ####################################################################################
 # Given a spherical triangle with lengths a, b and c, this routine computes the
 # angle C (opposite to c) using the spherical law of cossines
-####################################################################################  
+####################################################################################
 def tri_angle(a, b, c):
     angle = np.arccos((np.cos(c) - np.cos(a)*np.cos(b))/(np.sin(a)*np.sin(b)))
     return angle
@@ -163,13 +163,13 @@ def tg_vector_geodesic_edx_midpoints(edx, vertices, N, nghost):
 
     # Points where we are going to compute the tangent vector
     P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edx.X, edx.Y, edx.Z
-    
+
     # Vectors to be projected at the tangent line at P.
     # The tangent line considers the geodesic connecting edge mipoints in x dir.
     Q[0:N+nghost,:,:,0], Q[0:N+nghost,:,:,1], Q[0:N+nghost,:,:,2] = edx.X[0:N+nghost,:,:]-edx.X[1:N+nghost+1,:,:], edx.Y[0:N+nghost,:,:]-edx.Y[1:N+nghost+1,:,:], edx.Z[0:N+nghost,:,:]-edx.Z[1:N+nghost+1,:,:]
     Q[N+nghost,:,:,0], Q[N+nghost,:,:,1], Q[N+nghost,:,:,2] = edx.X[N+nghost-1,:,:]-edx.X[N+nghost,:,:], edx.Y[N+nghost-1,:,:]-edx.Y[N+nghost,:,:], edx.Z[N+nghost-1,:,:]-edx.Z[N+nghost,:,:]
-    
-    # Compute the projection on the tangent line at P     
+
+    # Compute the projection on the tangent line at P
     tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = tangent_projection(P, Q)
 
     # Normalization
@@ -186,14 +186,14 @@ def tg_vector_geodesic_edx_midpoints(edx, vertices, N, nghost):
 
     # Points where we are going to compute the tangent vector
     P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edx.X, edx.Y, edx.Z
-    
+
     # Vectors to be projected at the tangent line at P.
-    # The tangent line considers the geodesic connecting edx midpoints and vertices (y dir). 
+    # The tangent line considers the geodesic connecting edx midpoints and vertices (y dir).
     Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2] = edx.X[:,:,:]-vertices.X[:,1:N+nghost+1,:], edx.Y[:,:,:]-vertices.Y[:,1:N+nghost+1,:], edx.Z[:,:,:]-vertices.Z[:,1:N+nghost+1,:]
 
     # Compute the projection on the tangent line at P
     tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = tangent_projection(P, Q)
- 
+
     # Normalization
     norm = tg_ey_edx.X*tg_ey_edx.X + tg_ey_edx.Y*tg_ey_edx.Y + tg_ey_edx.Z*tg_ey_edx.Z
     norm = np.sqrt(norm)
@@ -220,12 +220,12 @@ def tg_vector_geodesic_edy_midpoints(edy, vertices, N, nghost):
 
     # Points where we are going to compute the tangent vector
     P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edy.X, edy.Y, edy.Z
- 
+
     # Vectors to be projected at the tangent line at P.
     # The tangent line considers the geodesic connecting edge mipoints and vercites in x dir.
     Q[:,:,:,0], Q[:,:,:,1], Q[:,:,:,2] = edy.X-vertices.X[1:N+nghost+1,:,:], edy.Y-vertices.Y[1:N+nghost+1,:,:], edy.Z-vertices.Z[1:N+nghost+1,:,:]
 
-    # Compute the projection on the tangent line at P     
+    # Compute the projection on the tangent line at P
     tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = tangent_projection(P, Q)
 
     # Normalization
@@ -244,7 +244,7 @@ def tg_vector_geodesic_edy_midpoints(edy, vertices, N, nghost):
     P[:,:,:,0], P[:,:,:,1] ,P[:,:,:,2] = edy.X, edy.Y, edy.Z
 
     # Vectors to be projected at the tangent line at P.
-    # The tangent line considers the geodesic connecting edx midpoints and vertices (x dir). 
+    # The tangent line considers the geodesic connecting edx midpoints and vertices (x dir).
     Q[:,0:N+nghost,:,0], Q[:,0:N+nghost,:,1], Q[:,0:N+nghost,:,2] = edy.X[:,0:N+nghost,:]-edy.X[:,1:N+nghost+1,:], edy.Y[:,0:N+nghost,:]-edy.Y[:,1:N+nghost+1,:], edy.Z[:,0:N+nghost,:]-edy.Z[:,1:N+nghost+1,:]
     Q[:,N+nghost,:,0], Q[:,N+nghost,:,1], Q[:,N+nghost,:,2] = edy.X[:,N+nghost-1,:]-edy.X[:,N+nghost,:], edy.Y[:,N+nghost-1,:]-edy.Y[:,N+nghost,:], edy.Z[:,N+nghost-1,:]-edy.Z[:,N+nghost,:]
 
