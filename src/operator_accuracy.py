@@ -32,7 +32,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     tc = simulation.tc
 
     # Number of tests
-    Ntest = 6
+    Ntest = 3
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -59,7 +59,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (1,4)
+    recons = (3,4)
     deps = (1,)
     split = (1,3)
     #recons = (simulation.recon,)
@@ -111,22 +111,33 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     norm_list  = ['linf','l1','l2']
     norm_title  = [r'$L_{\infty}$',r'$L_1$',r'$L_2$']
 
-    e = 0
-    for error in error_list:
-        errors = []
-        dep_name = []
-        for d in range(0, len(deps)):
+    for d in range(0, len(deps)):
+        e = 0
+        for error in error_list:
+            emin, emax = np.amin(error[:]), np.amax(error[:])
+
+            # convergence rate min/max
+            n = len(error)
+            CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
+            CRmin, CRmax = np.amin(CR), np.amax(CR)
+            errors = []
+            dep_name = []
             for sp in range(0, len(split)):
                 for r in range(0, len(recons)):
                     errors.append(error[:,r,sp,d])
-                    dep_name.append(dp_names[deps[d]-1]+'/'+sp_names[sp-1]+'/'+recon_names[recons[r]-1])
+                    dep_name.append(sp_names[sp-1]+'/'+recon_names[recons[r]-1])
 
-        title = 'Divergence error  - velocity='+ str(simulation.vf)+', norm='+norm_title[e]
-        filename = graphdir+'sphere_div_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
-        plot_errors_loglog(Nc, errors, dep_name, filename, title)
+            title = 'Divergence error, vf='+ str(simulation.vf)+\
+            ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]
+            filename = graphdir+'cs_div_vf'+str(vf)+'_dp'+dp_names[deps[d]-1]\
+            +'_norm'+norm_list[e]+'_parabola_errors.pdf'
+            plot_errors_loglog(Nc, errors, dep_name, filename, title, emin, emax)
 
-        # Plot the convergence rate
-        title = 'Divergence error - convergence rate - velocity=' + str(simulation.vf)+', norm='+norm_title[e]
-        filename = graphdir+'sphere_div_vf'+str(vf)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
-        plot_convergence_rate(Nc, errors, dep_name, filename, title)
-        e = e+1
+            # Plot the convergence rate
+            title = 'Divergence convergence rate, vf=' + str(simulation.vf)+\
+            ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]
+            filename = graphdir+'cs_div__vf'+str(vf)+'_dp'+dp_names[deps[d]-1]\
+            +'_norm'+norm_list[e]+'_convergence_rate.pdf'
+            plot_convergence_rate(Nc, errors, dep_name, filename, title, CRmin, CRmax)
+            e = e+1
+
