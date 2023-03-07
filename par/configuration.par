@@ -6,9 +6,9 @@
 #Loadable grid? 0-No; 1-Yes
 2
 #Show ongoing process details on screen? 0-No; 1-Yes
-2
+0
 #Test case to be done
-2
+4
 #Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------
@@ -16,6 +16,6 @@
 #  case(1) - Cubed-sphere generation and plotting
 #  case(2) - Grid quality testing
 #  case(3) - Interpolation  testing (see interpolation.par)
-#  case(3) - Reconstruction testing (see interpolation.par)
+#  case(4) - Reconstruction testing (see interpolation.par)
 #  case(5) - Divergence computation on the sphere (see divergence.par)
 #  case(6) - Advection on the sphere (see advection.par)
