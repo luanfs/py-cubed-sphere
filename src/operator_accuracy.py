@@ -10,14 +10,17 @@
 
 import numpy as np
 from constants import*
-from cs_datastruct          import cubed_sphere, latlon_grid
-from interpolation          import ll2cs
+from cs_datastruct          import cubed_sphere, latlon_grid, ppm_parabola, scalar_field
 from errors                 import print_errors_simul, plot_errors_loglog, plot_convergence_rate
 from configuration          import get_advection_parameters
 from advection_ic           import adv_simulation_par
 from advection_timestep     import adv_time_step
 from advection_sphere       import adv_sphere
-
+from sphgeo                 import sph2cart, cart2sph
+from scipy.special          import sph_harm
+from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
+from lagrange               import lagrange_poly_ghostcells
+from plot                   import plot_scalar_field
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
 ####################################################################################
@@ -25,14 +28,8 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     # Initial condition
     vf = simulation.vf
 
-    # Flux method
-    recon = simulation.recon
-
-    # Test case
-    tc = simulation.tc
-
     # Number of tests
-    Ntest = 3
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -59,12 +56,14 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,4)
+    #recons = (3,4)
     deps = (1,)
-    split = (1,3)
-    #recons = (simulation.recon,)
+    #split = (1,3)
+
+    recons = (simulation.recon,)
     #deps = (simulation.dp,)
-    #split = (simulation.opsplit,)
+    split = (simulation.opsplit,)
+
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK3']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
@@ -136,8 +135,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
             # Plot the convergence rate
             title = 'Divergence convergence rate, vf=' + str(simulation.vf)+\
             ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]
-            filename = graphdir+'cs_div__vf'+str(vf)+'_dp'+dp_names[deps[d]-1]\
+            filename = graphdir+'cs_div_vf'+str(vf)+'_dp'+dp_names[deps[d]-1]\
             +'_norm'+norm_list[e]+'_convergence_rate.pdf'
             plot_convergence_rate(Nc, errors, dep_name, filename, title, CRmin, CRmax)
             e = e+1
+
+
 

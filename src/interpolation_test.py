@@ -8,7 +8,7 @@
 import numpy as np
 from constants import*
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon, sph2cart, cart2sph
-from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid
+from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola
 from plot                   import plot_scalar_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_interpolation_parameters
@@ -16,6 +16,7 @@ from scipy.special          import sph_harm
 from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
 from lagrange               import lagrange_poly_ghostcells
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
+from reconstruction_1d      import ppm_reconstruction_x, ppm_reconstruction_y
 
 ####################################################################################
 # Interpolation simulation class
@@ -26,20 +27,21 @@ class interpolation_simulation_par:
         self.ic = ic
 
         # Define the scalar field name
-        if ic == 1 or ic == 2:
-            name = 'Spherical harmonic'
-        elif ic == 3:
-            name = 'Metric tensor'
+        if ic == 1:
+            name = 'Gaussian hill'
+        elif ic == 2:
+            name = 'Trigonometric field'
         else:
             print("Error - invalid scalar field")
             exit()
 
-        # Order
-        self.degree = degree
-
         # IC name
         self.icname = name
 
+        # degree
+        self.degree = degree
+
+        # Simulation title
         self.title = 'Interpolation'
 
 ####################################################################################
@@ -47,47 +49,13 @@ class interpolation_simulation_par:
 ####################################################################################
 def q_scalar_field(lon, lat, simulation):
     # Spherical harmonic
-    if simulation.ic == 1 or simulation.ic == 2:
-        if simulation.ic == 1:
-            alpha =   0.0*deg2rad # Rotation angle
-        if simulation.ic == 2:
-            alpha = -55.0*deg2rad # Rotation angle
-
-        # Wind speed
-        u0 =  2.0*erad*pi/(12.0*day2sec) # Wind speed
-        ws = -u0/erad
-        wt = ws*80000
-
-        #Rotation parameters
-        cosa  = np.cos(alpha)
-        cos2a = cosa*cosa
-        sina  = np.sin(alpha)
-        sin2a = sina*sina
-        coswt = np.cos(wt)
-        sinwt = np.sin(wt)
-
-        X, Y, Z = sph2cart(lon, lat)
-
-        rotX = (coswt*cos2a+sin2a)*X -sinwt*cosa*Y + (coswt*cosa*sina-cosa*sina)*Z
-        rotY =  sinwt*cosa*X + coswt*Y + sina*sinwt*Z
-        rotZ = (coswt*sina*cosa-sina*cosa)*X -sinwt*sina*Y + (coswt*sin2a+cos2a)*Z
-
-        m = 4
-        n = 10
-        lon_rot, lat_rot = cart2sph(rotX, rotY, rotZ)
-        Ymn = sph_harm(m, n, lon_rot+pi, lat_rot+pi)
-        q = Ymn.real
-    elif simulation.ic == 3: # Metric tensor
-        R = erad
-        #X, Y, Z = sph2cart(lon, lat)
-        #x, y = np.zeros(np.shape(X)), np.zeros(np.shape(X))
-        #for p in range(0, nbfaces):
-        #    x[:,:,p], y[:,:,p] = inverse_equiangular_gnomonic_map(X[:,:,p],Y[:,:,p],Z[:,:,p],p)
-        #tanx, tany = np.tan(x), np.tan(y)
-        #r = np.sqrt(1 + tanx*tanx + tany*tany)
-        #G = 1.0/r**3
-        #G = G/(np.cos(x)*np.cos(y))**2
-        #print(np.shape(G))
+    if simulation.ic == 1:
+        lon0, lat0 = np.pi/4.0, np.pi/6.0
+        X0, Y0, Z0 = sph2cart(lon0, lat0)
+        X , Y , Z  = sph2cart(lon , lat )
+        b0 = 10.0
+        q = np.exp(-b0*((X-X0)**2+ (Y-Y0)**2 + (Z-Z0)**2))
+    elif simulation.ic == 2: # Trigonometric field
         m = 1
         n = 1
         q = (-np.cos(lon) * np.sin(m * lon) * m * np.cos(n * lat) ** 4 / np.cos(lat) - \
@@ -95,92 +63,275 @@ def q_scalar_field(lon, lat, simulation):
             12.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 2 * np.sin(n *lat) ** 2 * n ** 2 * np.cos(lat) - \
             4.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 4 * n ** 2 * np.cos(lat) + \
             4.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 3 * np.sin(n * lat) * n * np.sin(lat)) / np.cos(lat)
-        q = q/R
     return q
 
 ###################################################################################
 # Routine to compute the interpolation error convergence in L_inf, L1 and L2 norms
 ####################################################################################
-def error_analysis_interpolation(simulation, map_projection, transformation, showonscreen, gridload):
-    # Initial condition
-    ic = simulation.ic
-
-    # Order
-    degree = simulation.degree
-
-    # Monotonization method
-    #mono = simulation.mono
-
+def error_analysis_interpolation(map_projection, transformation, showonscreen, gridload):
     # Number of tests
     Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
-    Nc[0] = 10
+    Nc[0] = 16
 
     # Compute number of cells for each simulation
     for i in range(1, Ntest):
         Nc[i] = Nc[i-1]*2
 
     # Errors array
-    error_linf = np.zeros(Ntest)
-    error_l1   = np.zeros(Ntest)
-    error_l2   = np.zeros(Ntest)
+    degrees = (0,1,2,3,4)
+    error_linf = np.zeros((Ntest, len(degrees)))
+    error_l1   = np.zeros((Ntest, len(degrees)))
+    error_l2   = np.zeros((Ntest, len(degrees)))
 
     # Let us test and compute the error!
-    ic, degree = get_interpolation_parameters()
+    ic = get_interpolation_parameters()
 
-    for i in range(0, Ntest):
-        simulation = interpolation_simulation_par(ic, degree)
-        N = int(Nc[i])
 
-        # Create CS mesh
-        cs_grid = cubed_sphere(N, transformation, False, gridload)
+    d = 0
+    eold=1
+    for degree in degrees:
+        for i in range(0, Ntest):
+            simulation = interpolation_simulation_par(ic, degree)
+            N = int(Nc[i])
+            print('\nParameters: N = '+str(int(Nc[i]))+', degree = '+str(degree))
 
-        # Interior cells index (ignoring ghost cells)
-        i0   = cs_grid.i0
-        iend = cs_grid.iend
-        j0   = cs_grid.j0
-        jend = cs_grid.jend
-        ngl = cs_grid.nghost_left
-        ngr = cs_grid.nghost_right
+            # Create CS mesh
+            cs_grid = cubed_sphere(N, transformation, False, gridload)
 
-        # Create the latlon mesh (for plotting)
-        ll_grid = latlon_grid(Nlat, Nlon)
-        ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+            # Interior cells index (ignoring ghost cells)
+            i0   = cs_grid.i0
+            iend = cs_grid.iend
+            j0   = cs_grid.j0
+            jend = cs_grid.jend
+            ngl = cs_grid.nghost_left
+            ngr = cs_grid.nghost_right
 
-        # Exact field
-        Q_exact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
-        Qexact = scalar_field(cs_grid, 'Q', 'center')
-        Qexact.f = Q_exact[i0:iend,j0:jend,:]
+            # Create the latlon mesh (for plotting)
+            ll_grid = latlon_grid(Nlat, Nlon)
+            ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
-        # Interpolated field
-        Q_numerical = np.zeros(np.shape(Q_exact))
-        Q_numerical[i0:iend,j0:jend,:] = Q_exact[i0:iend,j0:jend,:]
+            # Exact field
+            Q_exact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
+            Qexact = scalar_field(cs_grid, 'Q', 'center')
+            Qexact.f = Q_exact[i0:iend,j0:jend,:]
 
-        Q_ll = nearest_neighbour(Qexact, cs_grid, ll_grid)
-        name = 'interp_q_ic_'+str(simulation.ic)
-        plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
+            # Interpolated field
+            Q_numerical = np.zeros(np.shape(Q_exact))
+            Q_numerical[i0:iend,j0:jend,:] = Q_exact[i0:iend,j0:jend,:]
 
-        # Get Lagrange polynomials
-        lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+            Q_ll = nearest_neighbour(Qexact, cs_grid, ll_grid)
+            name = 'interp_q_ic_'+str(simulation.ic)
+            if degree == 0:
+                plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
 
-        # Interpolate to ghost cells
-        ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+            # Get Lagrange polynomials
+            lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
-        # Compute the errors
-        error_linf[i], error_l1[i], error_l2[i] = compute_errors(Q_numerical, Q_exact)
+            # Interpolate to ghost cells
+            ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
-        # Print errors
-        print_errors_simul(error_linf, error_l1, error_l2, i)
+            # Compute the errors
+            error_linf[i,d], error_l1[i,d], error_l2[i,d] = compute_errors(Q_numerical, Q_exact)
+
+            # Print errors
+            print_errors_simul(error_linf[:,d], error_l1[:,d], error_l2[:,d], i)
+
+        d = d+1
+        print()
 
     # Outputs
-    # Convergence rate
-    title = "Convergence rate - interpolation"
-    filename = graphdir+"interpolation_ic"+str(ic)+"_cr_rate_"+transformation
-    plot_convergence_rate(Nc, error_linf, error_l1, error_l2, filename, title)
+    # plot errors for different all schemes in  different norms
+    error_list = [error_linf, error_l1, error_l2]
+    norm_list  = ['linf','l1','l2']
+    norm_title  = [r'$L_{\infty}$',r'$L_1$',r'$L_2$']
+    e = 0
+    for error in error_list:
+        emin, emax = np.amin(error[:]), np.amax(error[:])
 
-    # Error convergence
-    title = "Convergence of error - interpolation"
-    filename = graphdir+"interpolation_ic"+str(ic)+"_error_convergence_"+transformation
-    plot_errors_loglog(Nc, error_linf, error_l1, error_l2, filename, title)
+        # convergence rate min/max
+        n = len(error)
+        CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
+        CRmin, CRmax = np.amin(CR), np.amax(CR)
+        errors = []
+        name = []
+        for d in degrees:
+            errors.append(error[:,d])
+            name.append('Degree='+str(d))
+
+        title = 'Interpolation error, ic='+ str(simulation.ic)+', norm='+norm_title[e]
+        filename = graphdir+'cs_interp_ic'+str(ic)+'_norm'+norm_list[e]+'_errors.pdf'
+        plot_errors_loglog(Nc, errors, name, filename, title, emin, emax)
+
+        # Plot the convergence rate
+        title = 'Interpolation convergence rate, ic=' + str(simulation.ic)+', norm='+norm_title[e]
+        filename = graphdir+'cs_interp_ic'+str(ic)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
+        plot_convergence_rate(Nc, errors, name, filename, title, CRmin, CRmax)
+        e = e+1
+
+###################################################################################
+# Routine to compute the error of the PPM reconstruction at edges in L_inf, L1 and L2 norms
+####################################################################################
+def error_analysis_recon(map_projection, transformation, showonscreen, gridload):
+    # Number of tests
+    Ntest = 7
+
+    # Number of cells along a coordinate axis
+    Nc = np.zeros(Ntest)
+    Nc[0] = 16
+
+    # Compute number of cells for each simulation
+    for i in range(1, Ntest):
+        Nc[i]  = Nc[i-1]*2
+
+    # Errors array
+    recons = (1,2,3,4)
+    recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
+    error_linf = np.zeros((Ntest, len(recons)))
+    error_l1   = np.zeros((Ntest, len(recons)))
+    error_l2   = np.zeros((Ntest, len(recons)))
+
+    # Function to be reconstructed
+    ic = get_interpolation_parameters()
+
+    # colormap for plotting
+    colormap = 'Blues'
+
+    # Let us test and compute the error
+    rec = 0
+    for recon in recons:
+        for i in range(0, Ntest):
+            N = int(Nc[i])
+
+            # Get parameters
+            simulation = recon_simulation_par(ic, recon)
+
+            # Create CS mesh
+            cs_grid = cubed_sphere(N, transformation, False, gridload)
+
+            # Create the latlon mesh (for plotting)
+            ll_grid = latlon_grid(Nlat, Nlon)
+            ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+
+            # Interior cells index (ignoring ghost cells)
+            i0   = cs_grid.i0
+            iend = cs_grid.iend
+            j0   = cs_grid.j0
+            jend = cs_grid.jend
+            N = cs_grid.N
+            nghost = cs_grid.nghost
+
+            # Get values at centers
+            Q = np.zeros((N+nghost, N+nghost, nbfaces))
+            Qexact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
+            q_edx = q_scalar_field(cs_grid.edx.lon, cs_grid.edx.lat, simulation)
+            q_edy = q_scalar_field(cs_grid.edy.lon, cs_grid.edy.lat, simulation)
+
+            Q[i0:iend,j0:jend,:] = Qexact[i0:iend,j0:jend,:]
+
+            print('\nParameters: N = '+str(int(Nc[i]))+', recon = ', recon)
+
+            # Get Lagrange polynomials
+            lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+
+            # Interpolate to ghost cells
+            ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+
+            # PPM parabolas
+            px = ppm_parabola(cs_grid,simulation,'x')
+            py = ppm_parabola(cs_grid,simulation,'y')
+
+            # Reconstruct the values at edged
+            ppm_reconstruction_x(Q, px, cs_grid, simulation)
+            ppm_reconstruction_y(Q, py, cs_grid, simulation)
+
+            # Plot the error
+            error_plot = scalar_field(cs_grid, 'error', 'center')
+            error_plot.f = 0.0
+            error_plot.f = np.maximum(abs(q_edx[i0:iend,j0:jend,:]-px.q_L[i0:iend:,j0:jend,:]),\
+                                      abs(q_edx[i0+1:iend+1,j0:jend,:]-px.q_R[i0:iend:,j0:jend,:]))
+            error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0:jend,:]-py.q_L[i0:iend:,j0:jend,:]))
+            error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
+
+           # Relative errors in different metrics
+            error_linf[i,rec-1], error_l1[i,rec-1], error_l2[i,rec-1] = compute_errors(error_plot.f,0*error_plot.f)
+            print_errors_simul(error_linf[:,rec-1], error_l1[:,rec-1], error_l2[:,rec-1], i)
+
+            #error_plot.f = Q[i0:iend,j0:jend,:]
+            e_ll = nearest_neighbour(error_plot, cs_grid, ll_grid)
+            emax_abs = np.amax(abs(e_ll))
+            emin, emax = 0, emax_abs
+            #emin, emax = np.amin(e_ll), np.amax(e_ll)
+            name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name
+            plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax)
+        rec = rec+1
+
+    # Outputs
+    # plot errors for different all schemes in  different norms
+    error_list = [error_linf, error_l1, error_l2]
+    norm_list  = ['linf','l1','l2']
+    norm_title  = [r'$L_{\infty}$',r'$L_1$',r'$L_2$']
+
+#    for d in range(0, len(deps)):
+    e = 0
+    for error in error_list:
+        emin, emax = np.amin(error[:]), np.amax(error[:])
+
+        # convergence rate min/max
+        n = len(error)
+        CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
+        CRmin, CRmax = np.amin(CR), np.amax(CR)
+        errors = []
+        name = []
+        for r in range(0, len(recons)):
+            errors.append(error[:,r])
+            name.append(recon_names[recons[r]-1])
+
+        title ='Reconstruction error, ic='+ str(simulation.ic)+', norm='+norm_title[e]
+        filename = graphdir+'cs_recon_ic'+str(ic)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
+        plot_errors_loglog(Nc, errors, name, filename, title, emin, emax)
+
+        # Plot the convergence rate
+        title = 'Reconstruction convergence rate, ic=' + str(simulation.ic)+', norm='+norm_title[e]
+        filename = graphdir+'cs_recon_ic'+str(ic)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
+        plot_convergence_rate(Nc, errors, name, filename, title, CRmin, CRmax)
+        e = e+1
+
+####################################################################################
+# Reconstruction simulation class
+####################################################################################
+class recon_simulation_par:
+    def __init__(self, ic, recon):
+        # Scalar field
+        self.ic = ic
+
+        # Define the scalar field name
+        if ic == 1:
+            name = 'Gaussian hill'
+        elif ic == 2:
+            name = 'Trigonometric field'
+        else:
+            print("Error - invalid scalar field")
+            exit()
+
+        if recon == 1:
+            self.recon_name = 'PPM-0'
+            self.degree = 3
+        elif recon == 2:
+            self.recon_name = 'PPM-CW84' #Monotonization from Collela and Woodward 84 paper
+            self.degree = 3
+        elif recon == 3:
+            self.recon_name = 'PPM-PL07' # Hybrid PPM from PL07 paper
+            self.degree = 4
+        elif recon == 4:
+            self.recon_name = 'PPM-L04' #Monotonization from Lin 04 paper
+            self.degree = 3
+
+        # IC name
+        self.icname = name
+        self.title = 'Reconstruction'
+
+
+
