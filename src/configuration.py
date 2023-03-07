@@ -111,8 +111,6 @@ def get_advection_parameters():
         confpar.readline()
         opsplit = confpar.readline()
         confpar.readline()
-        degree = confpar.readline()
-        confpar.readline()
 
         # Close the file
         confpar.close()
@@ -125,7 +123,6 @@ def get_advection_parameters():
         tc = int(tc)
         recon = int(recon)
         opsplit = int(opsplit)
-        degree = int(degree)
 
         #Print the parameters on the screen
         print("\n--------------------------------------------------------")
@@ -137,13 +134,12 @@ def get_advection_parameters():
         print("Adv test case: ", tc)
         print("Reconstruction scheme: ", recon)
         print("Splitting scheme: ", opsplit)
-        print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return dt, Tf, tc, ic, vf, recon, opsplit, degree
+    return dt, Tf, tc, ic, vf, recon, opsplit
 
 
 ####################################################################################

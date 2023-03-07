@@ -55,12 +55,14 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,4)
+    #recons = (3,4)
     deps = (1,)
-    split = (1,3)
-    #recons = (simulation.recon,)
+    #split = (1,3)
+
+    recons = (simulation.recon,)
     #deps = (simulation.dp,)
-    #split = (simulation.opsplit,)
+    split = (simulation.opsplit,)
+
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK3']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
@@ -69,10 +71,11 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros((Ntest, len(recons), len(split), len(deps)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, opsplit, degree = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, opsplit = get_advection_parameters()
 
     # Period for all tests
     Tf = 5
+
     # Let us test and compute the error
     d = 0
     for dp in deps:
@@ -82,7 +85,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
             for recon in recons:
                 for i in range(0, Ntest):
                     dt = dts[i]
-                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit, degree)
+                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit)
                     N = int(Nc[i])
 
                     # Create CS mesh

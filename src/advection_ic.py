@@ -19,7 +19,7 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, recon, opsplit, degree):
+    def __init__(self, dt, Tf, ic, vf, tc, recon, opsplit):
         # Initial condition
         self.ic = ic
 
@@ -42,7 +42,7 @@ class adv_simulation_par:
         self.Tf = Tf
 
         # Degree for interpolation
-        self.degree = degree
+        self.degree = 3
 
         # Define the initial condition name
         if ic == 1:

@@ -72,9 +72,11 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros((Ntest, len(recons), len(split), len(deps)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, opsplit, degree = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, opsplit = get_advection_parameters()
+
     # For divergence testing, we consider a constant field
     ic = 1
+
     # Let us test and compute the error
     d = 0
     for dp in deps:
@@ -84,7 +86,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
             for recon in recons:
                 for i in range(0, Ntest):
                     dt = dts[i]
-                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit, degree)
+                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit)
                     N = int(Nc[i])
 
                     # Create CS mesh
@@ -139,6 +141,3 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
             +'_norm'+norm_list[e]+'_convergence_rate.pdf'
             plot_convergence_rate(Nc, errors, dep_name, filename, title, CRmin, CRmax)
             e = e+1
-
-
-

@@ -176,7 +176,7 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
 ####################################################################################
 def error_analysis_recon(map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 7
+    Ntest = 4
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -187,7 +187,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         Nc[i]  = Nc[i-1]*2
 
     # Errors array
-    recons = (1,2,3,4)
+    recons = (3,4)
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
     error_linf = np.zeros((Ntest, len(recons)))
     error_l1   = np.zeros((Ntest, len(recons)))
@@ -255,9 +255,9 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
             error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0:jend,:]-py.q_L[i0:iend:,j0:jend,:]))
             error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
 
-           # Relative errors in different metrics
-            error_linf[i,rec-1], error_l1[i,rec-1], error_l2[i,rec-1] = compute_errors(error_plot.f,0*error_plot.f)
-            print_errors_simul(error_linf[:,rec-1], error_l1[:,rec-1], error_l2[:,rec-1], i)
+            # Relative errors in different metrics
+            error_linf[i,rec], error_l1[i,rec], error_l2[i,rec] = compute_errors(error_plot.f,0*error_plot.f)
+            print_errors_simul(error_linf[:,rec], error_l1[:,rec], error_l2[:,rec], i)
 
             #error_plot.f = Q[i0:iend,j0:jend,:]
             e_ll = nearest_neighbour(error_plot, cs_grid, ll_grid)
@@ -265,7 +265,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
             emin, emax = 0, emax_abs
             #emin, emax = np.amin(e_ll), np.amax(e_ll)
             name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name
-            plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax)
+            #plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax)
         rec = rec+1
 
     # Outputs
@@ -318,20 +318,17 @@ class recon_simulation_par:
 
         if recon == 1:
             self.recon_name = 'PPM-0'
-            self.degree = 3
         elif recon == 2:
             self.recon_name = 'PPM-CW84' #Monotonization from Collela and Woodward 84 paper
-            self.degree = 3
         elif recon == 3:
             self.recon_name = 'PPM-PL07' # Hybrid PPM from PL07 paper
-            self.degree = 4
         elif recon == 4:
             self.recon_name = 'PPM-L04' #Monotonization from Lin 04 paper
-            self.degree = 3
+
+        # Interpolation degree
+        self.degree = 3
 
         # IC name
         self.icname = name
         self.title = 'Reconstruction'
-
-
 
