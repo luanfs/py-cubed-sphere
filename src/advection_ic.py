@@ -161,7 +161,7 @@ def qexact_adv(lon, lat, t, simulation):
             if simulation.vf == 1:
                 lon0, lat0 = 0.0, 0.0
             elif simulation.vf == 2:
-                lon0, lat0 = -45.0*deg2rad, 35.0*deg2rad
+                lon0, lat0 = np.pi/4.0, np.pi/6.0
             X0, Y0, Z0 = sph2cart(lon0, lat0)
             b0 = 10.0
             q = np.exp(-b0*((rotX-X0)**2+ (rotY-Y0)**2 + (rotZ-Z0)**2))
