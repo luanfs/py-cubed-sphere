@@ -17,7 +17,9 @@ from sphgeo import*
 ####################################################################################
 # This routine plots the cubed-sphere grid.
 ####################################################################################
-fig_format = 'png' # Figure format
+ # Figure format
+fig_format = 'png'
+#fig_format = 'pdf'
 def plot_grid(grid, map_projection):
     # Figure resolution
     dpi = 100
@@ -27,9 +29,14 @@ def plot_grid(grid, map_projection):
     iend = grid.iend
     j0   = grid.j0
     jend = grid.jend
+    Nt = grid.nghost + grid.N
+
+    # Plot ghost cells?
+    plot_gc = False
 
     # Color of each cubed panel
     colors = ('blue','red','blue','red','green','green')
+    colors = ('black','black','black','black','black','black')
 
     print("--------------------------------------------------------")
     print('Plotting '+grid.name+' cubed-sphere grid using '+map_projection+' projection...')
@@ -64,23 +71,8 @@ def plot_grid(grid, map_projection):
         lon_edy = grid.edy.lon[:,:,p]*rad2deg
         lat_edy = grid.edy.lat[:,:,p]*rad2deg
 
-        # Tangent vector at edges in x direction
-        vec_tgx_edx_lat = grid.tg_ex_edx.lat[:,:,p]
-        vec_tgx_edx_lon = grid.tg_ex_edx.lon[:,:,p]
-        vec_tgy_edx_lat = grid.tg_ey_edx.lat[:,:,p]
-        vec_tgy_edx_lon = grid.tg_ey_edx.lon[:,:,p]
-
-        # Tangent vector at edges in y direction
-        vec_tgx_edy_lat = grid.tg_ex_edy.lat[:,:,p]
-        vec_tgx_edy_lon = grid.tg_ex_edy.lon[:,:,p]
-        vec_tgy_edy_lat = grid.tg_ey_edy.lat[:,:,p]
-        vec_tgy_edy_lon = grid.tg_ey_edy.lon[:,:,p]
-
-        # Plot vertices
+        # Plot vertices geodesic
         A_lon, A_lat = lon[i0:iend, j0:jend], lat[i0:iend, j0:jend]
-        #for i in range(0,grid.N):
-        #    for j in range(0,2):
-        #        plt.plot(A_lon[i,j], A_lat[i,j], marker='.',color = 'black')
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
         B_lon, B_lat = lon[i0+1:iend+1, j0:jend], lat[i0+1:iend+1, j0:jend]
@@ -92,16 +84,78 @@ def plot_grid(grid, map_projection):
         D_lon, D_lat = lon[i0:iend, j0+1:jend+1], lat[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
-        plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
-        plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
-        plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([A_lon, B_lon], [A_lat, B_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([B_lon, C_lon], [B_lat, C_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([C_lon, D_lon], [C_lat, D_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([D_lon, A_lon], [D_lat, A_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
+
+        if plot_gc:
+            if p==0:
+                # Plot centers geodesics
+                A_lon, A_lat = lonc[0:Nt-1, 0:Nt-1], latc[0:Nt-1, 0:Nt-1]
+                A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
+
+                B_lon, B_lat = lonc[1:Nt, 0:Nt-1], latc[1:Nt, 0:Nt-1]
+                B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
+
+                C_lon, C_lat = lonc[1:Nt, 1:Nt], latc[1:Nt, 1:Nt]
+                C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
+
+                D_lon, D_lat = lonc[0:Nt-1, 1:Nt], latc[0:Nt-1, 1:Nt]
+                D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
+
+                plt.plot([A_lon, B_lon], [A_lat, B_lat], '--', linewidth=0.75, color='yellow', transform=ccrs.Geodetic())
+                plt.plot([B_lon, C_lon], [B_lat, C_lat], '--', linewidth=0.75, color='yellow', transform=ccrs.Geodetic())
+                plt.plot([C_lon, D_lon], [C_lat, D_lat], '--', linewidth=0.75, color='yellow', transform=ccrs.Geodetic())
+                plt.plot([D_lon, A_lon], [D_lat, A_lat], '--', linewidth=0.75, color='yellow', transform=ccrs.Geodetic())
+
+                # Plot centers
+                A_lon, A_lat = lonc[:,:], latc[:,:]
+                for i in range(0, Nt):
+                    for j in range(0, Nt):
+                        if (i>=i0 and i<iend) and (j>=j0 and j<jend):
+                           plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'green', transform=ccrs.Geodetic())
+                        elif i==j or i+j==grid.N+grid.nghost-1:
+                           plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'magenta', transform=ccrs.Geodetic())
+                        else:
+                           plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'yellow', transform=ccrs.Geodetic())
+
+            elif p==1 or p==3:
+                # Plot centers geodesics
+                A_lon, A_lat = lonc[0:Nt-1, 0:Nt-1], latc[0:Nt-1, 0:Nt-1]
+                A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
+
+                B_lon, B_lat = lonc[1:Nt, 0:Nt-1], latc[1:Nt, 0:Nt-1]
+                B_lon, B_lat = np.ndarray.flatten(B_lon), np.ndarray.flatten(B_lat)
+
+                C_lon, C_lat = lonc[1:Nt, 1:Nt], latc[1:Nt, 1:Nt]
+                C_lon, C_lat = np.ndarray.flatten(C_lon),np.ndarray.flatten(C_lat)
+
+                D_lon, D_lat = lonc[0:Nt-1, 1:Nt], latc[0:Nt-1, 1:Nt]
+                D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
+
+                # Plot centers
+                A_lon, A_lat = lonc[:,:], latc[:,:]
+                for i in range(0, Nt):
+                    for j in range(0, Nt):
+                        if p==1 and (i>=i0 and i<i0+grid.nghost_right) and (j<j0 or j>=jend):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'cyan', transform=ccrs.Geodetic())
+                        if p==3 and (i>=iend-grid.nghost_right and i<iend) and (j<j0 or j>=jend):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'cyan', transform=ccrs.Geodetic())
+
+            if p != 0:
+                # Plot centers
+                A_lon, A_lat = lonc[:,:], latc[:,:]
+                for i in range(i0, iend):
+                    for j in range(j0, jend ):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'black', transform=ccrs.Geodetic())
+
+            plt.xlim(-80,80)
+            plt.ylim(-80,80)
 
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
-
     # Save the figure
-    #plt.show()
     plt.savefig(graphdir+grid.name+"_"+map_projection+'.'+fig_format, format=fig_format)
     print('Figure has been saved in '+graphdir+grid.name+"_"+map_projection+'.'+fig_format)
     print("--------------------------------------------------------\n")
@@ -110,7 +164,7 @@ def plot_grid(grid, map_projection):
 ####################################################################################
 # This routine plots the scalar field "field" given in the latlon_grid
 ####################################################################################
-def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
+def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, colormap=None, qmin=None, qmax=None):
     print("Plotting scalar field",name,"...")
 
     # Figure quality
@@ -171,8 +225,17 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection):
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
 
+    # check if colormap was given
+    if not colormap:
+        colormap = 'jet'
+
+    # check if colorbar range was given
+    if not qmin or not qmax:
+        qmin = np.amin(field)
+        qmax = np.amax(field)
+
     # Plot the scalar field
-    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg,field, cmap='jet', levels=100, transform=ccrs.PlateCarree())
+    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
     # Plot colorbar
     plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)
@@ -413,30 +476,12 @@ def save_grid_netcdf4(grid):
     edx      = griddata.createVariable('edx'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     edy      = griddata.createVariable('edy'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
 
-    # Tangent vectors
-    tg_ex_edx = griddata.createVariable('tg_ex_edx', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
-    tg_ey_edx = griddata.createVariable('tg_ey_edx', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
-    tg_ex_edy = griddata.createVariable('tg_ex_edy', 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
-    tg_ey_edy = griddata.createVariable('tg_ey_edy', 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
-
-    elon_edx = griddata.createVariable('elon_edx', 'f8', ('ix' , 'jy2', 'panel', 'r3dim'))
-    elat_edx = griddata.createVariable('elat_edx', 'f8', ('ix' , 'jy2', 'panel', 'r3dim'))
-    elon_edy = griddata.createVariable('elon_edy', 'f8', ('ix2', 'jy' , 'panel', 'r3dim'))
-    elat_edy = griddata.createVariable('elat_edy', 'f8', ('ix2', 'jy' , 'panel', 'r3dim'))
-
     # Geometric properties
     areas                   = griddata.createVariable('areas'                , 'f8', ('ix2', 'jy2', 'panel'))
-    length_x                = griddata.createVariable('length_x'             , 'f8', ('ix2', 'jy' , 'panel'))
-    length_y                = griddata.createVariable('length_y'             , 'f8', ('ix' , 'jy2', 'panel'))
-    length_diag             = griddata.createVariable('length_diag'          , 'f8', ('ix2', 'jy2', 'panel'))
-    length_antidiag         = griddata.createVariable('length_antidiag'      , 'f8', ('ix2', 'jy2', 'panel'))
     length_edx              = griddata.createVariable('length_edx'           , 'f8', ('ix2', 'jy2', 'panel'))
     length_edy              = griddata.createVariable('length_edy'           , 'f8', ('ix2', 'jy2', 'panel'))
-    angles                  = griddata.createVariable('angles'               , 'f8', ('ix2', 'jy2', 'panel', 'ed'))
 
     metric_tensor_centers   = griddata.createVariable('metric_tensor_centers', 'f8', ('ix2', 'jy2', 'panel'))
-    metric_tensor_edx       = griddata.createVariable('metric_tensor_edx'    , 'f8', ('ix' , 'jy2', 'panel'))
-    metric_tensor_edy       = griddata.createVariable('metric_tensor_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
 
     prod_ex_elon_edx          = griddata.createVariable('prod_ex_elon_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
     prod_ex_elat_edx          = griddata.createVariable('prod_ex_elat_edx'    , 'f8', ('ix', 'jy2' , 'panel'))
@@ -475,51 +520,11 @@ def save_grid_netcdf4(grid):
     edy[:,:,:,3] = grid.edy.lon
     edy[:,:,:,4] = grid.edy.lat
 
-    tg_ex_edx[:,:,:,0] = grid.tg_ex_edx.X
-    tg_ex_edx[:,:,:,1] = grid.tg_ex_edx.Y
-    tg_ex_edx[:,:,:,2] = grid.tg_ex_edx.Z
-    tg_ex_edx[:,:,:,3] = grid.tg_ex_edx.lon
-    tg_ex_edx[:,:,:,4] = grid.tg_ex_edx.lat
-
-    tg_ey_edx[:,:,:,0] = grid.tg_ey_edx.X
-    tg_ey_edx[:,:,:,1] = grid.tg_ey_edx.Y
-    tg_ey_edx[:,:,:,2] = grid.tg_ey_edx.Z
-    tg_ey_edx[:,:,:,3] = grid.tg_ey_edx.lon
-    tg_ey_edx[:,:,:,4] = grid.tg_ey_edx.lat
-
-    tg_ex_edy[:,:,:,0] = grid.tg_ex_edy.X
-    tg_ex_edy[:,:,:,1] = grid.tg_ex_edy.Y
-    tg_ex_edy[:,:,:,2] = grid.tg_ex_edy.Z
-    tg_ex_edy[:,:,:,3] = grid.tg_ex_edy.lon
-    tg_ex_edy[:,:,:,4] = grid.tg_ex_edy.lat
-
-    tg_ey_edy[:,:,:,0] = grid.tg_ey_edy.X
-    tg_ey_edy[:,:,:,1] = grid.tg_ey_edy.Y
-    tg_ey_edy[:,:,:,2] = grid.tg_ey_edy.Z
-    tg_ey_edy[:,:,:,3] = grid.tg_ey_edy.lon
-    tg_ey_edy[:,:,:,4] = grid.tg_ey_edy.lat
-
-    elon_edx[:,:,:,:] = grid.elon_edx
-    elat_edx[:,:,:,:] = grid.elat_edx
-    elon_edy[:,:,:,:] = grid.elon_edy
-    elat_edy[:,:,:,:] = grid.elat_edy
-
-    angles[:,:,:,0] = grid.angles[:,:,:,0]
-    angles[:,:,:,1] = grid.angles[:,:,:,1]
-    angles[:,:,:,2] = grid.angles[:,:,:,2]
-    angles[:,:,:,3] = grid.angles[:,:,:,3]
-
     areas[:,:,:]           = grid.areas[:,:,:]
-    length_x[:,:,:]        = grid.length_x[:,:,:]
-    length_y[:,:,:]        = grid.length_y[:,:,:]
-    length_diag[:,:,:]     = grid.length_diag[:,:,:]
-    length_antidiag[:,:,:] = grid.length_antidiag[:,:,:]
     length_edx[:,:,:]      = grid.length_edx[:,:,:]
     length_edy[:,:,:]      = grid.length_edy[:,:,:]
 
     metric_tensor_centers[:,:,:] = grid.metric_tensor_centers[:,:,:]
-    metric_tensor_edx[:,:,:]     = grid.metric_tensor_edx[:,:,:]
-    metric_tensor_edy[:,:,:]     = grid.metric_tensor_edy[:,:,:]
 
     prod_ex_elon_edx[:,:,:]          = grid.prod_ex_elon_edx[:,:,:]
     prod_ex_elat_edx[:,:,:]          = grid.prod_ex_elat_edx[:,:,:]
