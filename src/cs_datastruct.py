@@ -81,17 +81,6 @@ class cubed_sphere:
             edx      = point(N+1+nghost, N+nghost)
             edy      = point(N+nghost, N+1+nghost)
 
-            # Tangent vectors
-            tg_ex_edx = point(N+1+nghost, N+nghost)
-            tg_ey_edx = point(N+1+nghost, N+nghost)
-            tg_ex_edy = point(N+nghost  , N+1+nghost)
-            tg_ey_edy = point(N+nghost  , N+1+nghost)
-
-            elon_edx = np.zeros((N+1+nghost, N+1+nghost, nbfaces, 3))
-            elat_edx = np.zeros((N+1+nghost, N+nghost, nbfaces, 3))
-            elon_edy = np.zeros((N+nghost, N+1+nghost, nbfaces, 3))
-            elat_edy = np.zeros((N+nghost, N+1+nghost, nbfaces, 3))
-
             # Get values from file
             vertices.X   = griddata['vertices'][:,:,:,0]
             vertices.Y   = griddata['vertices'][:,:,:,1]
@@ -117,49 +106,13 @@ class cubed_sphere:
             edy.lon = griddata['edy'][:,:,:,3]
             edy.lat = griddata['edy'][:,:,:,4]
 
-            # Tangent vectors
-            tg_ex_edx.X   = griddata['tg_ex_edx'][:,:,:,0]
-            tg_ex_edx.Y   = griddata['tg_ex_edx'][:,:,:,1]
-            tg_ex_edx.Z   = griddata['tg_ex_edx'][:,:,:,2]
-            tg_ex_edx.lon = griddata['tg_ex_edx'][:,:,:,3]
-            tg_ex_edx.lat = griddata['tg_ex_edx'][:,:,:,4]
-
-            tg_ey_edx.X   = griddata['tg_ey_edx'][:,:,:,0]
-            tg_ey_edx.Y   = griddata['tg_ey_edx'][:,:,:,1]
-            tg_ey_edx.Z   = griddata['tg_ey_edx'][:,:,:,2]
-            tg_ey_edx.lon = griddata['tg_ey_edx'][:,:,:,3]
-            tg_ey_edx.lat = griddata['tg_ey_edx'][:,:,:,4]
-
-            tg_ex_edy.X   = griddata['tg_ex_edy'][:,:,:,0]
-            tg_ex_edy.Y   = griddata['tg_ex_edy'][:,:,:,1]
-            tg_ex_edy.Z   = griddata['tg_ex_edy'][:,:,:,2]
-            tg_ex_edy.lon = griddata['tg_ex_edy'][:,:,:,3]
-            tg_ex_edy.lat = griddata['tg_ex_edy'][:,:,:,4]
-
-            tg_ey_edy.X   = griddata['tg_ey_edy'][:,:,:,0]
-            tg_ey_edy.Y   = griddata['tg_ey_edy'][:,:,:,1]
-            tg_ey_edy.Z   = griddata['tg_ey_edy'][:,:,:,2]
-            tg_ey_edy.lon = griddata['tg_ey_edy'][:,:,:,3]
-            tg_ey_edy.lat = griddata['tg_ey_edy'][:,:,:,4]
-
-            elon_edx = griddata['elon_edx'][:,:,:,:]
-            elat_edx = griddata['elat_edx'][:,:,:,:]
-            elon_edy = griddata['elon_edy'][:,:,:,:]
-            elat_edy = griddata['elat_edy'][:,:,:,:]
-
             # Geometric properties
             areas           = griddata['areas'][:,:,:]
-            length_x        = griddata['length_x'][:,:,:]
-            length_y        = griddata['length_y'][:,:,:]
-            length_diag     = griddata['length_diag'][:,:,:]
-            length_antidiag = griddata['length_antidiag'][:,:,:]
             length_edx      = griddata['length_edx'][:,:,:]
             length_edy      = griddata['length_edy'][:,:,:]
-            angles          = griddata['angles'][:,:,:,:]
 
+            # Metric tensor/contravariant-covariant conversion tools
             metric_tensor_centers = griddata['metric_tensor_centers'][:,:,:]
-            metric_tensor_edx     = griddata['metric_tensor_edx'][:,:,:]
-            metric_tensor_edy     = griddata['metric_tensor_edy'][:,:,:]
 
             prod_ex_elon_edx          = griddata['prod_ex_elon_edx'][:,:,:]
             prod_ex_elat_edx          = griddata['prod_ex_elat_edx'][:,:,:]
@@ -178,26 +131,11 @@ class cubed_sphere:
             self.vertices        = vertices
             self.edx             = edx
             self.edy             = edy
-            self.tg_ex_edx       = tg_ex_edx
-            self.tg_ey_edx       = tg_ey_edx
-            self.tg_ex_edy       = tg_ex_edy
-            self.tg_ey_edy       = tg_ey_edy
-            self.elon_edx        = elon_edx
-            self.elat_edx        = elat_edx
-            self.elon_edy        = elon_edy
-            self.elat_edy        = elat_edy
-            self.length_x        = length_x
-            self.length_y        = length_y
-            self.length_diag     = length_diag
-            self.length_antidiag = length_antidiag
             self.length_edx      = length_edx
             self.length_edy      = length_edy
-            self.angles          = angles
             self.areas           = areas
 
             self.metric_tensor_centers = metric_tensor_centers
-            self.metric_tensor_edx     = metric_tensor_edx
-            self.metric_tensor_edy     = metric_tensor_edy
 
             self.prod_ex_elon_edx = prod_ex_elon_edx
             self.prod_ex_elat_edx = prod_ex_elat_edx
@@ -431,7 +369,7 @@ class cubed_sphere:
             # Compute arclen
             d = sphgeo.arclen(p1, p2)
             d = np.reshape(d,(N+nghost,N+nghost+1,nbfaces))
-            self.length_x = d
+            length_x = d[:,:,:]
             # Compute the geodesic distance of cell edges in y direction
             # Given points
             p1 = [vertices.X[:,0:N+nghost  ,:], vertices.Y[:,0:N+nghost  ,:], vertices.Z[:,0:N+nghost  ,:]]
@@ -444,7 +382,7 @@ class cubed_sphere:
             # Compute arclen
             d = sphgeo.arclen(p1,p2)
             d = np.reshape(d,(N+nghost+1,N+nghost,nbfaces))
-            self.length_y = d
+            length_y = d[:,:,:]
 
             # Cell diagonal length
             # Given points
@@ -458,23 +396,10 @@ class cubed_sphere:
             # Compute arclen
             d = sphgeo.arclen(p1,p2)
             d = np.reshape(d,(N+nghost,N+nghost,nbfaces))
-            self.length_diag = d
+            length_diag = d[:,:,:]
 
-            # Cell antidiagonal length
-            # Given points
-            p1 = [vertices.X[0:N+nghost,0:N+nghost,:], vertices.Y[0:N+nghost,0:N+nghost,:], vertices.Z[0:N+nghost,0:N+nghost,:]]
-            p2 = [vertices.X[1:N+nghost+1,1:N+nghost+1,:], vertices.Y[1:N+nghost+1,1:N+nghost+1,:], vertices.Z[1:N+nghost+1,1:N+nghost+1,:]]
-
-            # Reshape
-            p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost)*nbfaces))
-            p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost)*nbfaces))
-
-            # Compute arclen
-            d = sphgeo.arclen(p1,p2)
-            d = np.reshape(d,(N+nghost,N+nghost,nbfaces))
-            self.length_antidiag = d
-            # Compute cell angles
-            # Each angle of a cell is identified as below
+            # Compute cell areas
+            # Each edge of a cell is identified as below
             #    D---------C
             #    |         |
             #    |         |
@@ -482,55 +407,22 @@ class cubed_sphere:
             #    |         |
             #    A---------B
             #
-            if showonscreen==True:
-                print("Computing cell angles...")
-            angles = np.zeros((N+nghost, N+nghost, nbfaces, 4))
-
-            # Compute the angle A using the triangle ABD
-            a = self.length_x[:,0:N+nghost,:] # AB
-            b = self.length_y[0:N+nghost,:,:] # AD
-            c = self.length_diag            # DB
-            angles[:,:,:,0] = sphgeo.tri_angle(a, b, c)
+            # Compute the area of triangle ABD
+            a = length_x[:,0:N+nghost,:] # AB
+            b = length_y[0:N+nghost,:,:] # AD
+            c = length_diag            # DB
             areas = sphgeo.tri_area(a, b, c)
 
-            # Compute the angle B using the triangle ABC
-            a = self.length_x[:,0:N+nghost,:]   # AB
-            b = self.length_y[1:N+nghost+1,:,:] # BC
-            c = self.length_antidiag          # AB
-            angles[:,:,:,1] = sphgeo.tri_angle(a, b, c)
-
-            # Compute the angle C using the triangle DCB
-            a = self.length_x[:,1:N+nghost+1,:] # DC
-            b = self.length_y[1:N+nghost+1,:,:] # CB
-            c = self.length_diag              # DB
-            angles[:,:,:,2] = sphgeo.tri_angle(a, b, c)
+            # Compute the area of triangle DCB
+            a = length_x[:,1:N+nghost+1,:] # DC
+            b = length_y[1:N+nghost+1,:,:] # CB
+            c = length_diag              # DB
             areas = areas + sphgeo.tri_area(a, b, c)
-
-            # Compute the angle D using the triangle ADC
-            a = self.length_x[:,1:N+nghost+1,:] # DC
-            b = self.length_y[0:N+nghost,:,:]   # AD
-            c = self.length_antidiag          # CA
-            angles[:,:,:,3] = sphgeo.tri_angle(a, b, c)
-
-            # Angles attribute
-            self.angles = angles
 
             # Compute areas
             if showonscreen==True:
                 print("Computing cell areas...")
             self.areas = (self.R**2)*areas
-            self.length_x = self.R*self.length_x
-            self.length_y = self.R*self.length_y
-            # Use spherical excess formula
-            #self.areas = sphgeo.quad_area(angles[:,:,:,0], angles[:,:,:,1], angles[:,:,:,2], angles[:,:,:,3])
-            #self.areas = areas
-            #x = np.linspace(x_min, x_max, N+1)
-            #y = np.linspace(y_min, y_max, N+1)
-            #x, y = np.meshgrid(x, y, indexing='ij')
-            #areas2 = np.zeros((N, N, nbfaces))
-            #areas2[:,:,:]= sphgeo.quad_areas(x, y)
-
-            #print(np.amax(abs(areas2[:,:,0]-areas[:,:,0])/areas[:,:,0]))
 
             # Cell edx length
             # Given points
@@ -563,6 +455,7 @@ class cubed_sphere:
 
             self.length_edy = self.R*d
             #print(np.amin(self.length_edy),np.amax(self.length_edy))
+
             # Generate tangent vectors
             if showonscreen==True:
                 print("Generating latlon tangent vectors...")
@@ -632,20 +525,15 @@ class cubed_sphere:
 
         if showonscreen==True:
             # Print some grid properties
-            print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_x[i0:iend+1,j0:jend,:])*erad/10**3))
-            print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_x[i0:iend+1,j0:jend,:])*erad/10**3))
-            print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_x[i0:iend+1,j0:jend,:])*erad/10**3))
-            print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_x[i0:iend+1,j0:jend,:])/np.amin(self.length_x[i0:iend+1,j0:jend+1,:])))
+            print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
+            print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
+            print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
+            print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])/np.amin(self.length_edx[i0:iend+1,j0:jend+1,:])))
 
             print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
             print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
             print("Mean area (km2)        : ","{:.2e}".format(np.mean(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
             print("Ratio max/min area     : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])/np.amin(self.areas[i0:iend,j0:jend,:])))
-
-            print("Min  angle (degrees)   : ","{:.2e}".format(np.amin(self.angles[i0:iend+1,j0:jend+1,:]*rad2deg)))
-            print("Max  angle (degrees)   : ","{:.2e}".format(np.amax(self.angles[i0:iend+1,j0:jend+1,:]*rad2deg)))
-            print("Mean angle (degrees)   : ","{:.2e}".format(np.mean(self.angles[i0:iend+1,j0:jend+1,:]*rad2deg)))
-            print("Ratio max/min angle    : ","{:.2e}".format(np.amax(self.angles[i0:iend+1,j0:jend+1,:])/np.amin(self.angles[i0:iend+1,j0:jend+1,:])))
 
             #m = N
             #ratio = (1+2*np.tan((pi/4))**2 * (1-1/m))**1.5
