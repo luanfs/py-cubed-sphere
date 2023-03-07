@@ -8,9 +8,9 @@
 #Show ongoing process details on screen? 0-No; 1-Yes
 2
 #Test case to be done
-1
-#Map projection (for plotting): 1-mercator; 2-sphere 
 2
+#Map projection (for plotting): 1-mercator; 2-sphere 
+1
 #-----------Description of parameters -------------------------------------
 #Possible test cases
 #  case(1) - Cubed-sphere generation and plotting
