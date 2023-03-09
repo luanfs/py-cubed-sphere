@@ -17,9 +17,9 @@ from sphgeo import*
 ####################################################################################
 # This routine plots the cubed-sphere grid.
 ####################################################################################
- # Figure format
-#fig_format = 'png'
-fig_format = 'pdf'
+# Figure format
+fig_format = 'png'
+#fig_format = 'pdf'
 def plot_grid(grid, map_projection):
     # Figure resolution
     dpi = 100
@@ -247,6 +247,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
 
     ax.coastlines()
+
 
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
