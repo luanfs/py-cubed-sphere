@@ -18,7 +18,7 @@
 import numpy as np
 import numexpr as ne
 from constants import nbfaces
-
+from edges_treatment import average_parabola_cube_edges, edges_extrapolation
 ####################################################################################
 # Given the average values of a scalar field Q, this routine constructs
 # a piecewise parabolic aproximation of Q using its average value.
@@ -38,7 +38,6 @@ def ppm_reconstruction_x(Q, px, cs_grid, simulation):
         Q3 = Q[i0:iend+3,:,:]
         Q4 = Q[i0-3:iend,:,:]
         px.Q_edges[i0-1:iend+2,:,:] = ne.evaluate("(7.0/12.0)*(Q1+Q2) - (Q3+Q4)/12.0")
-
         # Assign values of Q_R and Q_L
         px.q_R[i0-1:iend+1,:,:] = px.Q_edges[i0:iend+2,:,:]
         px.q_L[i0-1:iend+1,:,:] = px.Q_edges[i0-1:iend+1,:,:]
@@ -382,3 +381,23 @@ def ppm_reconstruction_y(Q, py, cs_grid, simulation):
     q = Q[:,j0-1:jend+1,:]
     py.dq[:,j0-1:jend+1,:] = ne.evaluate('q_R-q_L')
     py.q6[:,j0-1:jend+1,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
+
+#########################################################################
+#
+# This routine computes the parabolas of PPM in x and y direction
+#
+########################################################################
+def ppm_reconstruction(Q, px, py, cs_grid, simulation):
+    # Reconstruct the values at edged
+    ppm_reconstruction_x(Q, px, cs_grid, simulation)
+    ppm_reconstruction_y(Q, py, cs_grid, simulation)
+
+    if simulation.edge_treatment==3 or simulation.edge_treatment==4:
+        # Extrapolation at cells near the cube edges
+        edges_extrapolation(Q, px, py, cs_grid, simulation)
+
+    # does the averaging
+    if simulation.edge_treatment==2 or simulation.edge_treatment==4:
+        average_parabola_cube_edges(px, py, cs_grid)
+
+

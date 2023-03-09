@@ -6,7 +6,7 @@
 import numpy as np
 from constants import*
 from interpolation          import ghost_cells_lagrange_interpolation
-from flux                   import compute_fluxes, fix_fluxes_at_cube_edges, average_fluxes_at_cube_edges
+from flux                   import compute_fluxes
 from advection_ic           import velocity_adv
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y

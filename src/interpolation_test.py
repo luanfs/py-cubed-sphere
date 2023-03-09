@@ -16,7 +16,7 @@ from scipy.special          import sph_harm
 from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
 from lagrange               import lagrange_poly_ghostcells
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
-from reconstruction_1d      import ppm_reconstruction_x, ppm_reconstruction_y
+from reconstruction_1d      import ppm_reconstruction
 
 ####################################################################################
 # Interpolation simulation class
@@ -176,7 +176,7 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
 ####################################################################################
 def error_analysis_recon(map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 4
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -189,10 +189,12 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     # Errors array
     recons = (3,4)
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
-    error_linf = np.zeros((Ntest, len(recons)))
-    error_l1   = np.zeros((Ntest, len(recons)))
-    error_l2   = np.zeros((Ntest, len(recons)))
+    ets = (1,2,3,4)
+    error_linf = np.zeros((Ntest, len(ets), len(recons)))
+    error_l1   = np.zeros((Ntest, len(ets), len(recons)))
+    error_l2   = np.zeros((Ntest, len(ets), len(recons)))
 
+    # Edge treatment
     # Function to be reconstructed
     ic = get_interpolation_parameters()
 
@@ -200,73 +202,78 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     colormap = 'Blues'
 
     # Let us test and compute the error
-    rec = 0
-    for recon in recons:
-        for i in range(0, Ntest):
-            N = int(Nc[i])
+    ET = 0
+    for et in ets:
+        rec = 0
+        for recon in recons:
+            for i in range(0, Ntest):
+                N = int(Nc[i])
 
-            # Get parameters
-            simulation = recon_simulation_par(ic, recon)
+                # Get parameters
+                simulation = recon_simulation_par(ic, recon, et)
 
-            # Create CS mesh
-            cs_grid = cubed_sphere(N, transformation, False, gridload)
+                # Create CS mesh
+                cs_grid = cubed_sphere(N, transformation, False, gridload)
 
-            # Create the latlon mesh (for plotting)
-            ll_grid = latlon_grid(Nlat, Nlon)
-            ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+                # Create the latlon mesh (for plotting)
+                ll_grid = latlon_grid(Nlat, Nlon)
+                ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
-            # Interior cells index (ignoring ghost cells)
-            i0   = cs_grid.i0
-            iend = cs_grid.iend
-            j0   = cs_grid.j0
-            jend = cs_grid.jend
-            N = cs_grid.N
-            nghost = cs_grid.nghost
+                # Interior cells index (ignoring ghost cells)
+                i0   = cs_grid.i0
+                iend = cs_grid.iend
+                j0   = cs_grid.j0
+                jend = cs_grid.jend
+                N = cs_grid.N
+                nghost = cs_grid.nghost
 
-            # Get values at centers
-            Q = np.zeros((N+nghost, N+nghost, nbfaces))
-            Qexact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
-            q_edx = q_scalar_field(cs_grid.edx.lon, cs_grid.edx.lat, simulation)
-            q_edy = q_scalar_field(cs_grid.edy.lon, cs_grid.edy.lat, simulation)
+                # Get values at centers
+                Q = np.zeros((N+nghost, N+nghost, nbfaces))
+                Qexact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
+                q_edx = q_scalar_field(cs_grid.edx.lon, cs_grid.edx.lat, simulation)
+                q_edy = q_scalar_field(cs_grid.edy.lon, cs_grid.edy.lat, simulation)
 
-            Q[i0:iend,j0:jend,:] = Qexact[i0:iend,j0:jend,:]
+                Q[i0:iend,j0:jend,:] = Qexact[i0:iend,j0:jend,:]
 
-            print('\nParameters: N = '+str(int(Nc[i]))+', recon = ', recon)
+                print('\nParameters: N = '+str(int(Nc[i]))+', et = '+str(et)+' , recon = ', recon)
 
-            # Get Lagrange polynomials
-            lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+                if simulation.edge_treatment==1 or simulation.edge_treatment==2: # Uses ghost cells interpolation
+                    # Get Lagrange polynomials
+                    lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
-            # Interpolate to ghost cells
-            ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+                    # Interpolate to ghost cells
+                    ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
-            # PPM parabolas
-            px = ppm_parabola(cs_grid,simulation,'x')
-            py = ppm_parabola(cs_grid,simulation,'y')
+                # PPM parabolas
+                px = ppm_parabola(cs_grid,simulation,'x')
+                py = ppm_parabola(cs_grid,simulation,'y')
+                ppm_reconstruction(Q, px, py, cs_grid, simulation)
 
-            # Reconstruct the values at edged
-            ppm_reconstruction_x(Q, px, cs_grid, simulation)
-            ppm_reconstruction_y(Q, py, cs_grid, simulation)
+                # Plot the error
+                error_plot = scalar_field(cs_grid, 'error', 'center')
+                error_plot.f = 0.0
+                error_plot.f = abs(q_edx[i0:iend,j0:jend,:]-px.q_L[i0:iend,j0:jend,:])
+                error_plot.f = np.maximum(abs(q_edx[i0:iend,j0:jend,:]-px.q_L[i0:iend,j0:jend,:]),\
+                                          abs(q_edx[i0+1:iend+1,j0:jend,:]-px.q_R[i0:iend,j0:jend,:]))
+                error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0:jend,:]-py.q_L[i0:iend:,j0:jend,:]))
+                error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
 
-            # Plot the error
-            error_plot = scalar_field(cs_grid, 'error', 'center')
-            error_plot.f = 0.0
-            error_plot.f = np.maximum(abs(q_edx[i0:iend,j0:jend,:]-px.q_L[i0:iend:,j0:jend,:]),\
-                                      abs(q_edx[i0+1:iend+1,j0:jend,:]-px.q_R[i0:iend:,j0:jend,:]))
-            error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0:jend,:]-py.q_L[i0:iend:,j0:jend,:]))
-            error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
+                # Relative errors in different metrics
+                error_linf[i,ET,rec], error_l1[i,ET,rec], error_l2[i,ET,rec] = compute_errors(error_plot.f,0*error_plot.f)
+                print_errors_simul(error_linf[:,ET,rec], error_l1[:,ET,rec], error_l2[:,ET,rec], i)
 
-            # Relative errors in different metrics
-            error_linf[i,rec], error_l1[i,rec], error_l2[i,rec] = compute_errors(error_plot.f,0*error_plot.f)
-            print_errors_simul(error_linf[:,rec], error_l1[:,rec], error_l2[:,rec], i)
-
-            #error_plot.f = Q[i0:iend,j0:jend,:]
-            e_ll = nearest_neighbour(error_plot, cs_grid, ll_grid)
-            emax_abs = np.amax(abs(e_ll))
-            emin, emax = 0, emax_abs
-            #emin, emax = np.amin(e_ll), np.amax(e_ll)
-            name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name
-            #plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax)
-        rec = rec+1
+                #error_plot.f = Q[i0:iend,j0:jend,:]
+                e_ll = nearest_neighbour(error_plot, cs_grid, ll_grid)
+                emax_abs = np.amax(abs(e_ll))
+                emin, emax = 0, emax_abs
+                #emin, emax = np.amin(e_ll), np.amax(e_ll)
+                name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name\
+                +'_et'+str(simulation.edge_treatment)
+                filename = 'Reconstruction error, ic='+ str(simulation.ic)+\
+                ', recon='+simulation.recon_name+', et='+str(simulation.edge_treatment)+', N='+str(cs_grid.N)
+                plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
+            rec = rec+1
+        ET = ET + 1
 
     # Outputs
     # plot errors for different all schemes in  different norms
@@ -286,8 +293,9 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         errors = []
         name = []
         for r in range(0, len(recons)):
-            errors.append(error[:,r])
-            name.append(recon_names[recons[r]-1])
+            for et in ets:
+                errors.append(error[:,et-1,r])
+                name.append(recon_names[recons[r]-1]+'-ET'+str(et))
 
         title ='Reconstruction error, ic='+ str(simulation.ic)+', norm='+norm_title[e]
         filename = graphdir+'cs_recon_ic'+str(ic)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
@@ -303,7 +311,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
 # Reconstruction simulation class
 ####################################################################################
 class recon_simulation_par:
-    def __init__(self, ic, recon):
+    def __init__(self, ic, recon, et):
         # Scalar field
         self.ic = ic
 
@@ -332,3 +340,9 @@ class recon_simulation_par:
         self.icname = name
         self.title = 'Reconstruction'
 
+        # Edges treatment
+        if et>=1 and et<=4:
+            self.edge_treatment = et
+        else:
+            print('ERROR in recon_simulation_par: invalid ET')
+            exit()
