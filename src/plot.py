@@ -269,7 +269,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
     # Plot colorbar
-    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)
+    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.0e')
 
     # Save the figure
     plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)
@@ -350,7 +350,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
     plt.title(title)
 
     # Plot colorbar
-    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04)
+    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04, format='%.0e')
 
     #ax.coastlines()
 
