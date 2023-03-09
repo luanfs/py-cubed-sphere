@@ -18,8 +18,8 @@ from sphgeo import*
 # This routine plots the cubed-sphere grid.
 ####################################################################################
  # Figure format
-fig_format = 'png'
-#fig_format = 'pdf'
+#fig_format = 'png'
+fig_format = 'pdf'
 def plot_grid(grid, map_projection):
     # Figure resolution
     dpi = 100
@@ -33,6 +33,9 @@ def plot_grid(grid, map_projection):
 
     # Plot ghost cells?
     plot_gc = False
+
+    # Plot C grid points?
+    plot_cgrid = False
 
     # Color of each cubed panel
     colors = ('blue','red','blue','red','green','green')
@@ -153,6 +156,28 @@ def plot_grid(grid, map_projection):
             plt.xlim(-80,80)
             plt.ylim(-80,80)
 
+        elif plot_cgrid:
+            if p==0:
+                A_lon, A_lat = lonc[:,:], latc[:,:]
+                for i in range(i0, iend):
+                    for j in range(j0, jend):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'black', transform=ccrs.Geodetic())
+
+                A_lon, A_lat = lon_edx[:,:], lat_edx[:,:]
+                for i in range(i0, iend+1):
+                    for j in range(j0, jend):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'blue', transform=ccrs.Geodetic())
+
+                A_lon, A_lat = lon_edy[:,:], lat_edy[:,:]
+                for i in range(i0, iend):
+                    for j in range(j0, jend+1):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'red', transform=ccrs.Geodetic())
+
+
+                plt.xlim(-50,50)
+                plt.ylim(-50,50)
+
+
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
     # Save the figure
@@ -164,7 +189,8 @@ def plot_grid(grid, map_projection):
 ####################################################################################
 # This routine plots the scalar field "field" given in the latlon_grid
 ####################################################################################
-def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, colormap=None, qmin=None, qmax=None):
+def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
+                      colormap=None, qmin=None, qmax=None, filename=None):
     print("Plotting scalar field",name,"...")
 
     # Figure quality
@@ -233,6 +259,10 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, colorma
     if not qmin or not qmax:
         qmin = np.amin(field)
         qmax = np.amax(field)
+
+    # add title
+    if filename:
+        plt.title(filename)
 
     # Plot the scalar field
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
