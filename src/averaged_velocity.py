@@ -20,8 +20,8 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
         twodt = simulation.twodt
 
         #----------------------------------------------------
-        Xu = cs_grid.edx.lat
-        Yu = cs_grid.edx.lon
+        Xu = cs_grid.edx.lon
+        Yu = cs_grid.edx.lat
         K1u, K1v = velocity_adv(Xu          , Yu, t, simulation)
         K2u, K2v = velocity_adv(Xu-dto2*K1u , Yu, t-dto2, simulation)
         K3u, K3v = velocity_adv(Xu-twodt*K2u, Yu, t-dt, simulation)
@@ -31,8 +31,8 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
                                                        cs_grid.prod_ey_elon_edx, cs_grid.prod_ey_elat_edx, cs_grid.determinant_ll2contra_edx)
 
        #----------------------------------------------------
-        Xu = cs_grid.edy.lat
-        Yu = cs_grid.edy.lon
+        Xu = cs_grid.edy.lon
+        Yu = cs_grid.edy.lat
         K1u, K1v = velocity_adv(Xu, Yu          , t, simulation)
         K2u, K2v = velocity_adv(Xu, Yu-dto2*K1v , t-dto2, simulation)
         K3u, K3v = velocity_adv(Xu, Yu-twodt*K2v, t-dt, simulation)
