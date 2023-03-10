@@ -2,19 +2,19 @@
 #Total period definition (seconds)
 5
 #Time step (seconds)
-0.0025	
+0.01	
 #Initial condition
 2	
 #Vector field 
-1
+2
 #Test case
-1
+2
 #Reconstruction(1, 2, 3, 4)
+4
+#Departure point scheme (1 or 2)
 1
 #Operator splitting(1, 2, 3)
 1
-#Ghost cells interpolation degree (>=0)
-3
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
 #  case(1) - constant flow
