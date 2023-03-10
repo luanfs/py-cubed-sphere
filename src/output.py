@@ -149,7 +149,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                 # Relative errors in different metrics
                 error_linf[k], error_l1[k], error_l2[k] = compute_errors(d.f, dex.f)
 
-                filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name
+                filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name+'_'+simulation.dp_name
                 title = "Divergence error"+', N='+str(cs_grid.N)+", vf="+str(simulation.vf)+", CFL="+cfl+', '\
                 +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name
                 plot_scalar_field(error_d, filename, cs_grid, ll_grid, map_projection, \
@@ -158,7 +158,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                 if simulation.vf >= 5: # Plot the divergence
                     colormap = 'jet'
                     dmin, dmax = np.amin(d_ll), np.amax(d_ll)
-                    filename = 'div_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name
+                    filename = 'div_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name+'_'+simulation.dp_name
                     title = "Divergence"+', N='+str(cs_grid.N)+", vf = "+str(simulation.vf)+", CFL = "+cfl+', '\
                     +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name
                     plot_scalar_field(d_ll, filename, cs_grid, ll_grid, map_projection, \
