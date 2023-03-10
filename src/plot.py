@@ -18,8 +18,8 @@ from sphgeo import*
 # This routine plots the cubed-sphere grid.
 ####################################################################################
 # Figure format
+#fig_format = 'eps'
 fig_format = 'png'
-#fig_format = 'pdf'
 def plot_grid(grid, map_projection):
     # Figure resolution
     dpi = 100
@@ -241,10 +241,10 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        #plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
 
     ax.coastlines()
 
@@ -269,7 +269,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
     # Plot colorbar
-    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.0e')
+    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.1e')
 
     # Save the figure
     plt.savefig(graphdir+cs_grid.name+"_"+name+"_"+map_projection+'.'+fig_format, format=fig_format)
@@ -334,14 +334,14 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
         D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        plt.plot([A_lon, B_lon], [A_lat, B_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
-        plt.plot([B_lon, C_lon], [B_lat, C_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
-        plt.plot([C_lon, D_lon], [C_lat, D_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
-        plt.plot([D_lon, A_lon], [D_lat, A_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        #plt.plot([A_lon, B_lon], [A_lat, B_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        #plt.plot([B_lon, C_lon], [B_lat, C_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        #plt.plot([C_lon, D_lon], [C_lat, D_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
+        #plt.plot([D_lon, A_lon], [D_lat, A_lat], linewidth=0.5, color='black', transform=ccrs.Geodetic())
 
 
-    #if map_projection == 'mercator':
-    #    ax.gridlines(draw_labels=True)
+    if map_projection == 'mercator':
+        ax.gridlines(draw_labels=True)
 
     # Plot the scalar field
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
@@ -350,7 +350,7 @@ def plot_scalar_and_vector_field(field, ulon_edx, vlat_edx, ulon_edy, vlat_edy, 
     plt.title(title)
 
     # Plot colorbar
-    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04, format='%.0e')
+    plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04, format='%.1e')
 
     #ax.coastlines()
 
