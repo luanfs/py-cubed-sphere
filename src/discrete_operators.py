@@ -13,12 +13,12 @@ import numexpr as ne
 # are the cfl numbers (must be already computed)
 # The divergence is given by px.dF + py.dF
 ####################################################################################
-def divergence(gQ, div, u_edges, v_edges, px, py, cx, cy, cs_grid, simulation):
+def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation):
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel
-    F_operator(px.dF, cx, u_edges, px.f_upw, cs_grid, simulation)
-    G_operator(py.dF, cy, v_edges, py.f_upw, cs_grid, simulation)
+    F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
+    G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
 
     N = cs_grid.N
     ng = cs_grid.nghost
@@ -58,8 +58,8 @@ def divergence(gQ, div, u_edges, v_edges, px, py, cx, cy, cs_grid, simulation):
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel again
-    F_operator(px.dF, cx, u_edges, px.f_upw, cs_grid, simulation)
-    G_operator(py.dF, cy, v_edges, py.f_upw, cs_grid, simulation)
+    F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
+    G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
 
     # Compute the divergence
     i0, j0, iend, jend  = cs_grid.i0, cs_grid.j0, cs_grid.iend, cs_grid.jend
@@ -77,7 +77,7 @@ def divergence(gQ, div, u_edges, v_edges, px, py, cx, cy, cs_grid, simulation):
 # u_edges (velocity in x direction at edges)
 # Formula 2.7 from Lin and Rood 1996
 ####################################################################################
-def F_operator(F, cx, u_edges, flux_x, cs_grid, simulation):
+def F_operator(F, cx, flux_x, cs_grid, simulation):
     N = cs_grid.N
     i0 = cs_grid.i0
     iend = cs_grid.iend
@@ -96,7 +96,7 @@ def F_operator(F, cx, u_edges, flux_x, cs_grid, simulation):
 # v_edges (velocity in y direction at edges)
 # Formula 2.8 from Lin and Rood 1996
 ####################################################################################
-def G_operator(G, cy, v_edges, flux_y, cs_grid, simulation):
+def G_operator(G, cy, flux_y, cs_grid, simulation):
     M = cs_grid.N
     j0 = cs_grid.j0
     jend = cs_grid.jend
@@ -107,38 +107,4 @@ def G_operator(G, cy, v_edges, flux_y, cs_grid, simulation):
     g1 = flux_y[:,j0+1:jend+1,:]
     g2 = flux_y[:,j0:jend,:]
     G[:,j0:jend,:] = ne.evaluate("-(c1*g1-c2*g2)")
-
-####################################################################################
-def fix_splitting_operator_ghost_cells(F, G, cs_grid):
-    i0 = cs_grid.i0
-    iend = cs_grid.iend
-    j0 = cs_grid.j0
-    jend = cs_grid.jend
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
-
-    # Fix F and G at Panel 1/ Panel 4 ghost cells
-    F[i0:iend,jend:jend+ngr,1] = G[i0:iend,jend:jend+ngr,1]
-
-    # Fix F at Panel 1/ Panel 5 ghost cells
-    F[i0:iend,0:ngl,1] = G[i0:iend,0:ngl,1]
-
-    # Fix F at Panel 3/ Panel 4 ghost cells
-    F[i0:iend,jend:jend+ngr,3] = G[i0:iend,jend:jend+ngr,3]
-
-    # Fix F at Panel 3/ Panel 5 ghost cells
-    F[i0:iend,0:ngl,3] = G[i0:iend,0:ngl,3]
-
-    # Fix G at Panel 4/ Panel 1 ghost cells
-    G[iend:iend+ngr,j0:jend,4] = F[iend:iend+ngr,j0:jend,4]
-
-    # Fix G at Panel 4/ Panel 3 ghost cells
-    G[0:ngl,j0:jend,4] = F[0:ngl,j0:jend,4]
-
-    # Fix G at Panel 5/ Panel 3 ghost cells
-    G[iend:iend+ngr,j0:jend,5] = F[iend:iend+ngr,j0:jend,5]
-
-    # Fix G at Panel 5/ Panel 1 ghost cells
-    G[0:ngl,j0:jend,5] = F[0:ngl,j0:jend,5]
-
 

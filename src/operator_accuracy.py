@@ -56,13 +56,13 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    #recons = (3,4)
-    deps = (1,)
-    #split = (1,3)
+    recons = (3,4)
+    #deps = (1,)
+    split = (1,3)
 
-    recons = (simulation.recon,)
-    #deps = (simulation.dp,)
-    split = (simulation.opsplit,)
+    #recons = (simulation.recon,)
+    deps = (simulation.dp,)
+    #split = (simulation.opsplit,)
 
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK3']
@@ -72,7 +72,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     error_l2   = np.zeros((Ntest, len(recons), len(split), len(deps)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, opsplit = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, dp, opsplit = get_advection_parameters()
 
     # For divergence testing, we consider a constant field
     ic = 1
@@ -86,7 +86,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
             for recon in recons:
                 for i in range(0, Ntest):
                     dt = dts[i]
-                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, opsplit)
+                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit)
                     N = int(Nc[i])
 
                     # Create CS mesh
@@ -126,7 +126,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
             for sp in range(0, len(split)):
                 for r in range(0, len(recons)):
                     errors.append(error[:,r,sp,d])
-                    dep_name.append(sp_names[sp-1]+'/'+recon_names[recons[r]-1])
+                    dep_name.append(sp_names[split[sp]-1]+'/'+recon_names[recons[r]-1])
 
             title = 'Divergence error, vf='+ str(simulation.vf)+\
             ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]

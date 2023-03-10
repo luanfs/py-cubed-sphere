@@ -712,13 +712,13 @@ class velocity_edges:
             self.vlat = np.zeros((N+1+ng, N+ng, nbfaces))
             self.ucontra = np.zeros((N+1+ng, N+ng, nbfaces))
             self.vcontra = np.zeros((N+1+ng, N+ng, nbfaces))
-            self.u_averaged = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
+            self.ucontra_averaged = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
         elif pos == 'pv':
             self.ulon = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vlat = np.zeros((N+ng, N+1+ng, nbfaces))
             self.ucontra = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vcontra = np.zeros((N+ng, N+1+ng, nbfaces))
-            self.v_averaged = np.zeros((N+ng, N+1+ng)) # used for departure point
+            self.vcontra_averaged = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
         else:
             print('ERROR in  velocity class: invalid position, ', pos)
 

@@ -4,14 +4,17 @@ from constants import nbfaces
 import numexpr as ne
 
 ####################################################################################
-# Compute the 1d flux operator
-# Inputs: Q (average values),  u_edges (velocity at edges)
+# Compute the 1d flux operators
 ####################################################################################
-def compute_flux_x(Q, px, cx, cs_grid, simulation):
+def compute_fluxes(Qx, Qy, px, py, cx, cy, cs_grid, simulation):
     # Reconstructs the values of Q using a piecewise parabolic polynomial
-    rec.ppm_reconstruction_x(Q, px, cs_grid, simulation)
+    rec.ppm_reconstruction_x(Qx, px, cs_grid, simulation)
+    rec.ppm_reconstruction_y(Qy, py, cs_grid, simulation)
+
     # Compute the fluxes
     numerical_flux_ppm_x(px, cx, cs_grid, simulation)
+    numerical_flux_ppm_y(py, cy, cs_grid, simulation)
+
 
 ####################################################################################
 # PPM flux in x direction
@@ -47,18 +50,6 @@ def numerical_flux_ppm_x(px, cx, cs_grid, simulation):
     px.f_upw[mask]  = px.f_L[mask]
     px.f_upw[~mask] = px.f_R[~mask]
 
-
-####################################################################################
-# Compute the 1d flux operator
-# Inputs: Q (average values),  v_edges (velocity at edges)
-####################################################################################
-def compute_flux_y(Q, py, cy, cs_grid, simulation):
-    # Reconstructs the values of Q using a piecewise parabolic polynomial
-    rec.ppm_reconstruction_y(Q, py, cs_grid, simulation)
-
-    # Compute the fluxes
-    numerical_flux_ppm_y(py, cy, cs_grid, simulation)
-
 ###############################################################################
 # PPM flux in y direction
 ####################################################################################
@@ -92,49 +83,3 @@ def numerical_flux_ppm_y(py, cy, cs_grid, simulation):
     mask = ne.evaluate('cy >= 0')
     py.f_upw[mask]  = py.f_L[mask]
     py.f_upw[~mask] = py.f_R[~mask]
-
-####################################################################################
-# Flux operator in y direction
-# Inputs: Q (average values),
-# v_edges (velocity in y direction at edges)
-# Formula 2.8 from Lin and Rood 1996
-####################################################################################
-def compute_fluxes(Qx, Qy, px, py, cx, cy, cs_grid, simulation):
-    # Compute the fluxes in x direction
-    compute_flux_x(Qx, px, cx, cs_grid, simulation)
-
-    # Compute the fluxes in y direction
-    compute_flux_y(Qy, py, cy, cs_grid, simulation)
-
-"""
-####################################################################################
-# Compute the 1d flux operator from PPM using its stencil
-# Inputs: Q (average values),  u_edges (zonal velocity at edges)
-####################################################################################
-def flux_ppm_x_stencil(Q, u_edges, flux_x, ax, cs_grid, simulation):
-    i0   = cs_grid.i0
-    iend = cs_grid.iend
-
-    flux_x[i0:iend+1,:,:] = ax[0,i0:iend+1,:,:]*Q[i0-3:iend-2,:,:] +\
-                            ax[1,i0:iend+1,:,:]*Q[i0-2:iend-1,:,:] +\
-                            ax[2,i0:iend+1,:,:]*Q[i0-1:iend+0,:,:] +\
-                            ax[3,i0:iend+1,:,:]*Q[i0+0:iend+1,:,:] +\
-                            ax[4,i0:iend+1,:,:]*Q[i0+1:iend+2,:,:] +\
-                            ax[5,i0:iend+1,:,:]*Q[i0+2:iend+3,:,:]
-
-####################################################################################
-# Compute the 1d flux operator from PPM using its stencil
-# Inputs: Q (average values),  v_edges (zonal velocity at edges)
-####################################################################################
-def flux_ppm_y_stencil(Q, v_edges, flux_y, ay, cs_grid, simulation):
-    j0   = cs_grid.j0
-    jend = cs_grid.jend
-
-    flux_y[:,j0:jend+1,:] = ay[0,:,j0:jend+1,:]*Q[:,j0-3:jend-2,:] +\
-                            ay[1,:,j0:jend+1,:]*Q[:,j0-2:jend-1,:] +\
-                            ay[2,:,j0:jend+1,:]*Q[:,j0-1:jend+0,:] +\
-                            ay[3,:,j0:jend+1,:]*Q[:,j0+0:jend+1,:] +\
-                            ay[4,:,j0:jend+1,:]*Q[:,j0+1:jend+2,:] +\
-                            ay[5,:,j0:jend+1,:]*Q[:,j0+2:jend+3,:]
-
-"""

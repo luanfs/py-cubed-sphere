@@ -19,7 +19,7 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, recon, opsplit):
+    def __init__(self, dt, Tf, ic, vf, tc, recon, dp, opsplit):
         # Initial condition
         self.ic = ic
 
@@ -31,9 +31,14 @@ class adv_simulation_par:
 
         # Time step
         self.dt = dt
+        self.dto2  = dt*0.5
+        self.twodt = dt*2.0
 
         # Flux method
         self.recon = recon
+
+        # Departure point scheme
+        self.dp = dp
 
         # Splitting method
         self.opsplit= opsplit
@@ -91,6 +96,15 @@ class adv_simulation_par:
            print("Error in adv_simulation_par - invalid reconstruction method")
            exit()
 
+        # Departure point scheme
+        if dp == 1:
+            dp_name = 'RK1'
+        elif dp == 2:
+            dp_name = 'RK3'
+        else:
+           print("Error in simulation_adv_par_1d - invalid departure point scheme", dp)
+           exit()
+
         # Operator splitting scheme
         if opsplit == 1:
             opsplit_name = 'SP-AVLT' # Average Lie-Trotter splitting
@@ -107,6 +121,9 @@ class adv_simulation_par:
 
         # Flux method name
         self.recon_name = recon_name
+
+        # Departure point method
+        self.dp_name = dp_name
 
         # Simulation title
         if tc == 1:
