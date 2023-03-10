@@ -39,10 +39,9 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
     if transformation == "gnomonic_equiangular":
         inverse = inverse_equiangular_gnomonic_map
         x_min, x_max = [-pio4, pio4] # Angular coordinates
-    elif transformation == "gnomonic_equidistant":
-        inverse = inverse_equidistant_gnomonic_map
-        a = cs_grid.R/np.sqrt(3.0)  # Half length of the cube
-        x_min, x_max = [-a, a]
+    else:
+        print('ERROR in lagrange_poly_ghostcells: grid is not gnomonic_equiangular.')
+        exit()
 
     dx = cs_grid.dx
     xc = np.linspace(x_min+dx/2.0-ngl*dx, x_max-dx/2.0+ngr*dx, N+ng) # Centers
