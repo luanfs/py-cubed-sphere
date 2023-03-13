@@ -313,3 +313,26 @@ def ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
 
             Q[0:i0,0:j0,p] = halo_data_ghost[:,:]
 
+####################################################################################
+# This routine set the ghost cell values equal to the adjacent panel values
+# ignoring the coordinate system discontinuity
+####################################################################################
+def ghost_cells_adjacent_panels(Q, cs_grid, simulation):
+   # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+
+    # Get halo data
+    halodata = get_halo_data_interpolation(Q, cs_grid)
+    halo_data_east  = halodata[0]
+    halo_data_west  = halodata[1]
+    halo_data_north = halodata[2]
+    halo_data_south = halodata[3]
+
+    # Set the values of the adjacent panel for ghost cells
+    Q[0:i0,:,:]  = halo_data_west[:,:,:]
+    Q[iend:,:,:] = halo_data_east[:,:,:]
+    Q[:,0:j0,:]  = halo_data_south[:,:,:]
+    Q[:,jend:,:] = halo_data_north[:,:,:]

@@ -392,12 +392,10 @@ def ppm_reconstruction(Q, px, py, cs_grid, simulation):
     ppm_reconstruction_x(Q, px, cs_grid, simulation)
     ppm_reconstruction_y(Q, py, cs_grid, simulation)
 
-    if simulation.edge_treatment==3 or simulation.edge_treatment==4:
+    if simulation.edge_treatment==2:
         # Extrapolation at cells near the cube edges
         edges_extrapolation(Q, px, py, cs_grid, simulation)
 
-    # does the averaging
-    if simulation.edge_treatment==2 or simulation.edge_treatment==4:
-        average_parabola_cube_edges(px, py, cs_grid)
+    average_parabola_cube_edges(px, py, cs_grid)
 
 

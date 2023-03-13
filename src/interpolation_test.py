@@ -13,7 +13,7 @@ from plot                   import plot_scalar_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_interpolation_parameters
 from scipy.special          import sph_harm
-from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
+from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation, ghost_cells_adjacent_panels
 from lagrange               import lagrange_poly_ghostcells
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
 from reconstruction_1d      import ppm_reconstruction
@@ -189,7 +189,12 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     # Errors array
     recons = (3,4)
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
-    ets = (1,2,3,4)
+
+    if transformation == 'gnomonic_equiangular':
+        ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
+    else:
+        ets = (1,2)
+
     error_linf = np.zeros((Ntest, len(ets), len(recons)))
     error_l1   = np.zeros((Ntest, len(ets), len(recons)))
     error_l2   = np.zeros((Ntest, len(ets), len(recons)))
@@ -237,7 +242,10 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
 
                 print('\nParameters: N = '+str(int(Nc[i]))+', et = '+str(et)+' , recon = ', recon)
 
-                if simulation.edge_treatment==1 or simulation.edge_treatment==2: # Uses ghost cells interpolation
+                if simulation.edge_treatment==1: # Uses adjacent cells values
+                    ghost_cells_adjacent_panels(Q, cs_grid, simulation)
+
+                if simulation.edge_treatment==3: # Uses ghost cells interpolation
                     # Get Lagrange polynomials
                     lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
@@ -270,7 +278,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name\
                 +'_et'+str(simulation.edge_treatment)
                 filename = 'Reconstruction error, ic='+ str(simulation.ic)+\
-                ', recon='+simulation.recon_name+', et='+str(simulation.edge_treatment)+', N='+str(cs_grid.N)
+                ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
                 plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
             rec = rec+1
         ET = ET + 1
@@ -341,8 +349,13 @@ class recon_simulation_par:
         self.title = 'Reconstruction'
 
         # Edges treatment
-        if et>=1 and et<=4:
-            self.edge_treatment = et
+        if et==1:
+            self.et_name='ET-1'
+        elif et==2:
+            self.et_name='ET-2'
+        elif et==3:
+            self.et_name='ET-3'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
             exit()
+        self.edge_treatment = et
