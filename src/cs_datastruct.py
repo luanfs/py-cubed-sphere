@@ -154,6 +154,7 @@ class cubed_sphere:
 
             # Finish time counting
             elapsed_time = time.time() - start_time
+
         else:
             # Generate the grid
             if showonscreen==True:
@@ -165,9 +166,9 @@ class cubed_sphere:
             elif transformation == "gnomonic_equidistant":
                 a = self.R/np.sqrt(3.0)  # Half length of the cube
                 x_min, x_max, y_min, y_max = [-a, a, -a, a]
-            #elif transformation == "conformal":
-            #    a = 1.0
-            #    x_min, x_max, y_min, y_max = [-1.0, 1.0, -1.0, 1.0]
+            elif transformation == "conformal":
+                a = 1.0
+                x_min, x_max, y_min, y_max = [-1.0, 1.0, -1.0, 1.0]
             else:
                 print("ERROR: invalid grid transformation.")
                 exit()
@@ -180,13 +181,9 @@ class cubed_sphere:
             dy = (y_max-y_min)/N
             self.dx, self.dy = dx, dy
 
-            # Ghost cells for each panel
-            if transformation == "gnomonic_equiangular" or transformation == "gnomonic_equidistant":
-                nghost_left  = 4
-                nghost_right = 4
-            #elif transformation == "conformal":
-            #    nghost_left  = 0
-            #    nghost_right = 0
+            # Ghost cells size
+            nghost_left  = 4
+            nghost_right = 4
 
             nghost = nghost_right + nghost_left
             self.nghost_left  = nghost_left
@@ -213,8 +210,9 @@ class cubed_sphere:
             elif transformation=="gnomonic_equidistant":
                 vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = equidistant_gnomonic_map(x, y, N+1+nghost, N+1+nghost, self.R)
 
-            #elif transformation=="conformal":
-            #    vertices.X, vertices.Y, vertices.Z, vertices.lon, vertices.lat = conformal_map(x, y, N+1+nghost, N+1+nghost)
+            elif transformation=="conformal":
+                vertices.X[i0:iend+1,j0:jend+1], vertices.Y[i0:iend+1,j0:jend+1], vertices.Z[i0:iend+1,j0:jend+1], vertices.lon[i0:iend+1,j0:jend+1], vertices.lat[i0:iend+1,j0:jend+1] = conformal_map(x[i0:iend+1], y[j0:jend+1], N+1, N+1)
+
             self.vertices = vertices
 
             # Generate cell centers
@@ -231,8 +229,10 @@ class cubed_sphere:
             elif transformation=="gnomonic_equidistant":
                 centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equidistant_gnomonic_map(x, y, N+nghost, N+nghost, self.R)
 
-            #elif transformation=="conformal":
-            #    centers.X, centers.Y, centers.Z, centers.lon, centers.lat = conformal_map(x, y, N+nghost, N+nghost)
+            elif transformation=="conformal":
+                centers.X[i0:iend,j0:jend], centers.Y[i0:iend,j0:jend], centers.Z[i0:iend,j0:jend], centers.lon[i0:iend,j0:jend], centers.lat[i0:iend,j0:jend] \
+                = conformal_map(x[i0:iend], y[j0:jend], N, N)
+
             self.centers = centers
 
             # Metric tensor on centers
@@ -251,6 +251,9 @@ class cubed_sphere:
 
             x = np.linspace(x_min-nghost_left*dx, x_max+nghost_right*dx, N+1+nghost) # Edges
             y = np.linspace(y_min+dy/2.0-nghost_left*dy, y_max-dy/2.0+nghost_right*dy, N+nghost) # Centers
+
+            # edges
+            Xu, Yu = np.meshgrid(x, y,indexing='ij')
             if transformation == "gnomonic_equiangular":
                 edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equiangular_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
                 tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equiangular_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
@@ -266,8 +269,9 @@ class cubed_sphere:
                 #tg_ey_edx2 = point(N+1+nghost, N+nghost)
                 #tg_ex_edx2, tg_ey_edx2 = tg_vector_geodesic_edx_midpoints(edx, vertices, N, nghost)
 
-            #elif transformation=="conformal":
-            #    edx.X, edx.Y, edx.Z, edx.lon, edx.lat = conformal_map(x, y, N+1+nghost, N+nghost)
+            elif transformation=="conformal":
+                edx.X[i0:iend+1,j0:jend], edx.Y[i0:iend+1,j0:jend], edx.Z[i0:iend+1,j0:jend], edx.lon[i0:iend+1,j0:jend], edx.lat[i0:iend+1,j0:jend] \
+                = conformal_map(x[i0:iend+1], y[j0:jend], N+1, N)
 
             self.edx = edx
 
@@ -308,6 +312,10 @@ class cubed_sphere:
 
             x = np.linspace(x_min+dx/2.0-nghost_left*dx, x_max-dx/2.0+nghost_right*dx, N+nghost) # Centers
             y = np.linspace(y_min-nghost_left*dx, y_max + nghost_right*dy, N+1+nghost) # Edges
+
+            # edges
+            Xv, Yv = np.meshgrid(x, y,indexing='ij')
+
             if transformation == "gnomonic_equiangular":
                 edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equiangular_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
                 tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equiangular_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
@@ -322,8 +330,9 @@ class cubed_sphere:
                 #tg_ex_edy2 = point(N+nghost, N+1+nghost)
                 #tg_ey_edy2 = point(N+nghost, N+1+nghost)
                 #tg_ex_edy2, tg_ey_edy2 = tg_vector_geodesic_edy_midpoints(edy, vertices, N, nghost)
-            #elif transformation=="conformal":
-            #    edy.X, edy.Y, edy.Z, edy.lon, edy.lat = conformal_map(x, y, N+nghost, N+nghost+1)
+            elif transformation=="conformal":
+                edy.X[i0:iend,j0:jend+1], edy.Y[i0:iend,j0:jend+1], edy.Z[i0:iend,j0:jend+1], edy.lon[i0:iend,j0:jend+1], edy.lat[i0:iend,j0:jend+1] \
+                = conformal_map(x[i0:iend], y[j0:jend+1], N, N+1)
             self.edy = edy
 
             # Normalize the tangent vectors in x dir
@@ -520,29 +529,32 @@ class cubed_sphere:
             #self.elon_edx, self.elat_edx
             #self.elon_edy, self.elat_edy
 
+            Xu = np.repeat(Xu[:, :, np.newaxis], 6, axis=2)
+            Yv = np.repeat(Yv[:, :, np.newaxis], 6, axis=2)
+            self.Xu, self.Yv = Xu, Yv
             # Finish time counting
             elapsed_time = time.time() - start_time
 
-        if showonscreen==True:
-            # Print some grid properties
-            print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
-            print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
-            print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
-            print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])/np.amin(self.length_edx[i0:iend+1,j0:jend+1,:])))
+            if showonscreen==True:
+                # Print some grid properties
+                print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
+                print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
+                print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
+                print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])/np.amin(self.length_edx[i0:iend+1,j0:jend+1,:])))
 
-            print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
-            print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
-            print("Mean area (km2)        : ","{:.2e}".format(np.mean(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
-            print("Ratio max/min area     : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])/np.amin(self.areas[i0:iend,j0:jend,:])))
+                print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
+                print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
+                print("Mean area (km2)        : ","{:.2e}".format(np.mean(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
+                print("Ratio max/min area     : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])/np.amin(self.areas[i0:iend,j0:jend,:])))
 
-            #m = N
-            #ratio = (1+2*np.tan((pi/4))**2 * (1-1/m))**1.5
-            #ratio = ratio*np.cos((pi/4))**4*(1-1/m)
-            #print(ratio)
-            #exit()
-        if (showonscreen==True):
-            print("\nDone in ","{:.2e}".format(elapsed_time),"seconds.")
-            print("--------------------------------------------------------\n")
+                #m = N
+                #ratio = (1+2*np.tan((pi/4))**2 * (1-1/m))**1.5
+                #ratio = ratio*np.cos((pi/4))**4*(1-1/m)
+                #print(ratio)
+                #exit()
+            if showonscreen==True:
+                print("\nDone in ","{:.2e}".format(elapsed_time),"seconds.")
+                print("--------------------------------------------------------\n")
 
 ####################################################################################
 # Structure for scalar values on cubed-sphere grid
@@ -713,12 +725,14 @@ class velocity_edges:
             self.ucontra = np.zeros((N+1+ng, N+ng, nbfaces))
             self.vcontra = np.zeros((N+1+ng, N+ng, nbfaces))
             self.ucontra_averaged = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
+            self.ucontra_old      = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
         elif pos == 'pv':
             self.ulon = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vlat = np.zeros((N+ng, N+1+ng, nbfaces))
             self.ucontra = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vcontra = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vcontra_averaged = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
+            self.vcontra_old      = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
         else:
             print('ERROR in  velocity class: invalid position, ', pos)
 

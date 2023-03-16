@@ -1,15 +1,14 @@
-import numpy as np
-import reconstruction_1d as rec
-from constants import nbfaces
+import numpy   as np
 import numexpr as ne
+from constants         import nbfaces
+from reconstruction_1d import ppm_reconstruction
 
 ####################################################################################
 # Compute the 1d flux operators
 ####################################################################################
 def compute_fluxes(Qx, Qy, px, py, cx, cy, cs_grid, simulation):
     # Reconstructs the values of Q using a piecewise parabolic polynomial
-    rec.ppm_reconstruction_x(Qx, px, cs_grid, simulation)
-    rec.ppm_reconstruction_y(Qy, py, cs_grid, simulation)
+    ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation)
 
     # Compute the fluxes
     numerical_flux_ppm_x(px, cx, cs_grid, simulation)

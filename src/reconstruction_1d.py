@@ -387,15 +387,13 @@ def ppm_reconstruction_y(Q, py, cs_grid, simulation):
 # This routine computes the parabolas of PPM in x and y direction
 #
 ########################################################################
-def ppm_reconstruction(Q, px, py, cs_grid, simulation):
+def ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation):
     # Reconstruct the values at edged
-    ppm_reconstruction_x(Q, px, cs_grid, simulation)
-    ppm_reconstruction_y(Q, py, cs_grid, simulation)
+    ppm_reconstruction_x(Qx, px, cs_grid, simulation)
+    ppm_reconstruction_y(Qy, py, cs_grid, simulation)
 
-    if simulation.edge_treatment==2:
+    if simulation.rec_edge_treatment==2:
         # Extrapolation at cells near the cube edges
-        edges_extrapolation(Q, px, py, cs_grid, simulation)
+        edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation)
 
-    average_parabola_cube_edges(px, py, cs_grid)
-
-
+    #average_parabola_cube_edges(Qx, Qy, px, py, cs_grid)

@@ -241,10 +241,10 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        #plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        #plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        #plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
-        #plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=1, color='black', transform=ccrs.Geodetic())
+        plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
 
     ax.coastlines()
 

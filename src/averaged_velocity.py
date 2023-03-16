@@ -8,8 +8,14 @@
 from advection_ic import velocity_adv
 from sphgeo       import latlon_to_contravariant
 import numexpr as ne
+import numpy   as np
 
 def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
+    i0, iend = cs_grid.i0, cs_grid.iend
+    j0, jend = cs_grid.j0, cs_grid.jend
+    N = cs_grid.N
+    ng = cs_grid.nghost
+
     # Compute the velocity needed for the departure point
     if simulation.dp == 1:
         U_pu.ucontra_averaged[:,:,:] = U_pu.ucontra[:,:,:]
@@ -17,26 +23,32 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
     elif simulation.dp == 2:
         dt = simulation.dt
         dto2 = simulation.dto2
-        twodt = simulation.twodt
 
         #----------------------------------------------------
-        Xu = cs_grid.edx.lon
-        Yu = cs_grid.edx.lat
-        K1u, K1v = velocity_adv(Xu          , Yu, t, simulation)
-        K2u, K2v = velocity_adv(Xu-dto2*K1u , Yu, t-dto2, simulation)
-        K3u, K3v = velocity_adv(Xu-twodt*K2u, Yu, t-dt, simulation)
-        U_av = ne.evaluate('(K1u + 4.0*K2u + K3u)/6.0')
-        V_av = ne.evaluate('(K1v + 4.0*K2v + K3v)/6.0')
-        U_pu.ucontra_averaged[:,:,:], _ = latlon_to_contravariant(U_av, V_av, cs_grid.prod_ex_elon_edx, cs_grid.prod_ex_elat_edx,\
-                                                       cs_grid.prod_ey_elon_edx, cs_grid.prod_ey_elat_edx, cs_grid.determinant_ll2contra_edx)
+        # First departure point estimate
+        Xu = cs_grid.Xu
+        xd = Xu[:,:,:]-dto2*U_pu.ucontra[:,:,:]
 
-       #----------------------------------------------------
-        Xu = cs_grid.edy.lon
-        Yu = cs_grid.edy.lat
-        K1u, K1v = velocity_adv(Xu, Yu          , t, simulation)
-        K2u, K2v = velocity_adv(Xu, Yu-dto2*K1v , t-dto2, simulation)
-        K3u, K3v = velocity_adv(Xu, Yu-twodt*K2v, t-dt, simulation)
-        U_av = ne.evaluate('(K1u + 4.0*K2u + K3u)/6.0')
-        V_av = ne.evaluate('(K1v + 4.0*K2v + K3v)/6.0')
-        _, U_pv.vcontra_averaged[:,:,:] =  latlon_to_contravariant(U_av, V_av, cs_grid.prod_ex_elon_edy, cs_grid.prod_ex_elat_edy,\
-                                                       cs_grid.prod_ey_elon_edy, cs_grid.prod_ey_elat_edy, cs_grid.determinant_ll2contra_edy)
+        # Velocity data at edges used for interpolation
+        u_interp = 1.5*U_pu.ucontra[:,:,:] - 0.5*U_pu.ucontra_old[:,:,:] # extrapolation for time at n+1/2
+
+        # Linear interpolation
+        for j in range(0, N+ng):
+            for p in range(0,6):
+                U_pu.ucontra_averaged[i0:iend+1,j,p] = np.interp(xd[i0:iend+1,j,p], Xu[:,j,p], u_interp[:,j,p])
+
+        #----------------------------------------------------
+        # First departure point estimate
+        Yv = cs_grid.Yv
+        yd = Yv[:,:,:]-dto2*U_pv.vcontra[:,:,:]
+
+        # Velocity data at edges used for interpolation
+        v_interp = 1.5*U_pv.vcontra[:,:,:] - 0.5*U_pv.vcontra_old[:,:,:] # extrapolation for time at n+1/2
+
+        # Linear interpolation
+        for i in range(0, N+ng):
+            for p in range(0,6):
+                U_pv.vcontra_averaged[i,j0:jend+1,p] = np.interp(yd[i,j0:jend+1,p], Yv[i,:,p], v_interp[i,:,p])
+
+
+    #----------------------------------------------------

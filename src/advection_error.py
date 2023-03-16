@@ -28,7 +28,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     tc = simulation.tc
 
     # Number of tests
-    Ntest = 3
+    Ntest = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -55,23 +55,25 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,4)
-    deps = (1,)
-    split = (1,3)
+    recons = (3,)
+    deps = (2,)
+    split = (1,)
+    rets = (3,)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
     #split = (simulation.opsplit,)
 
     recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
-    dp_names = ['RK1', 'RK3']
+    dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    error_linf = np.zeros((Ntest, len(recons), len(split), len(deps)))
-    error_l1   = np.zeros((Ntest, len(recons), len(split), len(deps)))
-    error_l2   = np.zeros((Ntest, len(recons), len(split), len(deps)))
+    ret_names = ['RET-1', 'RET-2', 'RET-3', 'RET-4']
+    error_linf = np.zeros((Ntest, len(recons), len(split), len(rets), len(deps)))
+    error_l1   = np.zeros((Ntest, len(recons), len(split), len(rets), len(deps)))
+    error_l2   = np.zeros((Ntest, len(recons), len(split), len(rets), len(deps)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, dp, opsplit = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
 
     # Period for all tests
     Tf = 5
@@ -79,29 +81,32 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     # Let us test and compute the error
     d = 0
     for dp in deps:
-        sp = 0
-        for opsplit in split:
-            rec = 0
-            for recon in recons:
-                for i in range(0, Ntest):
-                    dt = dts[i]
-                    simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit)
-                    N = int(Nc[i])
+        rt = 0
+        for ret in rets:
+            sp = 0
+            for opsplit in split:
+                rec = 0
+                for recon in recons:
+                    for i in range(0, Ntest):
+                        dt = dts[i]
+                        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
+                        N = int(Nc[i])
 
-                    # Create CS mesh
-                    cs_grid = cubed_sphere(N, transformation, False, gridload)
+                        # Create CS mesh
+                        cs_grid = cubed_sphere(N, transformation, False, gridload)
 
-                    # Create the latlon mesh (for plotting)
-                    ll_grid = latlon_grid(Nlat, Nlon)
-                    ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+                        # Create the latlon mesh (for plotting)
+                        ll_grid = latlon_grid(Nlat, Nlon)
+                        ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
-                    # Get advection error
-                    error_linf[i,rec,sp,d], error_l1[i,rec,sp,d], error_l2[i,rec,sp,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, False)
+                        # Get advection error
+                        error_linf[i,rec,sp,rt,d], error_l1[i,rec,sp,rt,d], error_l2[i,rec,sp,rt,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, False)
 
-                    # Print errors
-                    print_errors_simul(error_linf[:,rec,sp,d], error_l1[:,rec,sp,d], error_l2[:,rec,sp,d], i)
-                rec = rec+1
-            sp = sp+1
+                        # Print errors
+                        print_errors_simul(error_linf[:,rec,sp,rt,d], error_l1[:,rec,sp,rt,d], error_l2[:,rec,sp,rt,d], i)
+                    rec = rec+1
+                sp = sp+1
+            rt = rt+1
         d = d+1
 
     # Outputs
@@ -123,8 +128,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
             dep_name = []
             for sp in range(0, len(split)):
                 for r in range(0, len(recons)):
-                    errors.append(error[:,r,sp,d])
-                    dep_name.append(sp_names[split[sp]-1]+'/'+recon_names[recons[r]-1])
+                    for rt in range(0, len(rets)):
+                        errors.append(error[:,r,sp,rt,d])
+                        dep_name.append(sp_names[split[sp]-1]+'/'+recon_names[recons[r]-1]+'/'+ret_names[rets[rt]-1])
 
             title = simulation.title + '- ic=' + str(simulation.ic)+', vf='+ str(simulation.vf)+\
             ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]

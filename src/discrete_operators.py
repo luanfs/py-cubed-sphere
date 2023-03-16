@@ -5,15 +5,18 @@
 ####################################################################################
 
 import numpy as np
-from flux   import compute_fluxes
 import numexpr as ne
+from flux               import compute_fluxes
+from edges_treatment    import edges_ghost_cell_treatment, average_flux_cube_edges
 
 ####################################################################################
 # Given gQ (g = metric tensor), compute div(UgQ), where U = (u,v), and cx and cy
 # are the cfl numbers (must be already computed)
 # The divergence is given by px.dF + py.dF
 ####################################################################################
-def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation):
+def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation,\
+               transformation, lagrange_poly, Kmin, Kmax):
+
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel
@@ -23,7 +26,7 @@ def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation):
     N = cs_grid.N
     ng = cs_grid.nghost
 
-   # Splitting scheme
+    # Splitting scheme
     if simulation.opsplit==1:
         #Qx = gQ+0.5*px.dF
         #Qy = gQ+0.5*py.dF
@@ -57,13 +60,16 @@ def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation):
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
 
+    # Flux averaging
+    if simulation.rec_edge_treatment==4:
+        average_flux_cube_edges(px, py, cs_grid)
+
     # Applies F and G operators in each panel again
     F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
     G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
 
     # Compute the divergence
-    i0, j0, iend, jend  = cs_grid.i0, cs_grid.j0, cs_grid.iend, cs_grid.jend
-
+    #i0, j0, iend, jend  = cs_grid.i0, cs_grid.j0, cs_grid.iend, cs_grid.jend
     #div[i0:iend,j0:jend,:] = -(px.dF[i0:iend,j0:jend,:] + py.dF[i0:iend,j0:jend,:])/simulation.dt/cs_grid.metric_tensor_centers[i0:iend,j0:jend,:]
     pxdF = px.dF
     pydF = py.dF

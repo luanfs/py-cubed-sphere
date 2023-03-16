@@ -10,11 +10,13 @@
 #Test case
 2
 #Reconstruction(1, 2, 3, 4)
-4
+1
 #Departure point scheme (1 or 2)
 1
 #Operator splitting(1, 2, 3)
 1
+#Reconstruction edge treatment (1, 2, 3)
+4
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
 #  case(1) - constant flow
@@ -36,7 +38,7 @@
 #  case(4) - PPM with monotonization from Lin 2004 (L04)
 # Possible departure point computation
 #  case(1) - Euler
-#  case(2) - Third-order Runge Kutta
+#  case(2) - Second-order Runge Kutta
 #Possible 2d operator splitting schemes
 #  case(1) - Average Lie-Trotter (AVLT)
 #  case(2) - Splitting from Lin 2004 (L04)

@@ -1,9 +1,9 @@
 ####################################################################################
-# 
+#
 # Module for cubed-sphere transformations.
 #
 # Based on "C. Ronchi, R. Iacono, P.S. Paolucci, The “Cubed Sphere”:
-# A New Method for the Solution of Partial Differential Equations 
+# A New Method for the Solution of Partial Differential Equations
 # in Spherical Geometry."
 #
 # It includes equiangular and equidistant gnomonic mappings.
@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 #  +---+---+---+---+
 #      | 5 |
 #      +---+
-   
+
 ####################################################################################
 #
 # This routine computes the Gnomonic mapping based on the equiangular projection
@@ -42,12 +42,12 @@ def equiangular_gnomonic_map(x, y, N, M, R):
     # Cartesian coordinates of the projected points
     X = np.zeros((N, M, nbfaces))
     Y = np.zeros((N, M, nbfaces))
-    Z = np.zeros((N, M, nbfaces))      
-   
+    Z = np.zeros((N, M, nbfaces))
+
     # Creates a grid in [-pi/4,pi/4]x[-pi/4,pi/4] using
     # the given values of x and y
     x, y = np.meshgrid(x, y, indexing='ij')
-   
+
     # Auxiliary variables
     tanx = np.tan(x)
     tany = np.tan(y)
@@ -55,10 +55,10 @@ def equiangular_gnomonic_map(x, y, N, M, R):
     D    = np.sqrt(D2)
     invD = 1.0/D
     XoD  = invD*tanx
-    YoD  = invD*tany    
-    
+    YoD  = invD*tany
+
     # Compute the Cartesian coordinates for each panel
-    # with the aid of the auxiliary variables 
+    # with the aid of the auxiliary variables
 
     # Panel 0
     X[:,:,0] = invD
@@ -74,22 +74,22 @@ def equiangular_gnomonic_map(x, y, N, M, R):
     X[:,:,2] = -invD
     Y[:,:,2] = -XoD # x*X
     Z[:,:,2] =  YoD #-x*Y
-   
+
    # Panel 3
     Y[:,:,3] = -invD
     X[:,:,3] =  XoD #-y*X
-    Z[:,:,3] =  YoD #-y*Y       
-   
+    Z[:,:,3] =  YoD #-y*Y
+
     # Panel 4
     Z[:,:,4] =  invD
     X[:,:,4] = -YoD #-z*Y
     Y[:,:,4] =  XoD # z*X
-   
+
     # Panel 5
     Z[:,:,5] = -invD
     X[:,:,5] =  YoD #-z*Y
     Y[:,:,5] =  XoD #-z*X
-               
+
     # Convert to spherical coordinates
     lon, lat = sphgeo.cart2sph(X, Y, Z)
 
@@ -134,12 +134,12 @@ def inverse_equiangular_gnomonic_map(X, Y, Z, panel):
 # - Returns the Cartesian (X,Y,Z) and spherical (lon, lat) coordinates of the
 # projected points.
 #
-# References: 
+# References:
 # - Rancic, M., Purser, R.J. and Mesinger, F. (1996), A global shallow-water model using an expanded
-#  spherical cube: Gnomonic versus conformal coordinates. Q.J.R. Meteorol. Soc., 122: 959-982. 
+#  spherical cube: Gnomonic versus conformal coordinates. Q.J.R. Meteorol. Soc., 122: 959-982.
 #  https://doi.org/10.1002/qj.49712253209
 # - Nair, R. D., Thomas, S. J., & Loft, R. D. (2005). A Discontinuous Galerkin Transport Scheme on the
-# Cubed Sphere, Monthly Weather Review, 133(4), 814-828. Retrieved Feb 7, 2022, 
+# Cubed Sphere, Monthly Weather Review, 133(4), 814-828. Retrieved Feb 7, 2022,
 # from https://journals.ametsoc.org/view/journals/mwre/133/4/mwr2890.1.xml
 #
 ####################################################################################
@@ -150,22 +150,22 @@ def equidistant_gnomonic_map(x, y, N, M, R):
     # Cartesian coordinates of the projected points
     X = np.zeros((N, M, nbfaces))
     Y = np.zeros((N, M, nbfaces))
-    Z = np.zeros((N, M, nbfaces))      
-   
+    Z = np.zeros((N, M, nbfaces))
+
     # Creates a grid in [-a,a]x[-a,a] using
     # the given values of x and y
     x, y = np.meshgrid(x, y, indexing='ij')
-   
+
     # Auxiliary variables
     r2   = a**2 + x**2 + y**2
     r    = np.sqrt(r2)
     invr = 1.0/r
     xor  = invr*x
     yor  = invr*y
-    aor  = invr*a   
-    
+    aor  = invr*a
+
     # Compute the Cartesian coordinates for each panel
-    # with the aid of the auxiliary variables 
+    # with the aid of the auxiliary variables
 
     # Panel 0
     X[:,:,0] =  aor
@@ -181,11 +181,11 @@ def equidistant_gnomonic_map(x, y, N, M, R):
     X[:,:,2] = -aor
     Y[:,:,2] = -xor
     Z[:,:,2] =  yor
-   
+
     # Panel 3
     X[:,:,3] =  xor
     Y[:,:,3] = -aor
-    Z[:,:,3] =  yor      
+    Z[:,:,3] =  yor
 
     # Panel 4
     X[:,:,4] = -yor
@@ -195,7 +195,7 @@ def equidistant_gnomonic_map(x, y, N, M, R):
     # Panel 5
     X[:,:,5] =  yor
     Y[:,:,5] =  xor
-    Z[:,:,5] = -aor         
+    Z[:,:,5] = -aor
 
     # Convert to spherical coordinates
     lon, lat = sphgeo.cart2sph(X, Y, Z)
@@ -249,12 +249,12 @@ def equidistant_tg_xdir(x, y, N, M, R):
     # Cartesian coordinates of the tangent vector
     X = np.zeros((N, M, nbfaces))
     Y = np.zeros((N, M, nbfaces))
-    Z = np.zeros((N, M, nbfaces))      
-   
+    Z = np.zeros((N, M, nbfaces))
+
     # Creates a grid in [-a,a]x[-a,a] using
     # the given values of x and y
     x, y = np.meshgrid(x, y, indexing='ij')
-   
+
     # Auxiliary variables
     r2   = a**2 + x**2 + y**2
     r32  = np.sqrt(r2)**3
@@ -265,7 +265,7 @@ def equidistant_tg_xdir(x, y, N, M, R):
     a2 = a*a
 
     # Compute the Cartesian coordinates of the tangent vector for each panel
-    # with the aid of the auxiliary variables 
+    # with the aid of the auxiliary variables
 
     # Panel 0
     X[:,:,0] = -ax*invr
@@ -281,11 +281,11 @@ def equidistant_tg_xdir(x, y, N, M, R):
     X[:,:,2] =  ax*invr
     Y[:,:,2] = -(a2 + y2)*invr
     Z[:,:,2] = -xy*invr
-   
+
     # Panel 3
     X[:,:,3] =  (a2 + y2)*invr
     Y[:,:,3] =  ax*invr
-    Z[:,:,3] = -xy*invr 
+    Z[:,:,3] = -xy*invr
 
     # Panel 4
     X[:,:,4] =  xy*invr
@@ -309,12 +309,12 @@ def equidistant_tg_ydir(x, y, N, M, R):
     # Cartesian coordinates of the tangent vector
     X = np.zeros((N, M, nbfaces))
     Y = np.zeros((N, M, nbfaces))
-    Z = np.zeros((N, M, nbfaces))      
-   
+    Z = np.zeros((N, M, nbfaces))
+
     # Creates a grid in [-a,a]x[-a,a] using
     # the given values of x and y
     x, y = np.meshgrid(x, y, indexing='ij')
-   
+
     # Auxiliary variables
     r2   = a**2 + x**2 + y**2
     r32  = np.sqrt(r2)**3
@@ -323,9 +323,9 @@ def equidistant_tg_ydir(x, y, N, M, R):
     xy = x*y
     x2 = x*x
     a2 = a*a
-    
+
     # Compute the Cartesian coordinates of the tangent vector for each panel
-    # with the aid of the auxiliary variables 
+    # with the aid of the auxiliary variables
 
     # Panel 0
     X[:,:,0] = -ay*invr
@@ -341,11 +341,11 @@ def equidistant_tg_ydir(x, y, N, M, R):
     X[:,:,2] =  ay*invr
     Y[:,:,2] =  xy*invr
     Z[:,:,2] = (a2 + x2)*invr
-   
+
     # Panel 3
     X[:,:,3] = -xy*invr
     Y[:,:,3] =  ay*invr
-    Z[:,:,3] = (a2 + x2)*invr 
+    Z[:,:,3] = (a2 + x2)*invr
 
     # Panel 4
     X[:,:,4] = -(a2 + x2)*invr
@@ -367,13 +367,13 @@ def equiangular_tg_xdir(x, y, N, M, R):
     a = R/np.sqrt(3.0)
 
     X, Y, Z = equidistant_tg_xdir(a*np.tan(x), a*np.tan(y), N, M, R)
-    
+
     x, y = np.meshgrid(x, y, indexing='ij')
-    
+
     cosx = np.cos(x)
     cos2x = cosx*cosx
-    
-    for p in range(0, nbfaces): 
+
+    for p in range(0, nbfaces):
         X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2x, a*Y[:,:,p]/cos2x, a*Z[:,:,p]/cos2x
 
     return X, Y, Z
@@ -388,17 +388,17 @@ def equiangular_tg_ydir(x, y, N, M, R):
     X, Y, Z = equidistant_tg_ydir(a*np.tan(x), a*np.tan(y), N, M, R)
 
     x, y = np.meshgrid(x, y, indexing='ij')
- 
+
     cosy = np.cos(y)
     cos2y = cosy*cosy
-    for p in range(0, nbfaces): 
+    for p in range(0, nbfaces):
         X[:,:,p], Y[:,:,p], Z[:,:,p] = a*X[:,:,p]/cos2y, a*Y[:,:,p]/cos2y, a*Z[:,:,p]/cos2y
 
     return X, Y, Z
 
 ####################################################################################
 # Compute the metric tensor of the cubed-sphere mapping
-# Inputs: 1d arrays x and y containing the cube face coordinates, the cube   
+# Inputs: 1d arrays x and y containing the cube face coordinates, the cube
 # projection and sphere radius R.
 # Output: metric tensor G on the grid (x,y)
 # Reference: Rancic et al 1996
@@ -425,14 +425,14 @@ def metric_tensor(x, y, R, projection):
 # Compute the conformal map from Rancic et al(1996).
 #
 # This routine is a python translation from the Julia code provided by
-# https://github.com/CliMA/CubedSphere.jl and the matlab 
+# https://github.com/CliMA/CubedSphere.jl and the matlab
 # script from http://wwwcvs.mitgcm.org/viewvc/MITgcm/MITgcm_contrib/high_res_cube/matlab-grid-generator/map_xy2xyz.m?view=markup
 #
-# Reference: 
+# Reference:
 # - Rancic, M., Purser, R.J. and Mesinger, F. (1996), A global shallow-water model using an expanded
-#  spherical cube: Gnomonic versus conformal coordinates. Q.J.R. Meteorol. Soc., 122: 959-982. 
+#  spherical cube: Gnomonic versus conformal coordinates. Q.J.R. Meteorol. Soc., 122: 959-982.
 #  https://doi.org/10.1002/qj.49712253209
-#################################################################################### 
+####################################################################################
 def conformal_map(ξ, η, N, M):
     #print(ξ)
     swap = ξ
@@ -446,20 +446,20 @@ def conformal_map(ξ, η, N, M):
     kξ  =  ξ < 0
     kη  =  η < 0
     kξη = ηc > ξc
- 
+
     #plt.plot(ξ, η,'x')
-    #plt.show()  
+    #plt.show()
     X = ξc
     Y = ηc
     #plt.plot(ξc, ηc,'x')
-    #plt.show()     
+    #plt.show()
     ξc = 1 - ξc
     ηc = 1 - ηc
 
     ξc[kξη] = 1 - Y[kξη]
-    ηc[kξη] = 1 - X[kξη]	
+    ηc[kξη] = 1 - X[kξη]
     #plt.plot(ξc, ηc,'x')
-    #plt.show()     
+    #plt.show()
     z = ((ξc+1j*ηc)/2.0)**4
     W = WofZ(z)
 
@@ -468,7 +468,7 @@ def conformal_map(ξ, η, N, M):
     ra = np.sqrt(3.0)-1.0
     cb = 1j-1.0
     cc = ra*cb/2.0
-	
+
     W = i3*(W*1j)**thrd
     W = (W - ra)/(cb + cc*W)
 
@@ -486,10 +486,10 @@ def conformal_map(ξ, η, N, M):
     Y[kη]  = -Y[kη]
     X[kξ]  = -X[kξ]
 
-    # Fix truncation for x = 0 or y = 0 
+    # Fix truncation for x = 0 or y = 0
     X[ξ==0]=0
     Y[η==0]=0
-   
+
     #print(np.amax(abs(X**2+Y**2+Z**2-1)))
     #print(np.shape(X))
     # Cartesian coordinates of the projected points
@@ -515,13 +515,13 @@ def conformal_map(ξ, η, N, M):
     # Panel 2
     x[:,:,2] = -z[:,:,4]
     y[:,:,2] = -y[:,:,4]
-    z[:,:,2] = -x[:,:,4]     
+    z[:,:,2] = -x[:,:,4]
 
     # Panel 1
     x[:,:,1] = -y[:,:,4]
-    y[:,:,1] =  z[:,:,4]    
+    y[:,:,1] =  z[:,:,4]
     z[:,:,1] = -x[:,:,4]
-   
+
     # Panel 0
     x[:,:,0] =  z[:,:,4]
     y[:,:,0] =  y[:,:,4]
@@ -530,123 +530,107 @@ def conformal_map(ξ, η, N, M):
     # Convert to spherical coordinates
     lon, lat = sphgeo.cart2sph(x, y, z)
     return x, y, z, lon, lat
- 
+
 ####################################################################################
 # Failed attempt to compute the conformal map inverse
 # Given a panel, this routine computes the inverse of the conformal map
 # The points given in the arrays x,y,z are assumed to lie in the same panel
 ####################################################################################
-def inverse_conformal_map(x, y, z, panel):
+def inverse_conformal_map(x0, y0, z0, panel, cs_grid):
     # Maps back to panel 4
     if panel == 0:
-        Z =  x
-        Y =  y
-        X = -z
+        Z =  x0
+        Y =  y0
+        X = -z0
     elif panel == 1:
-        Y = -x
-        Z =  y
-        X = -z
+        Y = -x0
+        Z =  y0
+        X = -z0
     elif panel == 2:
-        Z = -x
-        Y = -y
-        X = -z
+        Z = -x0
+        Y = -y0
+        X = -z0
     elif panel == 3:
-        Y =  x
-        Z = -y
-        X = -z
+        Y =  x0
+        Z = -y0
+        X = -z0
     elif panel == 4:
-        X =  x
-        Y =  y
-        Z =  z 
+        X =  x0
+        Y =  y0
+        Z =  z0
     elif panel == 5:
-        X = -x
-        Y =  y
-        Z = -z
+        X = -x0
+        Y =  y0
+        Z = -z0
     else:
         print("ERROR: invalid panel.")
-        exit()      
+        exit()
 
+    #H  = Z + 1
+    #Xˢ = X / H
+    #Yˢ = Y / H
+    #im = 1j
+    #ω  = Xˢ + im * Yˢ
+    #ra = np.sqrt(3.0) - 1
+    #cb = -1 + im
+    #cc = ra * cb / 2
+    #ω0 = (ω * cb + ra) / (1 - ω * cc)
+    #W0 = im * ω0**3*im
+    #Z  = ZofW(W0)
+    #z  = 2 * Z**(1/4)
+    #x, y = z.real, z.imag
+
+    #kxy = abs(y) > abs(x)
+    #xx = x
+    #yy = y
+    #x[~kxy] = 1 - abs(yy[~kxy])
+    #y[~kxy] = 1 - abs(xx[~kxy])
+
+    #xf = x
+    #yf = y
+
+    #xf[X < Y] = y[X < Y]
+    #yf[X < Y] = x[X < Y]
+
+    #x = xf
+    #y = yf
+
+    # Cell centers
+    i0, iend = cs_grid.i0, cs_grid.iend
+    j0, jend = cs_grid.j0, cs_grid.jend
+    xc = cs_grid.centers.X[i0:iend,j0:jend,panel]
+    yc = cs_grid.centers.Y[i0:iend,j0:jend,panel]
+    zc = cs_grid.centers.Z[i0:iend,j0:jend,panel]
+    N  = cs_grid.N
+
+    # centroid points
+    xc = np.ndarray.flatten(xc)
+    yc = np.ndarray.flatten(yc)
+    zc = np.ndarray.flatten(zc)
+    Pc = (xc,yc,zc)
+    Pc = np.transpose(Pc)
+
+    # Given points
     X = np.ndarray.flatten(X)
     Y = np.ndarray.flatten(Y)
-    Z = np.ndarray.flatten(Z)      
-    P = np.zeros((np.shape(X)[0],3))
-    P[:,0] = abs(X)
-    P[:,1] = abs(Y)
-    P[:,2] = abs(Z)
-    PM = P.max(axis=1)
-    mask = np.logical_and(PM == abs(Z), Z>0)
-    #print(mask)
-    #for i in range(np.shape(x)[0]):
-    #   print(i,mask[i])
-    #   if mask[i] == False:
-    #      exit()
-    # Compute the inverse in panel 4   
-    #X[X<0] = -X[X<0]
-    #Y[Y<0] = -Y[Y<0]
+    Z = np.ndarray.flatten(Z)
+    P = (X,Y,Z)
+    P = np.transpose(P)
 
-    kXY = X>Y
-    X[kXY], Y[kXY] =  Y[kXY], X[kXY]
-    kX = X<0
-    kY = Y<0
-    Y[kY]  = -Y[kY]
-    X[kX]  = -X[kX]
+    print(np.shape(P))
+    print(np.shape(Pc))
 
-    H  = Z + 1.0
-    Xs = X/H
-    Ys = Y/H
-    im = 1j
-    ω  = Xs + im*Ys
-    ra = np.sqrt(3.0) - 1.0
-    cb = -1.0 + im
-    cc = ra * cb / 2.0
-    ω0 = (ω*cb + ra)/(1-ω*cc)
-    #print(np.amax(abs(ω0)))
-    #W0 = im*ω0**(3*im)
-    W0 = -ω0**3
-    #print(np.amax(abs(W0)))
-    Z1  = ZofW(W0)
-    #print(np.amax(abs(Z1)))
-    z1  = (Z1**0.25)*2
-    ξ, η = z1.real, z1.imag   #x1, y1 = reim(z)
+    #for k in range(0, np.shape(P)[0]):
+    for k in range(0, 1000):
+        dist = (P[k,0]-Pc[:,0])**2 + (P[k,1]-Pc[:,1])**2 + (P[k,2]-Pc[:,2])**2
+        print(k, np.amin(dist))
+        print(dist)
+        #print(ii)
 
-    kη = η < 0
-    η[kη] = -η[kη]
-    kξη = abs(η) <= abs(ξ)
-    η = 1.0 - abs(η)
-    ξ = 1.0 - abs(ξ)
-    #T =  ξ[kξη]
-    #ξ[kξη] = η[kξη] # !kxy && ( x1 = 1 - abs(yy) )
-    #η[kξη] = T # !kxy && ( y1 = 1 - abs(xx) )
+    exit()
+    #x, y = inverse_equiangular_gnomonic_map(X, Y, Z, 4)
 
-    #xf = ξ
-    #yf = η
-   
-    #xf[X<Y] = η[X<Y]   # ( X < Y ) && ( xf = y1  )
-    #yf[X<Y] = ξ[X<Y]   # ( X < Y ) && ( yf = x1  )
-    #ξ = xf
-    #η = yf
-   
-
-    #X = ξc
-    #Y = ηc	
-   
-    #ξc = 1 - ξc
-    #ηc = 1 - ηc
-
-    #kξ  =  ξ < 0
-    #kη  =  η < 0
-    #kξη = ηc > ξc
-   
-   
-    #ξc = abs(ξ)
-    #ηc = abs(η)
-
-    #print(np.amax(abs(ξ)), np.amax(abs(η)))
-    #plt.plot(ξ,η,'+')
-    #plt.show()
-   
-    return ξ, η
-
+    return x, y
 ####################################################################################
 # Evaluates the Taylor series W(z) (equation A.3a from Rancic et al 1996)
 ####################################################################################
@@ -656,7 +640,7 @@ def WofZ(z):
     for j in range(0,30):
         w = w + A[j]*z**(j+1)
     return w
-   
+
 ####################################################################################
 # Evaluates the Taylor series Z(w) (equation A.4a from Rancic et al 1996)
 ####################################################################################

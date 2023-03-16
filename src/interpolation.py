@@ -14,7 +14,7 @@ import math
 
 from constants import*
 from sphgeo import*
-from cs_transform   import inverse_equiangular_gnomonic_map, inverse_equidistant_gnomonic_map
+from cs_transform   import inverse_equiangular_gnomonic_map, inverse_equidistant_gnomonic_map, inverse_conformal_map
 from plot           import ll2cs_netcdf
 from advection_ic   import qexact_adv
 from halo_data      import get_halo_data_interpolation
@@ -63,7 +63,7 @@ def ll2cs(cs_grid, latlon_grid):
         elif cs_grid.projection == 'gnomonic_equidistant':
             a  = 1.0/np.sqrt(3.0) # Half length of the cube
         elif cs_grid.projection == 'conformal':
-            a  = 1.0/np.sqrt(3.0)
+            a  = 1.0
 
         # Grid spacing
         dx = 2*a/cs_grid.N
@@ -129,7 +129,9 @@ def ll2cs(cs_grid, latlon_grid):
             elif cs_grid.projection == 'gnomonic_equidistant':
                 x, y = inverse_equidistant_gnomonic_map(Xll[mask], Yll[mask], Zll[mask], p)
                 i[mask], j[mask] = find_closest_index(x, y)
-            #elif cs_grid.projection == 'conformal':
+            elif cs_grid.projection == 'conformal':
+                x, y = inverse_conformal_map(Xll[mask], Yll[mask], Zll[mask], p, cs_grid)
+                i[mask], j[mask] = find_closest_index(x, y)
 
         # Finish time counting
         elapsed_time = time.time() - start_time
