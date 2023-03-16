@@ -78,7 +78,7 @@ def grid_quality(cs_grid, ll_grid, map_projection):
     for l in range(0,len(fields_ll)):
         plot_scalar_field(fields_ll[l], fields_cs[l].name, cs_grid, ll_grid, map_projection)
         netcdf_data[fields_cs[l].name][:,:,0] = fields_ll[l][:,:]
-        exit()
+
     #Close netcdf file
     netcdf_data.close()
     print("A netcdf file has been created in ", datadir+netcdf_name+'.nc')
@@ -95,7 +95,7 @@ def areas(grid):
     jend = grid.jend
     areas = scalar_field(grid, 'areas', 'center')
     areas.f = grid.areas[i0:iend,j0:jend,:]*erad*erad/10**6
-    print(np.amin(areas.f), np.amax(areas.f))
+    #print(np.amin(areas.f), np.amax(areas.f))
     #areas.f = np.sqrt(areas.f)
     #print((np.sum(grid.areas)-4*np.pi)/4*np.pi)
     return areas

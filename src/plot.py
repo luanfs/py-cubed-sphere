@@ -526,6 +526,9 @@ def save_grid_netcdf4(grid):
     prod_ey_elat_edy          = griddata.createVariable('prod_ey_elat_edy'    , 'f8', ('ix2', 'jy' , 'panel'))
     determinant_ll2contra_edy = griddata.createVariable('determinant_ll2contra_edy', 'f8', ('ix2', 'jy' , 'panel'))
 
+
+    Xu   = griddata.createVariable('Xu'    , 'f8', ('ix', 'jy2' , 'panel'))
+    Yv   = griddata.createVariable('Yv'    , 'f8', ('ix2', 'jy' , 'panel'))
     # Values attribution
     vertices[:,:,:,0] = grid.vertices.X
     vertices[:,:,:,1] = grid.vertices.Y
@@ -568,6 +571,10 @@ def save_grid_netcdf4(grid):
     prod_ey_elon_edy[:,:,:]          = grid.prod_ey_elon_edy[:,:,:]
     prod_ey_elat_edy[:,:,:]          = grid.prod_ey_elat_edy[:,:,:]
     determinant_ll2contra_edy[:,:,:] = grid.determinant_ll2contra_edy[:,:,:]
+
+
+    Xu[:,:,:] = grid.Xu[:,:,:]
+    Yv[:,:,:] = grid.Yv[:,:,:]
 
     griddata.close()
     print("Done.")

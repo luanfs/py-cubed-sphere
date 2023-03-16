@@ -126,6 +126,10 @@ class cubed_sphere:
             prod_ey_elat_edy          = griddata['prod_ey_elat_edy'][:,:,:]
             determinant_ll2contra_edy = griddata['determinant_ll2contra_edy'][:,:,:]
 
+            Xu = griddata['Xu'][:,:,:]
+            Yv = griddata['Yv'][:,:,:]
+
+
             # Attributes
             self.centers         = centers
             self.vertices        = vertices
@@ -148,6 +152,9 @@ class cubed_sphere:
             self.prod_ey_elon_edy = prod_ey_elon_edy
             self.prod_ey_elat_edy = prod_ey_elat_edy
             self.determinant_ll2contra_edy = determinant_ll2contra_edy
+
+            self.Xu = Xu
+            self.Yv = Yv
 
             # Close netcdf file
             griddata.close()
