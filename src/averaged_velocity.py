@@ -33,9 +33,16 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
         u_interp = 1.5*U_pu.ucontra[:,:,:] - 0.5*U_pu.ucontra_old[:,:,:] # extrapolation for time at n+1/2
 
         # Linear interpolation
-        for j in range(0, N+ng):
-            for p in range(0,6):
-                U_pu.ucontra_averaged[i0:iend+1,j,p] = np.interp(xd[i0:iend+1,j,p], Xu[:,j,p], u_interp[:,j,p])
+        #for j in range(0, N+ng):
+        #    for p in range(0,6):
+        #        U_pu.ucontra_averaged[i0:iend+1,j,p] = np.interp(xd[i0:iend+1,j,p], Xu[:,j,p], u_interp[:,j,p])
+
+        a = (Xu[i0:iend+1,:,:]-xd[i0:iend+1,:,:])/cs_grid.dx
+        upos = U_pu.ucontra[i0:iend+1,:,:]>=0
+        uneg = ~upos
+        U_pu.ucontra_averaged[i0:iend+1,:,:][upos] = (1.0-a[upos])*u_interp[i0:iend+1,:,:][upos] + a[upos]*u_interp[i0-1:iend,:,:][upos]
+        U_pu.ucontra_averaged[i0:iend+1,:,:][uneg] = -a[uneg]*u_interp[i0+1:iend+2,:,:][uneg] + (1.0+a[uneg])*u_interp[i0:iend+1,:,:][uneg]
+
 
         #----------------------------------------------------
         # First departure point estimate
@@ -46,9 +53,14 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
         v_interp = 1.5*U_pv.vcontra[:,:,:] - 0.5*U_pv.vcontra_old[:,:,:] # extrapolation for time at n+1/2
 
         # Linear interpolation
-        for i in range(0, N+ng):
-            for p in range(0,6):
-                U_pv.vcontra_averaged[i,j0:jend+1,p] = np.interp(yd[i,j0:jend+1,p], Yv[i,:,p], v_interp[i,:,p])
+        #for i in range(0, N+ng):
+        #    for p in range(0,6):
+        #        U_pv.vcontra_averaged[i,j0:jend+1,p] = np.interp(yd[i,j0:jend+1,p], Yv[i,:,p], v_interp[i,:,p])
+        a = (Yv[:,j0:jend+1,:]-yd[:,j0:jend+1,:])/cs_grid.dy
+        vpos = U_pv.vcontra[:,j0:jend+1,:]>=0
+        vneg = ~vpos
+        U_pv.vcontra_averaged[:,j0:jend+1,:][vpos] = (1.0-a[vpos])*v_interp[:,j0:jend+1,:][vpos] + a[vpos]*v_interp[:,j0-1:jend,:][vpos]
+        U_pv.vcontra_averaged[:,j0:jend+1,:][vneg] = -a[vneg]*v_interp[:,j0+1:jend+2,:][vneg] + (1.0+a[vneg])*v_interp[:,j0:jend+1,:][vneg]
 
 
     #----------------------------------------------------
