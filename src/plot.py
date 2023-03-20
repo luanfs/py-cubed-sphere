@@ -37,6 +37,9 @@ def plot_grid(grid, map_projection):
     # Plot C grid points?
     plot_cgrid = False
 
+    # Plot tangent vectors?
+    plot_tg = False
+
     # Color of each cubed panel
     colors = ('blue','red','blue','red','green','green')
     colors = ('black','black','black','black','black','black')
@@ -177,6 +180,32 @@ def plot_grid(grid, map_projection):
                 plt.xlim(-50,50)
                 plt.ylim(-50,50)
 
+        elif plot_tg:
+            # Edges in x direction
+            lon_edx = grid.edx.lon[i0:iend+1,j0:jend,p]*rad2deg
+            lat_edx = grid.edx.lat[i0:iend+1,j0:jend,p]*rad2deg
+
+            # Edges in y direction
+            lon_edy = grid.edy.lon[i0:iend,j0:jend+1,p]*rad2deg
+            lat_edy = grid.edy.lat[i0:iend,j0:jend+1,p]*rad2deg
+
+            # Tangent vector at edges in x direction
+            vec_tgx_edx_lat = grid.tg_ex_edx.lat[i0:iend+1,j0:jend,p]
+            vec_tgx_edx_lon = grid.tg_ex_edx.lon[i0:iend+1,j0:jend,p]
+            vec_tgy_edx_lat = grid.tg_ey_edx.lat[i0:iend+1,j0:jend,p]
+            vec_tgy_edx_lon = grid.tg_ey_edx.lon[i0:iend+1,j0:jend,p]
+
+            # Tangent vector at edges in y direction
+            vec_tgx_edy_lat = grid.tg_ex_edy.lat[i0:iend,j0:jend+1,p]
+            vec_tgx_edy_lon = grid.tg_ex_edy.lon[i0:iend,j0:jend+1,p]
+            vec_tgy_edy_lat = grid.tg_ey_edy.lat[i0:iend,j0:jend+1,p]
+            vec_tgy_edy_lon = grid.tg_ey_edy.lon[i0:iend,j0:jend+1,p]
+
+            # Plot tangent vector at edge points in x dir
+            plt.quiver(lon_edx, lat_edx, vec_tgx_edx_lon, vec_tgx_edx_lat, width = 0.001)
+            #plt.quiver(lon_edx, lat_edx, vec_tgy_edx_lon, vec_tgy_edx_lat, width = 0.001)
+            #plt.quiver(lon_edy, lat_edy, vec_tgx_edy_lon, vec_tgx_edy_lat, width = 0.001)
+            #plt.quiver(lon_edy, lat_edy, vec_tgy_edy_lon, vec_tgy_edy_lat, width = 0.001)
 
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
@@ -241,10 +270,10 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         D_lon, D_lat = lons[i0:iend, j0+1:jend+1], lats[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
-        plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
-        plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
-        plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        #plt.plot([A_lon, B_lon], [A_lat, B_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        #plt.plot([B_lon, C_lon], [B_lat, C_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        #plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
+        #plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
 
     ax.coastlines()
 
@@ -506,6 +535,11 @@ def save_grid_netcdf4(grid):
     centers  = griddata.createVariable('centers' , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
     edx      = griddata.createVariable('edx'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     edy      = griddata.createVariable('edy'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+    tg_ex_edx      = griddata.createVariable('tg_ex_edx'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
+    tg_ey_edx      = griddata.createVariable('tg_ey_edx'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
+    tg_ex_edy      = griddata.createVariable('tg_ex_edy'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+    tg_ey_edy      = griddata.createVariable('tg_ey_edy'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+
 
     # Geometric properties
     areas                   = griddata.createVariable('areas'                , 'f8', ('ix2', 'jy2', 'panel'))
@@ -553,6 +587,30 @@ def save_grid_netcdf4(grid):
     edy[:,:,:,2] = grid.edy.Z
     edy[:,:,:,3] = grid.edy.lon
     edy[:,:,:,4] = grid.edy.lat
+
+    tg_ex_edx[:,:,:,0] = grid.tg_ex_edx.X
+    tg_ex_edx[:,:,:,1] = grid.tg_ex_edx.Y
+    tg_ex_edx[:,:,:,2] = grid.tg_ex_edx.Z
+    tg_ex_edx[:,:,:,3] = grid.tg_ex_edx.lon
+    tg_ex_edx[:,:,:,4] = grid.tg_ex_edx.lat
+
+    tg_ey_edx[:,:,:,0] = grid.tg_ey_edx.X
+    tg_ey_edx[:,:,:,1] = grid.tg_ey_edx.Y
+    tg_ey_edx[:,:,:,2] = grid.tg_ey_edx.Z
+    tg_ey_edx[:,:,:,3] = grid.tg_ey_edx.lon
+    tg_ey_edx[:,:,:,4] = grid.tg_ey_edx.lat
+
+    tg_ex_edy[:,:,:,0] = grid.tg_ex_edy.X
+    tg_ex_edy[:,:,:,1] = grid.tg_ex_edy.Y
+    tg_ex_edy[:,:,:,2] = grid.tg_ex_edy.Z
+    tg_ex_edy[:,:,:,3] = grid.tg_ex_edy.lon
+    tg_ex_edy[:,:,:,4] = grid.tg_ex_edy.lat
+
+    tg_ey_edy[:,:,:,0] = grid.tg_ey_edy.X
+    tg_ey_edy[:,:,:,1] = grid.tg_ey_edy.Y
+    tg_ey_edy[:,:,:,2] = grid.tg_ey_edy.Z
+    tg_ey_edy[:,:,:,3] = grid.tg_ey_edy.lon
+    tg_ey_edy[:,:,:,4] = grid.tg_ey_edy.lat
 
     areas[:,:,:]           = grid.areas[:,:,:]
     length_edx[:,:,:]      = grid.length_edx[:,:,:]

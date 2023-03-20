@@ -76,10 +76,15 @@ class cubed_sphere:
             nghost = self.nghost
 
             # Create points
-            vertices = point(N+1+nghost, N+1+nghost)
-            centers  = point(N+nghost, N+nghost)
-            edx      = point(N+1+nghost, N+nghost)
-            edy      = point(N+nghost, N+1+nghost)
+            vertices  = point(N+1+nghost, N+1+nghost)
+            centers   = point(N+nghost, N+nghost)
+            edx       = point(N+1+nghost, N+nghost)
+            edy       = point(N+nghost, N+1+nghost)
+            tg_ex_edx = point(N+1+nghost, N+nghost)
+            tg_ey_edx = point(N+1+nghost, N+nghost)
+            tg_ex_edy = point(N+nghost, N+1+nghost)
+            tg_ey_edy = point(N+nghost, N+1+nghost)
+
 
             # Get values from file
             vertices.X   = griddata['vertices'][:,:,:,0]
@@ -105,6 +110,32 @@ class cubed_sphere:
             edy.Z   = griddata['edy'][:,:,:,2]
             edy.lon = griddata['edy'][:,:,:,3]
             edy.lat = griddata['edy'][:,:,:,4]
+
+            tg_ex_edx.X   = griddata['tg_ex_edx'][:,:,:,0]
+            tg_ex_edx.Y   = griddata['tg_ex_edx'][:,:,:,1]
+            tg_ex_edx.Z   = griddata['tg_ex_edx'][:,:,:,2]
+            tg_ex_edx.lon = griddata['tg_ex_edx'][:,:,:,3]
+            tg_ex_edx.lat = griddata['tg_ex_edx'][:,:,:,4]
+
+            tg_ey_edx.X   = griddata['tg_ey_edx'][:,:,:,0]
+            tg_ey_edx.Y   = griddata['tg_ey_edx'][:,:,:,1]
+            tg_ey_edx.Z   = griddata['tg_ey_edx'][:,:,:,2]
+            tg_ey_edx.lon = griddata['tg_ey_edx'][:,:,:,3]
+            tg_ey_edx.lat = griddata['tg_ey_edx'][:,:,:,4]
+
+            tg_ex_edy.X   = griddata['tg_ex_edy'][:,:,:,0]
+            tg_ex_edy.Y   = griddata['tg_ex_edy'][:,:,:,1]
+            tg_ex_edy.Z   = griddata['tg_ex_edy'][:,:,:,2]
+            tg_ex_edy.lon = griddata['tg_ex_edy'][:,:,:,3]
+            tg_ex_edy.lat = griddata['tg_ex_edy'][:,:,:,4]
+
+            tg_ey_edx.X   = griddata['tg_ey_edy'][:,:,:,0]
+            tg_ey_edx.Y   = griddata['tg_ey_edy'][:,:,:,1]
+            tg_ey_edx.Z   = griddata['tg_ey_edy'][:,:,:,2]
+            tg_ey_edx.lon = griddata['tg_ey_edy'][:,:,:,3]
+            tg_ey_edx.lat = griddata['tg_ey_edy'][:,:,:,4]
+
+
 
             # Geometric properties
             areas           = griddata['areas'][:,:,:]
@@ -539,6 +570,7 @@ class cubed_sphere:
             Xu = np.repeat(Xu[:, :, np.newaxis], 6, axis=2)
             Yv = np.repeat(Yv[:, :, np.newaxis], 6, axis=2)
             self.Xu, self.Yv = Xu, Yv
+
             # Finish time counting
             elapsed_time = time.time() - start_time
 
