@@ -391,9 +391,98 @@ def ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation):
     # Reconstruct the values at edged
     ppm_reconstruction_x(Qx, px, cs_grid, simulation)
     ppm_reconstruction_y(Qy, py, cs_grid, simulation)
+    i0 = cs_grid.i0
+    j0 = cs_grid.j0
+    iend = cs_grid.iend
+    jend = cs_grid.jend
 
     if simulation.rec_edge_treatment==2:
         # Extrapolation at cells near the cube edges
         edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation)
 
-    #average_parabola_cube_edges(Qx, Qy, px, py, cs_grid)
+    # 0-1; 1-2; 2-3
+    e1_L1 = np.amax(abs(px.q_L[iend,j0:jend,0:3]-px.q_L[i0,j0:jend,1:4]))
+    e1_R1 = np.amax(abs(px.q_R[iend,j0:jend,0:3]-px.q_R[i0,j0:jend,1:4]))
+    e1_L2 = np.amax(abs(px.q_L[iend-1,j0:jend,0:3]-px.q_L[i0-1,j0:jend,1:4]))
+    e1_R2 = np.amax(abs(px.q_R[iend-1,j0:jend,0:3]-px.q_R[i0-1,j0:jend,1:4]))
+
+    # 3-0
+    e2_L1 = np.amax(abs(px.q_L[iend,j0:jend,3]-px.q_L[i0,j0:jend,0]))
+    e2_R1 = np.amax(abs(px.q_R[iend,j0:jend,3]-px.q_R[i0,j0:jend,0]))
+    e2_L2 = np.amax(abs(px.q_L[iend-1,j0:jend,3]-px.q_L[i0-1,j0:jend,0]))
+    e2_R2 = np.amax(abs(px.q_R[iend-1,j0:jend,3]-px.q_R[i0-1,j0:jend,0]))
+
+    # 0-4
+    e3_L1 = np.amax(abs(py.q_L[i0:iend,jend,0]-py.q_L[i0:iend,j0,4]))
+    e3_R1 = np.amax(abs(py.q_R[i0:iend,jend,0]-py.q_R[i0:iend,j0,4]))
+    e3_L2 = np.amax(abs(py.q_L[i0:iend,jend-1,0]-py.q_L[i0:iend,j0-1,4]))
+    e3_R2 = np.amax(abs(py.q_R[i0:iend,jend-1,0]-py.q_R[i0:iend,j0-1,4]))
+
+    # 1-4
+    e4_L1 = np.amax(abs(py.q_L[i0:iend,jend,1]-px.q_R[iend-1,j0:jend,4]))
+    e4_R1 = np.amax(abs(py.q_R[i0:iend,jend,1]-px.q_L[iend-1,j0:jend,4]))
+    e4_L2 = np.amax(abs(py.q_L[i0:iend,jend-1,1]-px.q_R[iend,j0:jend,4]))
+    e4_R2 = np.amax(abs(py.q_R[i0:iend,jend-1,1]-px.q_L[iend,j0:jend,4]))
+
+    # 2-4
+    e5_L1 = np.amax(abs(py.q_L[i0:iend,jend,2]-np.flip(py.q_R[i0:iend,jend-1,4])))
+    e5_R1 = np.amax(abs(py.q_R[i0:iend,jend,2]-np.flip(py.q_L[i0:iend,jend-1,4])))
+    e5_L2 = np.amax(abs(py.q_L[i0:iend,jend-1,2]-np.flip(py.q_R[i0:iend,jend,4])))
+    e5_R2 = np.amax(abs(py.q_R[i0:iend,jend-1,2]-np.flip(py.q_L[i0:iend,jend,4])))
+
+    # 3-4
+    e6_L1 = np.amax(abs(py.q_L[i0:iend,jend,3]-np.flip(px.q_L[i0,j0:jend,4])))
+    e6_R1 = np.amax(abs(py.q_R[i0:iend,jend,3]-np.flip(px.q_R[i0,j0:jend,4])))
+    e6_L2 = np.amax(abs(py.q_L[i0:iend,jend-1,3]-np.flip(px.q_L[i0-1,j0:jend,4])))
+    e6_R2 = np.amax(abs(py.q_R[i0:iend,jend-1,3]-np.flip(px.q_R[i0-1,j0:jend,4])))
+
+    # 0-5
+    e7_L1 = np.amax(abs(py.q_L[i0:iend,j0,0]-py.q_L[i0:iend,jend,5]))
+    e7_R1 = np.amax(abs(py.q_R[i0:iend,j0,0]-py.q_R[i0:iend,jend,5]))
+    e7_L2 = np.amax(abs(py.q_L[i0:iend,j0-1,0]-py.q_L[i0:iend,jend-1,5]))
+    e7_R2 = np.amax(abs(py.q_R[i0:iend,j0-1,0]-py.q_R[i0:iend,jend-1,5]))
+
+    # 1-5
+    e8_L1 = np.amax(abs(px.q_L[iend,j0:jend,5]-np.flip(py.q_L[i0:iend,j0,1])))
+    e8_R1 = np.amax(abs(px.q_R[iend,j0:jend,5]-np.flip(py.q_R[i0:iend,j0,1])))
+    e8_L2 = np.amax(abs(px.q_L[iend-1,j0:jend,5]-np.flip(py.q_L[i0:iend,j0-1,1])))
+    e8_R2 = np.amax(abs(px.q_R[iend-1,j0:jend,5]-np.flip(py.q_R[i0:iend,j0-1,1])))
+
+    # 2-5
+    e9_L1 = np.amax(abs(py.q_L[i0:iend,j0-1,5]-np.flip(py.q_R[i0:iend,j0,2])))
+    e9_R1 = np.amax(abs(py.q_R[i0:iend,j0,5]-np.flip(py.q_L[i0:iend,j0-1,2])))
+    e9_L2 = np.amax(abs(py.q_L[i0:iend,j0-1,5]-np.flip(py.q_R[i0:iend,j0,2])))
+    e9_R2 = np.amax(abs(py.q_R[i0:iend,j0,5]-np.flip(py.q_L[i0:iend,j0-1,2])))
+
+    # 3-5
+    e10_L1 = np.amax(abs(px.q_L[i0-1,j0:jend,5]-py.q_R[i0:iend,j0,3]))
+    e10_R1 = np.amax(abs(px.q_R[i0-1,j0:jend,5]-py.q_L[i0:iend,j0,3]))
+    e10_L2 = np.amax(abs(px.q_L[i0,j0:jend,5]-py.q_R[i0:iend,j0-1,3]))
+    e10_R2 = np.amax(abs(px.q_R[i0,j0:jend,5]-py.q_L[i0:iend,j0-1,3]))
+
+    """
+    print('---------------------')
+    print(e1_L1, e1_R1, e1_L2, e1_R2)
+    print(e2_L1, e2_R1, e2_L2, e2_R2)
+    print(e3_L1, e3_R1, e3_L2, e3_R2)
+    print(e4_L1, e4_R1, e4_L2, e4_R2)
+    print(e5_L1, e5_R1, e5_L2, e5_R2)
+    print(e6_L1, e6_R1, e6_L2, e6_R2)
+    print(e7_L1, e7_R1, e7_L2, e7_R2)
+    print(e8_L1, e8_R1, e8_L2, e8_R2)
+    print(e9_L1, e9_R1, e9_L2, e9_R2)
+    print(e10_L1, e10_R1, e10_L2, e10_R2)
+    print('---------------------')
+
+    e = max(e1_L1, e1_R1, e1_L2, e1_R2)
+    e = max(e, e2_L1, e2_R1, e2_L2, e2_R2)
+    e = max(e, e3_L1, e3_R1, e3_L2, e3_R2)
+    e = max(e, e4_L1, e4_R1, e4_L2, e4_R2)
+    e = max(e, e5_L1, e5_R1, e5_L2, e5_R2)
+    e = max(e, e6_L1, e6_R1, e6_L2, e6_R2)
+    e = max(e, e7_L1, e7_R1, e7_L2, e7_R2)
+    e = max(e, e8_L1, e8_R1, e8_L2, e8_R2)
+    e = max(e, e9_L1, e9_R1, e9_L2, e9_R2)
+    e = max(e, e10_L1, e10_R1, e10_L2, e10_R2)
+    print('error rec = ',e)
+    """

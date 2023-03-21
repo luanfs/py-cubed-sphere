@@ -17,7 +17,8 @@ from sphgeo import*
 from cs_transform   import inverse_equiangular_gnomonic_map, inverse_equidistant_gnomonic_map, inverse_conformal_map
 from plot           import ll2cs_netcdf
 from advection_ic   import qexact_adv
-from halo_data      import get_halo_data_interpolation
+from halo_data      import get_halo_data_interpolation, get_halo_data_interpolation_NS, get_halo_data_interpolation_WE
+
 ####################################################################################
 # This routine receives cubeb-sphere and lat-lon grids and convert each lat-lon
 # point to a cubed-sphere point searching the nearest point in the cubed sphere.
@@ -315,26 +316,159 @@ def ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
 
             Q[0:i0,0:j0,p] = halo_data_ghost[:,:]
 
+
 ####################################################################################
-# This routine set the ghost cell values equal to the adjacent panel values
-# ignoring the coordinate system discontinuity
+# Ghost cells interpolation using Lagrange polynomials - consider only ghost
+# cells at south and north
 ####################################################################################
-def ghost_cells_adjacent_panels(Q, cs_grid, simulation):
-   # Interior cells index (ignoring ghost cells)
+def ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulation,\
+                                       lagrange_poly, Kmin, Kmax):
+    N   = cs_grid.N        # Number of cells in x direction
+    ng  = cs_grid.nghost   # Number o ghost cells
+    ngl = cs_grid.nghost_left
+    ngr = cs_grid.nghost_right
+
+    # Order
+    interpol_degree = simulation.degree
+
+    # Interior cells index (ignoring ghost cells)
     i0   = cs_grid.i0
     iend = cs_grid.iend
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
     # Get halo data
-    halodata = get_halo_data_interpolation(Q, cs_grid)
+    halodata = get_halo_data_interpolation_NS(Qx, cs_grid)
+    halo_data_north = halodata[0]
+    halo_data_south = halodata[1]
+
+    # Interpolation stencil
+    Kmin_north, Kmax_north = Kmin[2], Kmax[2]
+    Kmin_south, Kmax_south = Kmin[3], Kmax[3]
+
+    # Get Lagrange polynomials
+    lagrange_poly_north = lagrange_poly[2]
+    lagrange_poly_south = lagrange_poly[3]
+
+    if interpol_degree>=0:
+        degree = interpol_degree
+        order = degree + 1
+        halo_data_y = np.zeros((N+ng, ngr,order)) # Data used in the interpolation
+        halo_data_ghost_y = np.zeros((N+ng, ngr, N+ng))  # Interpolated data at ghost cells
+
+        for p in range(0, nbfaces):
+            # Interpolate ghost cells of panel p at north
+            support_values = halo_data_north[:,:,p]
+
+            for g in range(0, ngl):
+                for k in range(0, N):
+                    halo_data_y[k,g,:] = support_values[Kmin_north[k,g]:Kmax_north[k,g],g]
+
+            interpolation_data = halo_data_y*lagrange_poly_north
+
+            halo_data_ghost_y = np.sum(interpolation_data[:,:,:], axis=2)
+
+            Qx[i0:iend,jend:jend+ngr,p] = halo_data_ghost_y[i0:iend,:]
+
+            # Interpolate ghost cells of panel p at south
+            support_values = halo_data_south[:,:,p]
+
+            for g in range(0, ngl):
+                for k in range(0, N+ng):
+                    halo_data_y[k,g,:] = support_values[Kmin_south[k,g]:Kmax_south[k,g],g]
+            interpolation_data = halo_data_y*lagrange_poly_south
+
+            halo_data_ghost_y = np.sum(interpolation_data[:,:,:], axis=2)
+
+            Qx[i0:iend,0:j0,p] = halo_data_ghost_y[i0:iend,:]
+
+####################################################################################
+# Ghost cells interpolation using Lagrange polynomials - consider only ghost
+# cells at west and east adjacent panels
+####################################################################################
+def ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulation,\
+                                       lagrange_poly, Kmin, Kmax):
+    N   = cs_grid.N        # Number of cells in x direction
+    ng  = cs_grid.nghost   # Number o ghost cells
+    ngl = cs_grid.nghost_left
+    ngr = cs_grid.nghost_right
+
+    # Order
+    interpol_degree = simulation.degree
+
+    # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+
+    # Get halo data
+    halodata = get_halo_data_interpolation_WE(Qy, cs_grid)
     halo_data_east  = halodata[0]
     halo_data_west  = halodata[1]
-    halo_data_north = halodata[2]
-    halo_data_south = halodata[3]
+
+    # Interpolation stencil
+    Kmin_east , Kmax_east  = Kmin[0], Kmax[0]
+    Kmin_west , Kmax_west  = Kmin[1], Kmax[1]
+
+    # Get Lagrange polynomials
+    lagrange_poly_east  = lagrange_poly[0]
+    lagrange_poly_west  = lagrange_poly[1]
+
+    if interpol_degree>=0:
+        degree = interpol_degree
+        order = degree + 1
+        halo_data_x = np.zeros((ngr, N+ng, order)) # Data used in the interpolation
+        halo_data_ghost_x = np.zeros((ngr, N+ng))  # Interpolated data at ghost cells
+
+        for p in range(0, nbfaces):
+            # Interpolate ghost cells of panel p at east
+            support_values = halo_data_east[:,:,p]
+            for g in range(0, ngl):
+                for k in range(0, N+ng):
+                    halo_data_x[g,k,:] = support_values[g,Kmin_east[g,k]:Kmax_east[g,k]]
+
+            interpolation_data = halo_data_x*lagrange_poly_east
+
+            halo_data_ghost_x = np.sum(interpolation_data[:,:,:], axis=2)
+
+            Qy[iend:iend+ngr,j0:jend,p] = halo_data_ghost_x[:,j0:jend]
+
+            # Interpolate ghost cells of panel p at west
+            support_values = halo_data_west[:,:,p]
+
+            for g in range(0, ngl):
+                for k in range(0, N+ng):
+                    halo_data_x[g,k,:] = support_values[g,Kmin_west[g,k]:Kmax_west[g,k]]
+
+            interpolation_data = halo_data_x*lagrange_poly_west
+
+            halo_data_ghost_x = np.sum(interpolation_data[:,:,:], axis=2)
+
+            Qy[0:i0,j0:jend,p] = halo_data_ghost_x[:,j0:jend]
+
+####################################################################################
+# This routine set the ghost cell values equal to the adjacent panel values
+# ignoring the coordinate system discontinuity
+####################################################################################
+def ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation):
+   # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+    ngl = cs_grid.nghost_left
+
+    # Get halo data
+    halodata = get_halo_data_interpolation_WE(Qx, Qy, cs_grid)
+    halo_data_east  = halodata[0]
+    halo_data_west  = halodata[1]
+    halodata = get_halo_data_interpolation_NS(Qx, Qy, cs_grid)
+    halo_data_north = halodata[0]
+    halo_data_south = halodata[1]
 
     # Set the values of the adjacent panel for ghost cells
-    Q[0:i0,:,:]  = halo_data_west[:,:,:]
-    Q[iend:,:,:] = halo_data_east[:,:,:]
-    Q[:,0:j0,:]  = halo_data_south[:,:,:]
-    Q[:,jend:,:] = halo_data_north[:,:,:]
+    Qy[0:i0,j0:jend,:]  = halo_data_west[:,:,:]
+    Qy[iend:,j0:jend,:] = halo_data_east[:,:,:]
+    Qx[i0:iend,0:j0,:]  = halo_data_south[:,:,:]
+    Qx[i0:iend,jend:,:] = halo_data_north[:,:,:]

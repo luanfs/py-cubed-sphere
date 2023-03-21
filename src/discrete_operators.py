@@ -14,14 +14,31 @@ from edges_treatment    import edges_ghost_cell_treatment, average_flux_cube_edg
 # are the cfl numbers (must be already computed)
 # The divergence is given by px.dF + py.dF
 ####################################################################################
-def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation,\
+def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
                transformation, lagrange_poly, Kmin, Kmax):
 
+    # Multiply the field Q by metric tensor
+    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
+
+    # Fill ghost cell values
+    edges_ghost_cell_treatment(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+
+    i0, iend = cs_grid.i0, cs_grid.iend
+    j0, jend = cs_grid.j0, cs_grid.jend
+    dx, dy   = cs_grid.dx, cs_grid.dy
+    # compute the fluxes
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel
     F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
     G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
+
+    pxdF = px.dF
+    pydF = py.dF
+    dt = simulation.dt
+    metric_tensor = cs_grid.metric_tensor_centers
+    div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
+    #print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*dx*dy))
 
     N = cs_grid.N
     ng = cs_grid.nghost
@@ -57,6 +74,9 @@ def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation,\
         Qx = ne.evaluate('0.5*(gQ + (gQ + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(gQ + (gQ + pydF)/(1.0-(c1y-c2y)))')
 
+    # Fill ghost cell values
+    edges_ghost_cell_treatment(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
 
@@ -76,6 +96,8 @@ def divergence(gQ, div, px, py, cx, cy, cs_grid, simulation,\
     dt = simulation.dt
     metric_tensor = cs_grid.metric_tensor_centers
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
+    #print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*dx*dy))
+    #exit()
 
 ####################################################################################
 # Flux operator in x direction

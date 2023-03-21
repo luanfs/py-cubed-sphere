@@ -26,9 +26,6 @@ def adv_time_step(cs_grid, simulation, Q, gQ, div, px, py, cx, cy, \
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
-    # Fill ghost cell values
-    edges_ghost_cell_treatment(Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
-
     # Compute the velocity need for the departure point
     time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation)
 
@@ -37,10 +34,10 @@ def adv_time_step(cs_grid, simulation, Q, gQ, div, px, py, cx, cy, \
     cy[:,:,:] = cfl_y(U_pv.vcontra_averaged[:,:,:], cs_grid, simulation)
 
     # Multiply the field Q by metric tensor
-    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
+    #gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
 
     # Compute the divergence
-    divergence(gQ, div, px, py, cx, cy, cs_grid, simulation,\
+    divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
                transformation, lagrange_poly, Kmin, Kmax)
     # Q update
     Q[i0:iend,j0:jend,:] = Q[i0:iend,j0:jend,:] - simulation.dt*div[i0:iend,j0:jend,:]

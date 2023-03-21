@@ -18,7 +18,7 @@ from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_m
 from reconstruction_1d      import ppm_reconstruction
 from edges_treatment        import edges_ghost_cell_treatment
 from lagrange               import lagrange_poly_ghostcells
-
+from interpolation          import ghost_cells_lagrange_interpolation
 ####################################################################################
 # Interpolation simulation class
 ####################################################################################
@@ -71,7 +71,7 @@ def q_scalar_field(lon, lat, simulation):
 ####################################################################################
 def error_analysis_interpolation(map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 7
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -89,7 +89,6 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
 
     # Let us test and compute the error!
     ic = get_interpolation_parameters()
-
 
     d = 0
     for degree in degrees:
@@ -124,8 +123,8 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
 
             Q_ll = nearest_neighbour(Qexact, cs_grid, ll_grid)
             name = 'interp_q_ic_'+str(simulation.ic)
-            if degree == 0:
-                plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
+            #if degree == 0:
+            #    plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
 
             # Get Lagrange polynomials
             lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
@@ -176,7 +175,7 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
 ####################################################################################
 def error_analysis_recon(map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 7
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -187,14 +186,16 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         Nc[i]  = Nc[i-1]*2
 
     # Errors array
-    recons = (3,4)
-    recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
+    recons = (1,)
+    recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
+    ret_names = ['RET-0','RET-1','RET-2']
 
     if transformation == 'gnomonic_equiangular':
         rets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
     else:
         rets = (1,2)
 
+    rets = (1,2)
     error_linf = np.zeros((Ntest, len(rets), len(recons)))
     error_l1   = np.zeros((Ntest, len(rets), len(recons)))
     error_l2   = np.zeros((Ntest, len(rets), len(recons)))
@@ -246,7 +247,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
                 # Fill halo data
-                edges_ghost_cell_treatment(Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+                edges_ghost_cell_treatment(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
                 # PPM parabolas
                 px = ppm_parabola(cs_grid,simulation,'x')
@@ -297,9 +298,9 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         errors = []
         name = []
         for r in range(0, len(recons)):
-            for ret in rets:
-                errors.append(error[:,ret-1,r])
-                name.append(recon_names[recons[r]-1]+'-RET'+str(ret))
+            for ret in range(0, len(rets)):
+                errors.append(error[:,ret,r])
+                name.append(recon_names[recons[r]-1]+'/'+ret_names[rets[ret]-1])
 
         title ='Reconstruction error, ic='+ str(simulation.ic)+', norm='+norm_title[e]
         filename = graphdir+'cs_recon_ic'+str(ic)+'_norm'+norm_list[e]+'_parabola_errors.pdf'

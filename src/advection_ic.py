@@ -197,6 +197,7 @@ def qexact_adv(lon, lat, t, simulation):
             X0, Y0, Z0 = sph2cart(lon0, lat0)
             b0 = 10.0
             q = np.exp(-b0*((rotX-X0)**2+ (rotY-Y0)**2 + (rotZ-Z0)**2))
+            #q = np.exp(-b0*((X-X0)**2+ (Y-Y0)**2 + (Z-Z0)**2))
         else:
             X, Y, Z = sph2cart(lon, lat)
             lon0, lat0 = 0.0, 0.0

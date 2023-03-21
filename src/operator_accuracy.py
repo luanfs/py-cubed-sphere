@@ -59,7 +59,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     recons = (3,)
     deps = (1,)
     split = (3,)
-    rets = (3,4)
+    rets = (1,)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
