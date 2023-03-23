@@ -396,10 +396,12 @@ def ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation):
     iend = cs_grid.iend
     jend = cs_grid.jend
 
-    if simulation.rec_edge_treatment==2:
+    if simulation.edge_treatment==2:
         # Extrapolation at cells near the cube edges
         edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation)
 
+
+    """
     # 0-1; 1-2; 2-3
     e1_L1 = np.amax(abs(px.q_L[iend,j0:jend,0:3]-px.q_L[i0,j0:jend,1:4]))
     e1_R1 = np.amax(abs(px.q_R[iend,j0:jend,0:3]-px.q_R[i0,j0:jend,1:4]))
@@ -460,7 +462,7 @@ def ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation):
     e10_L2 = np.amax(abs(px.q_L[i0,j0:jend,5]-py.q_R[i0:iend,j0-1,3]))
     e10_R2 = np.amax(abs(px.q_R[i0,j0:jend,5]-py.q_L[i0:iend,j0-1,3]))
 
-    """
+
     print('---------------------')
     print(e1_L1, e1_R1, e1_L2, e1_R2)
     print(e2_L1, e2_R1, e2_L2, e2_R2)

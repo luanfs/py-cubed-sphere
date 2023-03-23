@@ -12,8 +12,6 @@ from sphgeo                 import latlon_to_contravariant, contravariant_to_lat
 from cfl                    import cfl_x, cfl_y
 from discrete_operators     import divergence
 from averaged_velocity      import time_averaged_velocity
-from edges_treatment        import edges_ghost_cell_treatment
-
 ####################################################################################
 # This routine computes one advection timestep
 ####################################################################################

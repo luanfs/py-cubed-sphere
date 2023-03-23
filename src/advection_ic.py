@@ -19,7 +19,7 @@ from scipy.special import sph_harm
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, recon, dp, opsplit, ret):
+    def __init__(self, dt, Tf, ic, vf, tc, recon, dp, opsplit, et):
         # Initial condition
         self.ic = ic
 
@@ -48,7 +48,6 @@ class adv_simulation_par:
 
         # Degree for interpolation
         self.degree = 3
-
 
         # Define the initial condition name
         if ic == 1:
@@ -118,18 +117,18 @@ class adv_simulation_par:
            exit()
 
         # Edges treatment
-        if ret==1:
-            self.ret_name='RET-1'
-        elif ret==2:
-            self.ret_name='RET-2'
-        elif ret==3:
-            self.ret_name='RET-3'
-        elif ret==4:
-            self.ret_name='RET-4'
+        if et==1:
+            self.et_name='ET-1'
+        elif et==2:
+            self.et_name='ET-2'
+        elif et==3:
+            self.et_name='ET-3'
+        elif et==4:
+            self.et_name='ET-4'
         else:
-            print('ERROR in recon_simulation_par: invalid RET')
+            print('ERROR in recon_simulation_par: invalid ET')
             exit()
-        self.rec_edge_treatment = ret
+        self.edge_treatment = et
 
         # Splitting name
         self.opsplit_name = opsplit_name

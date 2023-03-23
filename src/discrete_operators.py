@@ -7,7 +7,7 @@
 import numpy as np
 import numexpr as ne
 from flux               import compute_fluxes
-from edges_treatment    import edges_ghost_cell_treatment, average_flux_cube_edges
+from edges_treatment    import edges_ghost_cell_treatment_scalar, average_flux_cube_edges, edges_ghost_cell_treatment_vector
 
 ####################################################################################
 # Given gQ (g = metric tensor), compute div(UgQ), where U = (u,v), and cx and cy
@@ -20,12 +20,9 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     # Multiply the field Q by metric tensor
     gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
 
-    # Fill ghost cell values
-    edges_ghost_cell_treatment(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+    # Fill ghost cell values - scalar field
+    edges_ghost_cell_treatment_scalar(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
-    i0, iend = cs_grid.i0, cs_grid.iend
-    j0, jend = cs_grid.j0, cs_grid.jend
-    dx, dy   = cs_grid.dx, cs_grid.dy
     # compute the fluxes
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
@@ -38,7 +35,6 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     dt = simulation.dt
     metric_tensor = cs_grid.metric_tensor_centers
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
-    #print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*dx*dy))
 
     N = cs_grid.N
     ng = cs_grid.nghost
@@ -75,13 +71,13 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         Qy = ne.evaluate('0.5*(gQ + (gQ + pydF)/(1.0-(c1y-c2y)))')
 
     # Fill ghost cell values
-    edges_ghost_cell_treatment(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+    edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
 
     # Flux averaging
-    if simulation.rec_edge_treatment==4:
+    if simulation.edge_treatment==4:
         average_flux_cube_edges(px, py, cs_grid)
 
     # Applies F and G operators in each panel again
@@ -96,8 +92,6 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     dt = simulation.dt
     metric_tensor = cs_grid.metric_tensor_centers
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
-    #print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*dx*dy))
-    #exit()
 
 ####################################################################################
 # Flux operator in x direction

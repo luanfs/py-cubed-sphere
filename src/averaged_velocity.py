@@ -9,12 +9,16 @@ from advection_ic import velocity_adv
 from sphgeo       import latlon_to_contravariant
 import numexpr as ne
 import numpy   as np
+from edges_treatment    import edges_ghost_cell_treatment_vector
 
 def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
     i0, iend = cs_grid.i0, cs_grid.iend
     j0, jend = cs_grid.j0, cs_grid.jend
     N = cs_grid.N
     ng = cs_grid.nghost
+
+    # Fill ghost cell - velocity field
+    edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)
 
     # Compute the velocity needed for the departure point
     if simulation.dp == 1:

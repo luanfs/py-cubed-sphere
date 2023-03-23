@@ -10,6 +10,7 @@ from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
 from lagrange               import lagrange_poly_ghostcells
+from edges_treatment    import edges_ghost_cell_treatment_vector
 
 ####################################################################################
 # This routine initializates the advection routine variables
@@ -40,6 +41,9 @@ def init_vars_adv(cs_grid, simulation, transformation):
     # Convert latlon to contravariant at pv
     U_pv.ucontra[:,:,:], U_pv.vcontra[:,:,:] = latlon_to_contravariant(U_pv.ulon, U_pv.vlat, cs_grid.prod_ex_elon_edy, cs_grid.prod_ex_elat_edy,\
                                                        cs_grid.prod_ey_elon_edy, cs_grid.prod_ey_elat_edy, cs_grid.determinant_ll2contra_edy)
+
+    # Fill ghost cell - velocity field
+    edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)
 
     U_pu.ucontra_old[:,:,:] = U_pu.ucontra[:,:,:]
     U_pv.vcontra_old[:,:,:] = U_pv.vcontra[:,:,:]

@@ -231,21 +231,21 @@ def average_flux_cube_edges(px, py, cs_grid):
     px.f_upw[iend,j0:jend,4] = (px.f_upw[iend,j0:jend,4] + py.f_upw[i0:iend,jend,1])*0.5
     py.f_upw[i0:iend,jend,1] = px.f_upw[iend,j0:jend,4]
 
-    # Average panels 1-5
-    py.f_upw[i0:iend,j0,1] = (py.f_upw[i0:iend,j0,1] + np.flip(px.f_upw[iend,j0:jend,5]))*0.5
-    px.f_upw[iend,j0:jend,5] = np.flip(py.f_upw[i0:iend,j0,1])
-
     # Average panels 2-4
     py.f_upw[i0:iend,jend,4] = (py.f_upw[i0:iend,jend,4] + np.flip(py.f_upw[i0:iend,jend-1,2]))*0.5
     py.f_upw[i0:iend,jend,2] = np.flip(py.f_upw[i0:iend,jend,4])
 
-    # Average panels 2-5
-    py.f_upw[i0:iend,j0,2] = (py.f_upw[i0:iend,j0,2] + np.flip(py.f_upw[i0:iend,j0,5]))*0.5
-    py.f_upw[i0:iend,j0,5] = np.flip(py.f_upw[i0:iend,j0,2])
-
     # Average panels 3-4
     px.f_upw[i0,j0:jend,4] = np.flip(py.f_upw[i0:iend,jend,3])
     py.f_upw[i0:iend,jend,3] = np.flip(px.f_upw[i0,j0:jend,4])
+
+    # Average panels 1-5
+    py.f_upw[i0:iend,j0,1] = (py.f_upw[i0:iend,j0,1] + np.flip(px.f_upw[iend,j0:jend,5]))*0.5
+    px.f_upw[iend,j0:jend,5] = np.flip(py.f_upw[i0:iend,j0,1])
+
+    # Average panels 2-5
+    py.f_upw[i0:iend,j0,2] = (py.f_upw[i0:iend,j0,2] + np.flip(py.f_upw[i0:iend,j0,5]))*0.5
+    py.f_upw[i0:iend,j0,5] = np.flip(py.f_upw[i0:iend,j0,2])
 
     # Average panels 3-5
     py.f_upw[i0:iend,j0,3] = (px.f_upw[i0,j0:jend,5] + py.f_upw[i0:iend,j0,3])*0.5
@@ -253,12 +253,13 @@ def average_flux_cube_edges(px, py, cs_grid):
 
 ####################################################################################
 # This routine fill the halo data with the scheme given in simulation
+# Qx and Qy are scalar fields
 ####################################################################################
-def edges_ghost_cell_treatment(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax):
-    if simulation.rec_edge_treatment==1 or simulation.rec_edge_treatment==2: # Uses adjacent cells values
+def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax):
+    if simulation.edge_treatment==1 or simulation.edge_treatment==2: # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
-    if simulation.rec_edge_treatment==3 or simulation.rec_edge_treatment==4: # Uses ghost cells interpolation
+    if simulation.edge_treatment==3 or simulation.edge_treatment==4: # Uses ghost cells interpolation
         # Interpolate to ghost cells - north and south neighbors
         ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
@@ -266,4 +267,52 @@ def edges_ghost_cell_treatment(Qx, Qy, cs_grid, simulation, transformation, lagr
         ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
 
+####################################################################################
+# This routine fill the halo data with the scheme given in simulation
+# u and v are components of the velocity fields at edges
+####################################################################################
+def edges_ghost_cell_treatment_vector(u, v, cs_grid, simulation):
+    if simulation.dp_name == 'RK2':
+        i0, iend = cs_grid.i0, cs_grid.iend
+        j0, jend = cs_grid.j0, cs_grid.jend
+        ngl = cs_grid.nghost_left
+
+        if simulation.edge_treatment==1 or simulation.edge_treatment==2: # Uses adjacent cells values
+            # Panels 0-1,1-2,2-3,3-4
+            u[iend+1,j0:jend,0:3] = u[i0+1,j0:jend,1:4]
+            u[iend+1,j0:jend,3]   = u[i0+1,j0:jend,0]
+            u[i0-1,j0:jend,1:4] = u[iend-1,j0:jend,0:3]
+            u[i0-1,j0:jend,0]   = u[iend-1,j0:jend,3]
+
+            # Panels 0-4
+            v[i0:iend,jend+1,0] = v[i0:iend,j0+1,4]
+            v[i0:iend,j0-1,4]   = v[i0:iend,jend-1,0]
+
+            # Panels 1-4
+            u[iend+1,j0:jend,4] = -v[i0:iend,jend-1,1]
+            v[i0:iend,jend+1,1] = -u[iend-1,j0:jend,4]
+
+            # Panels 2-4
+            v[i0:iend,jend+1,4] = -np.flip(v[i0:iend,jend-1,2])
+            v[i0:iend,jend+1,2] = -np.flip(v[i0:iend,jend-1,4])
+
+            # Panels 3-4
+            u[i0-1,j0:jend,4]   = np.flip(v[i0:iend,jend-1,3])
+            v[i0:iend,jend+1,3] = np.flip(u[i0+1,j0:jend,4])
+
+            # Panels 0-5
+            v[i0:iend,jend+1,5] = v[i0:iend,j0+1,0]
+            v[i0:iend,j0-1,0]   = v[i0:iend,jend-1,5]
+
+            # Panels 1-5
+            v[i0:iend,j0-1,1]   = np.flip(u[iend-1,j0:jend,5])
+            u[iend+1,j0:jend,5] = np.flip(v[i0:iend,j0+1,1])
+
+            # Panels 2-5
+            v[i0:iend,j0-1,2] = -np.flip(v[i0:iend,j0+1,5])
+            v[i0:iend,j0-1,5] = -np.flip(v[i0:iend,j0+1,2])
+
+            # Average panels 3-5
+            v[i0:iend,j0-1,3] = -u[i0+1,j0:jend,5]
+            u[i0-1,j0:jend,5] = -v[i0:iend,j0+1,3]
 

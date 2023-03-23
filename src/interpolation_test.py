@@ -16,7 +16,7 @@ from scipy.special          import sph_harm
 from interpolation          import ll2cs, nearest_neighbour
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
 from reconstruction_1d      import ppm_reconstruction
-from edges_treatment        import edges_ghost_cell_treatment
+from edges_treatment        import edges_ghost_cell_treatment_scalar
 from lagrange               import lagrange_poly_ghostcells
 from interpolation          import ghost_cells_lagrange_interpolation
 ####################################################################################
@@ -188,17 +188,17 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     # Errors array
     recons = (1,)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
-    ret_names = ['RET-0','RET-1','RET-2']
+    et_names = ['RET-0','RET-1','RET-2']
 
     if transformation == 'gnomonic_equiangular':
-        rets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
+        ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
     else:
-        rets = (1,2)
+        ets = (1,2)
 
-    rets = (1,2)
-    error_linf = np.zeros((Ntest, len(rets), len(recons)))
-    error_l1   = np.zeros((Ntest, len(rets), len(recons)))
-    error_l2   = np.zeros((Ntest, len(rets), len(recons)))
+    ets = (1,2)
+    error_linf = np.zeros((Ntest, len(ets), len(recons)))
+    error_l1   = np.zeros((Ntest, len(ets), len(recons)))
+    error_l2   = np.zeros((Ntest, len(ets), len(recons)))
 
     # Edge treatment
     # Function to be reconstructed
@@ -208,15 +208,15 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     colormap = 'Blues'
 
     # Let us test and compute the error
-    RET = 0
-    for ret in rets:
+    ET = 0
+    for et in ets:
         rec = 0
         for recon in recons:
             for i in range(0, Ntest):
                 N = int(Nc[i])
 
                 # Get parameters
-                simulation = recon_simulation_par(ic, recon, ret)
+                simulation = recon_simulation_par(ic, recon, et)
 
                 # Create CS mesh
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
@@ -241,13 +241,13 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
 
                 Q[i0:iend,j0:jend,:] = Qexact[i0:iend,j0:jend,:]
 
-                print('\nParameters: N = '+str(int(Nc[i]))+', ret = '+str(ret)+' , recon = ', recon)
+                print('\nParameters: N = '+str(int(Nc[i]))+', et = '+str(et)+' , recon = ', recon)
 
                 # get lagrange_poly
                 lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
                 # Fill halo data
-                edges_ghost_cell_treatment(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+                edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
                 # PPM parabolas
                 px = ppm_parabola(cs_grid,simulation,'x')
@@ -264,8 +264,8 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
 
                 # Relative errors in different metrics
-                error_linf[i,RET,rec], error_l1[i,RET,rec], error_l2[i,RET,rec] = compute_errors(error_plot.f,0*error_plot.f)
-                print_errors_simul(error_linf[:,RET,rec], error_l1[:,RET,rec], error_l2[:,RET,rec], i)
+                error_linf[i,ET,rec], error_l1[i,ET,rec], error_l2[i,ET,rec] = compute_errors(error_plot.f,0*error_plot.f)
+                print_errors_simul(error_linf[:,ET,rec], error_l1[:,ET,rec], error_l2[:,ET,rec], i)
 
                 #error_plot.f = Q[i0:iend,j0:jend,:]
                 e_ll = nearest_neighbour(error_plot, cs_grid, ll_grid)
@@ -273,12 +273,12 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 emin, emax = 0, emax_abs
                 #emin, emax = np.amin(e_ll), np.amax(e_ll)
                 name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name\
-                +'_ret'+str(simulation.rec_edge_treatment)
+                +'_ret'+str(simulation.edge_treatment)
                 filename = 'Reconstruction error, ic='+ str(simulation.ic)+\
-                ', recon='+simulation.recon_name+', '+str(simulation.ret_name)+', N='+str(cs_grid.N)
+                ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
                 plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
             rec = rec+1
-        RET = RET + 1
+        ET = ET + 1
 
     # Outputs
     # plot errors for different all schemes in  different norms
@@ -298,9 +298,9 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         errors = []
         name = []
         for r in range(0, len(recons)):
-            for ret in range(0, len(rets)):
-                errors.append(error[:,ret,r])
-                name.append(recon_names[recons[r]-1]+'/'+ret_names[rets[ret]-1])
+            for et in range(0, len(ets)):
+                errors.append(error[:,et,r])
+                name.append(recon_names[recons[r]-1]+'/'+et_names[ets[et]-1])
 
         title ='Reconstruction error, ic='+ str(simulation.ic)+', norm='+norm_title[e]
         filename = graphdir+'cs_recon_ic'+str(ic)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
@@ -316,7 +316,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
 # Reconstruction simulation class
 ####################################################################################
 class recon_simulation_par:
-    def __init__(self, ic, recon, ret):
+    def __init__(self, ic, recon, et):
         # Scalar field
         self.ic = ic
 
@@ -346,13 +346,13 @@ class recon_simulation_par:
         self.title = 'Reconstruction'
 
         # Edges treatment
-        if ret==1:
-            self.ret_name='RET-1'
-        elif ret==2:
-            self.ret_name='RET-2'
-        elif ret==3:
-            self.ret_name='RET-3'
+        if et==1:
+            self.et_name='RET-1'
+        elif et==2:
+            self.et_name='RET-2'
+        elif et==3:
+            self.et_name='RET-3'
         else:
-            print('ERROR in recon_simulation_par: invalid RET')
+            print('ERROR in recon_simulation_par: invalid ET')
             exit()
-        self.rec_edge_treatment = ret
+        self.edge_treatment = et
