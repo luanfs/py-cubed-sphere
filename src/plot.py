@@ -588,6 +588,7 @@ def save_grid_netcdf4(grid):
     edy[:,:,:,3] = grid.edy.lon
     edy[:,:,:,4] = grid.edy.lat
 
+    """
     tg_ex_edx[:,:,:,0] = grid.tg_ex_edx.X
     tg_ex_edx[:,:,:,1] = grid.tg_ex_edx.Y
     tg_ex_edx[:,:,:,2] = grid.tg_ex_edx.Z
@@ -611,6 +612,7 @@ def save_grid_netcdf4(grid):
     tg_ey_edy[:,:,:,2] = grid.tg_ey_edy.Z
     tg_ey_edy[:,:,:,3] = grid.tg_ey_edy.lon
     tg_ey_edy[:,:,:,4] = grid.tg_ey_edy.lat
+    """
 
     areas[:,:,:]           = grid.areas[:,:,:]
     length_edx[:,:,:]      = grid.length_edx[:,:,:]

@@ -111,6 +111,7 @@ class cubed_sphere:
             edy.lon = griddata['edy'][:,:,:,3]
             edy.lat = griddata['edy'][:,:,:,4]
 
+            """
             tg_ex_edx.X   = griddata['tg_ex_edx'][:,:,:,0]
             tg_ex_edx.Y   = griddata['tg_ex_edx'][:,:,:,1]
             tg_ex_edx.Z   = griddata['tg_ex_edx'][:,:,:,2]
@@ -134,7 +135,7 @@ class cubed_sphere:
             tg_ey_edx.Z   = griddata['tg_ey_edy'][:,:,:,2]
             tg_ey_edx.lon = griddata['tg_ey_edy'][:,:,:,3]
             tg_ey_edx.lat = griddata['tg_ey_edy'][:,:,:,4]
-
+            """
 
 
             # Geometric properties
@@ -528,10 +529,12 @@ class cubed_sphere:
             tg_ey_edy.lon = tg_ey_edy.X[:,:,:]*self.elon_edy[:,:,:,0] + tg_ey_edy.Y[:,:,:]*self.elon_edy[:,:,:,1] + tg_ey_edy.Z[:,:,:]*self.elon_edy[:,:,:,2]
             tg_ey_edy.lat = tg_ey_edy.X[:,:,:]*self.elat_edy[:,:,:,0] + tg_ey_edy.Y[:,:,:]*self.elat_edy[:,:,:,1] + tg_ey_edy.Z[:,:,:]*self.elat_edy[:,:,:,2]
 
+            """
             self.tg_ex_edx = tg_ex_edx
             self.tg_ey_edx = tg_ey_edx
             self.tg_ex_edy = tg_ex_edy
             self.tg_ey_edy = tg_ey_edy
+            """
 
             # Latlon/Contravariant conversion
             if showonscreen==True:
