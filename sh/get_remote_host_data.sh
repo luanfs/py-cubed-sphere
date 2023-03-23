@@ -24,10 +24,10 @@ output='cs_data'   #output file (.tar)
 # Fisrt, we create a tarball with the target data in remote host 2
 #-------------------------------------------------------------------------------------------------------
 echo "Creating tarball at $remote_host2:"
-ssh -t $user1@$remote_host1 "ssh -t $user2@$remote_host2 <<'EOL'
+ssh -t $user1@$remote_host1 "ssh -t $user2@$remote_host2 <<EOF
 	cd $output_dir_remote_host2;
 	tar cjfv $output $data
-	EOL"
+EOF"
 echo "Created tarball at $remote_host2"
 echo
 
