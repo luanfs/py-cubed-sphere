@@ -252,7 +252,7 @@ def average_flux_cube_edges(px, py, cs_grid):
     px.f_upw[i0,j0:jend,5] = py.f_upw[i0:iend,j0,3]
 
 ####################################################################################
-# This routine fill the halo data with the scheme given in simulation
+# This routine fill the halo data using the scheme given in simulation
 # Qx and Qy are scalar fields
 ####################################################################################
 def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax):
@@ -261,10 +261,10 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformatio
 
     if simulation.edge_treatment==3 or simulation.edge_treatment==4: # Uses ghost cells interpolation
         # Interpolate to ghost cells - north and south neighbors
-        ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+        ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
         # Interpolate to ghost cells - west and east neighbors
-        ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+        ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
 
 ####################################################################################

@@ -321,7 +321,7 @@ def ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
 # Ghost cells interpolation using Lagrange polynomials - consider only ghost
 # cells at south and north
 ####################################################################################
-def ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulation,\
+def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation,\
                                        lagrange_poly, Kmin, Kmax):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.nghost   # Number o ghost cells
@@ -338,7 +338,7 @@ def ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulatio
     jend = cs_grid.jend
 
     # Get halo data
-    halodata = get_halo_data_interpolation_NS(Qx, cs_grid)
+    halodata = get_halo_data_interpolation_NS(Qx, Qy, cs_grid)
     halo_data_north = halodata[0]
     halo_data_south = halodata[1]
 
@@ -361,8 +361,8 @@ def ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulatio
             support_values = halo_data_north[:,:,p]
 
             for g in range(0, ngl):
-                for k in range(0, N):
-                    halo_data_y[k,g,:] = support_values[Kmin_north[k,g]:Kmax_north[k,g],g]
+                for k in range(ngl, N+ngl):
+                    halo_data_y[k,g,:] = support_values[Kmin_north[k,g]-ngl:Kmax_north[k,g]-ngl,g]
 
             interpolation_data = halo_data_y*lagrange_poly_north
 
@@ -374,8 +374,8 @@ def ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulatio
             support_values = halo_data_south[:,:,p]
 
             for g in range(0, ngl):
-                for k in range(0, N+ng):
-                    halo_data_y[k,g,:] = support_values[Kmin_south[k,g]:Kmax_south[k,g],g]
+                for k in range(ngl, N+ngl):
+                    halo_data_y[k,g,:] = support_values[Kmin_south[k,g]-ngl:Kmax_south[k,g]-ngl,g]
             interpolation_data = halo_data_y*lagrange_poly_south
 
             halo_data_ghost_y = np.sum(interpolation_data[:,:,:], axis=2)
@@ -386,7 +386,7 @@ def ghost_cells_lagrange_interpolation_NS(Qx, cs_grid, transformation, simulatio
 # Ghost cells interpolation using Lagrange polynomials - consider only ghost
 # cells at west and east adjacent panels
 ####################################################################################
-def ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulation,\
+def ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation,\
                                        lagrange_poly, Kmin, Kmax):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.nghost   # Number o ghost cells
@@ -403,7 +403,7 @@ def ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulatio
     jend = cs_grid.jend
 
     # Get halo data
-    halodata = get_halo_data_interpolation_WE(Qy, cs_grid)
+    halodata = get_halo_data_interpolation_WE(Qy, Qx, cs_grid)
     halo_data_east  = halodata[0]
     halo_data_west  = halodata[1]
 
@@ -425,8 +425,8 @@ def ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulatio
             # Interpolate ghost cells of panel p at east
             support_values = halo_data_east[:,:,p]
             for g in range(0, ngl):
-                for k in range(0, N+ng):
-                    halo_data_x[g,k,:] = support_values[g,Kmin_east[g,k]:Kmax_east[g,k]]
+                for k in range(ngl, N+ngl):
+                    halo_data_x[g,k,:] = support_values[g,Kmin_east[g,k]-ngl:Kmax_east[g,k]-ngl]
 
             interpolation_data = halo_data_x*lagrange_poly_east
 
@@ -438,8 +438,8 @@ def ghost_cells_lagrange_interpolation_WE(Qy, cs_grid, transformation, simulatio
             support_values = halo_data_west[:,:,p]
 
             for g in range(0, ngl):
-                for k in range(0, N+ng):
-                    halo_data_x[g,k,:] = support_values[g,Kmin_west[g,k]:Kmax_west[g,k]]
+                for k in range(ngl, N+ngl):
+                    halo_data_x[g,k,:] = support_values[g,Kmin_west[g,k]-ngl:Kmax_west[g,k]-ngl]
 
             interpolation_data = halo_data_x*lagrange_poly_west
 
