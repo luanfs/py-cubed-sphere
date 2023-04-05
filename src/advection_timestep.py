@@ -31,9 +31,6 @@ def adv_time_step(cs_grid, simulation, Q, gQ, div, px, py, cx, cy, \
     cx[:,:,:] = cfl_x(U_pu.ucontra_averaged[:,:,:], cs_grid, simulation)
     cy[:,:,:] = cfl_y(U_pv.vcontra_averaged[:,:,:], cs_grid, simulation)
 
-    # Multiply the field Q by metric tensor
-    #gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
-
     # Compute the divergence
     divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
                transformation, lagrange_poly, Kmin, Kmax)
