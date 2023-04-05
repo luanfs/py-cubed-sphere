@@ -2,21 +2,21 @@
 #Total period definition (seconds)
 5
 #Time step (seconds)
-0.01	
+0.005
 #Initial condition
-2	
+3	
 #Vector field 
-2
+4
 #Test case
 2
-#Reconstruction(1, 2, 3, 4)
+#Reconstruction (1, 2, 3, 4)
 1
-#Departure point scheme (1 or 2)
+#Departure point scheme (1, 2)
 1
-#Operator splitting(1, 2, 3)
+#Operator splitting (1, 2, 3)
 1
-#Reconstruction edge treatment (1, 2, 3)
-4
+#Edge treatment (1, 2, 3, 4, 5, 6)
+5
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
 #  case(1) - constant flow
