@@ -21,10 +21,10 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
     edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)
 
     # Compute the velocity needed for the departure point
-    if simulation.dp == 1:
+    if simulation.dp_name == 'RK1':
         U_pu.ucontra_averaged[:,:,:] = U_pu.ucontra[:,:,:]
         U_pv.vcontra_averaged[:,:,:] = U_pv.vcontra[:,:,:]
-    elif simulation.dp == 2:
+    elif simulation.dp_name == 'RK2':
         dt = simulation.dt
         dto2 = simulation.dto2
 
@@ -66,5 +66,42 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
         U_pv.vcontra_averaged[:,j0:jend+1,:][vpos] = (1.0-a[vpos])*v_interp[:,j0:jend+1,:][vpos] + a[vpos]*v_interp[:,j0-1:jend,:][vpos]
         U_pv.vcontra_averaged[:,j0:jend+1,:][vneg] = -a[vneg]*v_interp[:,j0+1:jend+2,:][vneg] + (1.0+a[vneg])*v_interp[:,j0:jend+1,:][vneg]
 
+        if simulation.et_name=='ET-R96-AF' or simulation.et_name=='ET-Z21-AF':
+            # Average panels 0-1,1-2,2-3,3-4
+            U_pu.ucontra_averaged[iend,j0:jend,0:3] = (U_pu.ucontra_averaged[iend,j0:jend,0:3] + U_pu.ucontra_averaged[i0,j0:jend,1:4])*0.5
+            U_pu.ucontra_averaged[i0,j0:jend,1:4] = U_pu.ucontra_averaged[iend,j0:jend,0:3]
+            U_pu.ucontra_averaged[iend,j0:jend,3] = (U_pu.ucontra_averaged[iend,j0:jend,3] + U_pu.ucontra_averaged[i0,j0:jend,0])*0.5
+            U_pu.ucontra_averaged[i0,j0:jend,0] = U_pu.ucontra_averaged[iend,j0:jend,3]
 
+            # Average panels 0-4
+            U_pv.vcontra_averaged[i0:iend,j0,4] = (U_pv.vcontra_averaged[i0:iend,j0,4] + U_pv.vcontra_averaged[i0:iend,jend,0])*0.5
+            U_pv.vcontra_averaged[i0:iend,jend,0] = U_pv.vcontra_averaged[i0:iend,j0,4]
+
+            # Average panels 1-4
+            U_pu.ucontra_averaged[iend,j0:jend,4] = (U_pu.ucontra_averaged[iend,j0:jend,4] - U_pv.vcontra_averaged[i0:iend,jend,1])*0.5
+            U_pv.vcontra_averaged[i0:iend,jend,1] = -U_pu.ucontra_averaged[iend,j0:jend,4]
+
+            # Average panels 2-4
+            U_pv.vcontra_averaged[i0:iend,jend,4] = (U_pv.vcontra_averaged[i0:iend,jend,4] - np.flip(U_pv.vcontra_averaged[i0:iend,jend-1,2]))*0.5
+            U_pv.vcontra_averaged[i0:iend,jend,2] = -np.flip(U_pv.vcontra_averaged[i0:iend,jend,4])
+
+            # Average panels 3-4
+            U_pu.ucontra_averaged[i0,j0:jend,4] = (U_pu.ucontra_averaged[i0,j0:jend,4] + np.flip(U_pv.vcontra_averaged[i0:iend,jend,3]))*0.5
+            U_pv.vcontra_averaged[i0:iend,jend,3] = np.flip(U_pu.ucontra_averaged[i0,j0:jend,4])
+
+            # Average panels 0-5
+            U_pv.vcontra_averaged[i0:iend,jend,5] = (U_pv.vcontra_averaged[i0:iend,jend,5] + U_pv.vcontra_averaged[i0:iend,j0,0])*0.5
+            U_pv.vcontra_averaged[i0:iend,j0,0] = U_pv.vcontra_averaged[i0:iend,jend,5]
+
+            # Average panels 1-5
+            U_pv.vcontra_averaged[i0:iend,j0,1] = (U_pv.vcontra_averaged[i0:iend,j0,1] + np.flip(U_pu.ucontra_averaged[iend,j0:jend,5]))*0.5
+            U_pu.ucontra_averaged[iend,j0:jend,5] = np.flip(U_pv.vcontra_averaged[i0:iend,j0,1])
+
+            # Average panels 2-5
+            U_pv.vcontra_averaged[i0:iend,j0,2] = (U_pv.vcontra_averaged[i0:iend,j0,2] - np.flip(U_pv.vcontra_averaged[i0:iend,j0,5]))*0.5
+            U_pv.vcontra_averaged[i0:iend,j0,5] = -np.flip(U_pv.vcontra_averaged[i0:iend,j0,2])
+
+            # Average panels 3-5
+            U_pv.vcontra_averaged[i0:iend,j0,3] = (-U_pu.ucontra_averaged[i0,j0:jend,5] + U_pv.vcontra_averaged[i0:iend,j0,3])*0.5
+            U_pu.ucontra_averaged[i0,j0:jend,5] = -U_pv.vcontra_averaged[i0:iend,j0,3]
     #----------------------------------------------------
