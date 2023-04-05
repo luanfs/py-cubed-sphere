@@ -223,10 +223,6 @@ def average_flux_cube_edges(px, py, cs_grid):
     py.f_upw[i0:iend,j0,4] = (py.f_upw[i0:iend,j0,4] + py.f_upw[i0:iend,jend,0])*0.5
     py.f_upw[i0:iend,jend,0] = py.f_upw[i0:iend,j0,4]
 
-    # Average panels 0-5
-    py.f_upw[i0:iend,jend,5] = (py.f_upw[i0:iend,jend,5] + py.f_upw[i0:iend,j0,0])*0.5
-    py.f_upw[i0:iend,j0,0] = py.f_upw[i0:iend,jend,5]
-
     # Average panels 1-4
     px.f_upw[iend,j0:jend,4] = (px.f_upw[iend,j0:jend,4] + py.f_upw[i0:iend,jend,1])*0.5
     py.f_upw[i0:iend,jend,1] = px.f_upw[iend,j0:jend,4]
@@ -236,8 +232,12 @@ def average_flux_cube_edges(px, py, cs_grid):
     py.f_upw[i0:iend,jend,2] = np.flip(py.f_upw[i0:iend,jend,4])
 
     # Average panels 3-4
-    px.f_upw[i0,j0:jend,4] = np.flip(py.f_upw[i0:iend,jend,3])
+    px.f_upw[i0,j0:jend,4] = (px.f_upw[i0,j0:jend,4] + np.flip(py.f_upw[i0:iend,jend,3]))*0.5
     py.f_upw[i0:iend,jend,3] = np.flip(px.f_upw[i0,j0:jend,4])
+
+    # Average panels 0-5
+    py.f_upw[i0:iend,jend,5] = (py.f_upw[i0:iend,jend,5] + py.f_upw[i0:iend,j0,0])*0.5
+    py.f_upw[i0:iend,j0,0] = py.f_upw[i0:iend,jend,5]
 
     # Average panels 1-5
     py.f_upw[i0:iend,j0,1] = (py.f_upw[i0:iend,j0,1] + np.flip(px.f_upw[iend,j0:jend,5]))*0.5
@@ -256,16 +256,19 @@ def average_flux_cube_edges(px, py, cs_grid):
 # Qx and Qy are scalar fields
 ####################################################################################
 def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax):
-    if simulation.edge_treatment==1 or simulation.edge_treatment==2: # Uses adjacent cells values
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
-    if simulation.edge_treatment==3 or simulation.edge_treatment==4: # Uses ghost cells interpolation
+    elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF': # Uses ghost cells interpolation - ignoring corner ghost cells
         # Interpolate to ghost cells - north and south neighbors
         ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
         # Interpolate to ghost cells - west and east neighbors
         ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
+    elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF': # Uses ghost cells interpolation - using corner ghost cells
+        ghost_cells_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
+                                           lagrange_poly, Kmin, Kmax)
 
 ####################################################################################
 # This routine fill the halo data with the scheme given in simulation
@@ -277,7 +280,7 @@ def edges_ghost_cell_treatment_vector(u, v, cs_grid, simulation):
         j0, jend = cs_grid.j0, cs_grid.jend
         ngl = cs_grid.nghost_left
 
-        if simulation.edge_treatment==1 or simulation.edge_treatment==2: # Uses adjacent cells values
+        if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
             # Panels 0-1,1-2,2-3,3-4
             u[iend+1,j0:jend,0:3] = u[i0+1,j0:jend,1:4]
             u[iend+1,j0:jend,3]   = u[i0+1,j0:jend,0]
@@ -315,4 +318,3 @@ def edges_ghost_cell_treatment_vector(u, v, cs_grid, simulation):
             # Average panels 3-5
             v[i0:iend,j0-1,3] = -u[i0+1,j0:jend,5]
             u[i0-1,j0:jend,5] = -v[i0:iend,j0+1,3]
-

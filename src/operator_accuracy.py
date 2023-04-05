@@ -29,7 +29,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     vf = simulation.vf
 
     # Number of tests
-    Ntest = 3
+    Ntest = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -56,25 +56,25 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,)
-    deps = (1,)
-    split = (3,)
-    rets = (1,)
+    recons = (1,)
+    deps = (1,2)
+    split = (1,)
+    ets = (5,)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
     #split = (simulation.opsplit,)
 
-    recon_names = ['PPM', 'PPM-CW84','PPM-PL07','PPM-L04']
-    dp_names = ['RK1', 'RK3']
+    recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
+    dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    ret_names = ['RET-1', 'RET-2', 'RET-3', 'RET-4']
-    error_linf = np.zeros((Ntest, len(recons), len(split), len(rets), len(deps)))
-    error_l1   = np.zeros((Ntest, len(recons), len(split), len(rets), len(deps)))
-    error_l2   = np.zeros((Ntest, len(recons), len(split), len(rets), len(deps)))
+    et_names = ['ET-S72', 'ET-PL07', 'ET-R96', 'ET-R96-AF','ET-Z21', 'ET-Z21-AF']
+    error_linf = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
+    error_l1   = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
+    error_l2   = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, dp, opsplit, et = get_advection_parameters()
 
     # For divergence testing, we consider a constant field
     ic = 1
@@ -82,15 +82,15 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     # Let us test and compute the error
     d = 0
     for dp in deps:
-        rt = 0
-        for ret in rets:
+        et = 0
+        for ET in ets:
             sp = 0
             for opsplit in split:
                 rec = 0
                 for recon in recons:
                     for i in range(0, Ntest):
                         dt = dts[i]
-                        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
+                        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
                         N = int(Nc[i])
 
                         # Create CS mesh
@@ -101,14 +101,14 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
                         ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
                         # Get divergence error
-                        error_linf[i,rec,sp,rt,d], error_l1[i,rec,sp,rt,d], error_l2[i,rec,sp,rt,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, True)
-                        print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', recon,', split=',opsplit, ', dp=', dp, ', ret=', ret)
+                        error_linf[i,rec,sp,et,d], error_l1[i,rec,sp,et,d], error_l2[i,rec,sp,et,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, True)
+                        print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', recon,', split=',opsplit, ', dp=', dp, ', et=', et)
 
                         # Print errors
-                        print_errors_simul(error_linf[:,rec,sp,rt,d], error_l1[:,rec,sp,rt,d], error_l2[:,rec,sp,rt,d], i)
+                        print_errors_simul(error_linf[:,rec,sp,et,d], error_l1[:,rec,sp,et,d], error_l2[:,rec,sp,et,d], i)
                     rec= rec+1
                 sp = sp+1
-            rt = rt+1
+            et = et+1
         d = d+1
 
     # Outputs
@@ -130,9 +130,9 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
             dep_name = []
             for sp in range(0, len(split)):
                 for r in range(0, len(recons)):
-                    for rt in range(0, len(rets)):
-                        errors.append(error[:,r,sp,rt,d])
-                        dep_name.append(sp_names[split[sp]-1]+'/'+recon_names[recons[r]-1]+'/'+ret_names[rets[rt]-1])
+                    for et in range(0, len(ets)):
+                        errors.append(error[:,r,sp,et,d])
+                        dep_name.append(sp_names[split[sp]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[et]-1])
 
             title = 'Divergence error, vf='+ str(simulation.vf)+\
             ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]

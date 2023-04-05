@@ -186,16 +186,16 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         Nc[i]  = Nc[i-1]*2
 
     # Errors array
-    recons = (1,)
+    recons = (3,)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
-    et_names = ['ET-S72','ET-PL07','ET-2']
+    et_names = ['ET-S72','ET-PL07','ET-R96','ET-Z21']
 
     if transformation == 'gnomonic_equiangular':
         ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
     else:
         ets = (1,2)
 
-    #ets = (3,)
+    ets = (3,4)
     error_linf = np.zeros((Ntest, len(ets), len(recons)))
     error_l1   = np.zeros((Ntest, len(ets), len(recons)))
     error_l2   = np.zeros((Ntest, len(ets), len(recons)))
@@ -273,7 +273,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 emin, emax = 0, emax_abs
                 #emin, emax = np.amin(e_ll), np.amax(e_ll)
                 name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name\
-                +'_ret'+str(simulation.edge_treatment)
+                +'_et'+str(simulation.edge_treatment)
                 filename = 'Reconstruction error, ic='+ str(simulation.ic)+\
                 ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
                 plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
@@ -351,7 +351,9 @@ class recon_simulation_par:
         elif et==2:
             self.et_name='ET-PL07'
         elif et==3:
-            self.et_name='ET-3'
+            self.et_name='ET-R96'
+        elif et==4:
+            self.et_name='ET-Z21'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
             exit()

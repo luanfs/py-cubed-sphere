@@ -16,15 +16,25 @@ from edges_treatment    import edges_ghost_cell_treatment_scalar, average_flux_c
 ####################################################################################
 def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
                transformation, lagrange_poly, Kmin, Kmax):
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
+        # Multiply the field Q by metric tensor
+        gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
+        # Fill ghost cell values - scalar field
+        edges_ghost_cell_treatment_scalar(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
-    # Multiply the field Q by metric tensor
-    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
-
-    # Fill ghost cell values - scalar field
-    edges_ghost_cell_treatment_scalar(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+    elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF' or \
+         simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF':
+        # Fill ghost cell values - scalar field
+        edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+        # Multiply the field Q by metric tensor
+        gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
 
     # compute the fluxes
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
+
+    # Flux averaging
+    if simulation.et_name=='ET-R96-AF' or simulation.et_name=='ET-Z21-AF':
+        average_flux_cube_edges(px, py, cs_grid)
 
     # Applies F and G operators in each panel
     F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
@@ -40,14 +50,14 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     ng = cs_grid.nghost
 
     # Splitting scheme
-    if simulation.opsplit==1:
+    if simulation.opsplit_name=='SP-AVLT':
         #Qx = gQ+0.5*px.dF
         #Qy = gQ+0.5*py.dF
         pxdF = px.dF
         pydF = py.dF
         Qx = ne.evaluate("gQ+0.5*pxdF")
         Qy = ne.evaluate("gQ+0.5*pydF")
-    elif simulation.opsplit==2:
+    elif simulation.opsplit_name=='SP-L04':
         # L04 equation 7 and 8
         #px.dF = px.dF + (cx[1:,:,:]-cx[:N+ng,:,:])*gQ
         #py.dF = py.dF + (cy[:,1:,:]-cy[:,:N+ng,:])*gQ
@@ -59,7 +69,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         c1y, c2y = cy[:,1:,:], cy[:,:N+ng,:]
         Qx = ne.evaluate('(gQ + 0.5*(pxdF + (c1x-c2x)*gQ))')
         Qy = ne.evaluate('(gQ + 0.5*(pydF + (c1y-c2y)*gQ))')
-    elif simulation.opsplit==3:
+    elif simulation.opsplit_name=='SP-PL07':
         # PL07 - equation 17 and 18
         #Qx = 0.5*(gQ + (gQ + px.dF)/(1.0-(cx[1:,:,:]-cx[:N+ng,:,:])))
         #Qy = 0.5*(gQ + (gQ + py.dF)/(1.0-(cy[:,1:,:]-cy[:,:N+ng,:])))
@@ -70,14 +80,16 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         Qx = ne.evaluate('0.5*(gQ + (gQ + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(gQ + (gQ + pydF)/(1.0-(c1y-c2y)))')
 
-    # Fill ghost cell values
-    edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07' or \
+       simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF':
+        # Fill ghost cell values
+        edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
 
     # Flux averaging
-    if simulation.edge_treatment==4:
+    if simulation.et_name=='ET-R96-AF' or simulation.et_name=='ET-Z21-AF':
         average_flux_cube_edges(px, py, cs_grid)
 
     # Applies F and G operators in each panel again
