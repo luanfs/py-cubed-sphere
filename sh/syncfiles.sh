@@ -9,6 +9,21 @@ version=` date +%y.%m.%d `
 output="py-cs.tar.bz2"
 bkpdir="py-cs" 
 
+#-------------------------------------------------------------------------------------------------------
+# remote host 1 - ime.usp.br
+user_remote_host1="luansantos"
+remote_host1="brucutuiv.ime.usp.br"
+remote_host1_dir="/var/tmp"
+#-------------------------------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------------------------------
+# remote host 2 - ybytu
+user_remote_host2="luansantos"
+remote_host2="ybytu"
+remote_host2_dir="doc/py-cs"
+#-------------------------------------------------------------------------------------------------------
+
+
 #Edit place to sync relative to system used
 dropdir="/home/luan/Dropbox/doc/code/"$bkpdir
 echo "Sync with Dropbox:"
@@ -16,17 +31,28 @@ rsync -v -t -u $output  "$dropdir/."
 echo "Synchronized with Dropbox"
 echo
 
-#remote server ime.usp.br backup sync
-echo "Sending to ime.usp.br:"
-rsync -t -v -z -a --progress $output luansantos@ime.usp.br:/home/posmap/luansantos/doc/$bkpdir
-echo "Sent to luansantos@ime.usp.br"
+#remote server remote_host1 backup sync
+echo "Sending to $remote_host1:"
+rsync -t -v -z -a --progress $output $user_remote_host1@$remote_host1:$remote_host1_dir
+echo "Sent to $user_remote_host1@$remote_host1"
 echo
 
-#remote server ybytu backup sync
-echo "Sending to ybytu:"
-ssh -t luansantos@ime.usp.br  "rsync -t -v -z -a --progress doc/$bkpdir/$output luansantos@ybytu:/home/luansantos/doc/"$bkpdir
-echo "Sent to luansantos@ybytu"
+#remote server remote_host2 backup sync
+echo "Sending to $remote_host2:"
+ssh -t $user_remote_host1@$remote_host1 "rsync -t -v -z -a --progress $remote_host1_dir/$output $user_remote_host2@$remote_host2:$remote_host2_dir; rm -rf $output"
+echo "Sent to $user_remote_host2@$remote_host2"
 echo
+
+#-------------------------------------------------------------------------------------------------------
+# untar
+echo "Untar at $remote_host2:"
+ssh -t $user_remote_host1@$remote_host1 "ssh -t $user_remote_host2@$remote_host2 <<EOF
+	cd $remote_host2_dir;
+	tar -xvf $output;
+	rm -rf $output;
+EOF"
+echo "Untar and compilation at $remote_host2 done."
+#-------------------------------------------------------------------------------------------------------
 
 # remove tar file
 rm -rf $output
