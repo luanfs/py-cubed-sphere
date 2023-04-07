@@ -130,7 +130,7 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
             lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
 
             # Interpolate to ghost cells
-            ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+            ghost_cells_lagrange_interpolation(Q_numerical, Q_numerical, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
             # Compute the errors
             error_linf[i,d], error_l1[i,d], error_l2[i,d] = compute_errors(Q_numerical, Q_exact)
@@ -191,11 +191,10 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     et_names = ['ET-S72','ET-PL07','ET-R96','ET-Z21']
 
     if transformation == 'gnomonic_equiangular':
-        ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
+        ets = (1,2,3) # Edge treatment 3 and 4 applies only to equiangular CS
     else:
         ets = (1,2)
 
-    ets = (3,4)
     error_linf = np.zeros((Ntest, len(ets), len(recons)))
     error_l1   = np.zeros((Ntest, len(ets), len(recons)))
     error_l2   = np.zeros((Ntest, len(ets), len(recons)))
@@ -254,6 +253,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 py = ppm_parabola(cs_grid,simulation,'y')
                 ppm_reconstruction(Q, Q, px, py, cs_grid, simulation)
 
+# HI LUAN
                 # Plot the error
                 error_plot = scalar_field(cs_grid, 'error', 'center')
                 error_plot.f = 0.0
@@ -273,7 +273,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 emin, emax = 0, emax_abs
                 #emin, emax = np.amin(e_ll), np.amax(e_ll)
                 name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name\
-                +'_et'+str(simulation.edge_treatment)
+                +'_et'+str(simulation.et_name)
                 filename = 'Reconstruction error, ic='+ str(simulation.ic)+\
                 ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
                 plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)

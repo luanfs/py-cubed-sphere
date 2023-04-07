@@ -256,7 +256,7 @@ def average_flux_cube_edges(px, py, cs_grid):
 # Qx and Qy are scalar fields
 ####################################################################################
 def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax):
-    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
+    if simulation.et_name=='ET-S72' or simulationet_name=='ET-PL07': # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
     elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF': # Uses ghost cells interpolation - ignoring corner ghost cells
@@ -264,10 +264,10 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformatio
         ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
         # Interpolate to ghost cells - west and east neighbors
-        ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+        ghost_cells_lagrange_interpolation_WE(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
 
     elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF': # Uses ghost cells interpolation - using corner ghost cells
-        ghost_cells_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
+        ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulation,\
                                            lagrange_poly, Kmin, Kmax)
 
 ####################################################################################
