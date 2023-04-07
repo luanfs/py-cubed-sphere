@@ -29,7 +29,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     vf = simulation.vf
 
     # Number of tests
-    Ntest = 5
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,9 +57,9 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (1,)
-    deps = (1,2)
+    deps = (1,)
     split = (1,)
-    ets = (5,)
+    ets = (1,2,3,4)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
@@ -68,7 +68,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    et_names = ['ET-S72', 'ET-PL07', 'ET-R96', 'ET-R96-AF','ET-Z21', 'ET-Z21-AF']
+    et_names = ['ET-S72', 'ET-PL07', 'ET-R96','ET-Z21', 'ET-Z21-AF']
     error_linf = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
     error_l1   = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
     error_l2   = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))

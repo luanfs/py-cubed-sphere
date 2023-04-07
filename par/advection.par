@@ -8,15 +8,15 @@
 #Vector field 
 4
 #Test case
-2
+1
 #Reconstruction (1, 2, 3, 4)
 1
 #Departure point scheme (1, 2)
 1
 #Operator splitting (1, 2, 3)
 1
-#Edge treatment (1, 2, 3, 4, 5, 6)
-5
+#Edge treatment (1, 2, 3, 4, 5)
+4
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
 #  case(1) - constant flow
