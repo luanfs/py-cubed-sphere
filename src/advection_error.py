@@ -58,7 +58,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     recons = (3,)
     deps = (1,2)
     split = (1,3)
-    ets = (1,2,3,5)
+    ets = (1,2,5)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)

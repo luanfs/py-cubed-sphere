@@ -21,11 +21,9 @@ from scipy.special          import sph_harm
 from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
 from lagrange               import lagrange_poly_ghostcells
 from plot                   import plot_scalar_field
-
-####################################################################################
+###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
 ####################################################################################
-
 def error_analysis_div(simulation, map_projection, plot, transformation, showonscreen, gridload):
     # Initial condition
     vf = simulation.vf
@@ -58,10 +56,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,)
-    deps = (1,)
+    recons = (1,)
+    deps = (1,2)
     split = (1,)
-    ets = (3,)
+    ets = (5,)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)

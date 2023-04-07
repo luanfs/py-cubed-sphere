@@ -157,7 +157,7 @@ def nearest_neighbour(Q, cs_grid, latlon_grid):
 ####################################################################################
 # Ghost cells interpolation using Lagrange polynomials
 ####################################################################################
-def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulation,\
+def ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
                                        lagrange_poly, Kmin, Kmax):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.nghost   # Number o ghost cells
@@ -174,7 +174,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
     jend = cs_grid.jend
 
     # Get halo data
-    halodata = get_halo_data_interpolation(Qx, Qy, cs_grid)
+    halodata = get_halo_data_interpolation(Q, cs_grid)
     halo_data_east  = halodata[0]
     halo_data_west  = halodata[1]
     halo_data_north = halodata[2]
@@ -211,7 +211,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost_x = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qx[iend:iend+ngr,j0:jend,p] = halo_data_ghost_x[:,j0:jend]
+            Q[iend:iend+ngr,j0:jend,p] = halo_data_ghost_x[:,j0:jend]
 
             # Interpolate ghost cells of panel p at west
             support_values = halo_data_west[:,:,p]
@@ -224,7 +224,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost_x = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qx[0:i0,j0:jend,p] = halo_data_ghost_x[:,j0:jend]
+            Q[0:i0,j0:jend,p] = halo_data_ghost_x[:,j0:jend]
 
             # Interpolate ghost cells of panel p at north
             support_values = halo_data_north[:,:,p]
@@ -236,7 +236,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost_y = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qy[i0:iend,jend:jend+ngr,p] = halo_data_ghost_y[i0:iend,:]
+            Q[i0:iend,jend:jend+ngr,p] = halo_data_ghost_y[i0:iend,:]
 
             # Interpolate ghost cells of panel p at south
             support_values = halo_data_south[:,:,p]
@@ -248,11 +248,11 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost_y = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qy[i0:iend,0:i0,p] = halo_data_ghost_y[i0:iend,:]
+            Q[i0:iend,0:i0,p] = halo_data_ghost_y[i0:iend,:]
 
         # Now let us interpolate the remaing ghost cell data
         # Get halo data
-        halodata = get_halo_data_interpolation(Qx, Qy, cs_grid)
+        halodata = get_halo_data_interpolation(Q, cs_grid)
         halo_data_east  = halodata[0]
         halo_data_west  = halodata[1]
         halo_data_north = halodata[2]
@@ -274,7 +274,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qx[iend:iend+ngr,jend:jend+ngr,p] = halo_data_ghost[:,:]
+            Q[iend:iend+ngr,jend:jend+ngr,p] = halo_data_ghost[:,:]
 
             # Interpolate ghost cells of panel p at east - cells in [iend:iend+ngr,0:j0,p]
             support_values = halo_data_east[:,:,p]
@@ -287,7 +287,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qx[iend:iend+ngr,0:j0,p] = halo_data_ghost[:,:]
+            Q[iend:iend+ngr,0:j0,p] = halo_data_ghost[:,:]
 
             # Interpolate ghost cells of panel p at west - cells in [0:i0,jend:jend+ngr,p]
             support_values = halo_data_west[:,:,p]
@@ -300,7 +300,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qy[0:i0,jend:jend+ngr,p] = halo_data_ghost[:,:]
+            Q[0:i0,jend:jend+ngr,p] = halo_data_ghost[:,:]
 
             # Interpolate ghost cells of panel p at west - cells in [0:i0,0:j0,p]
             support_values = halo_data_west[:,:,p]
@@ -314,7 +314,7 @@ def ghost_cells_lagrange_interpolation(Qx, Qy, cs_grid, transformation, simulati
 
             halo_data_ghost = np.sum(interpolation_data[:,:,:], axis=2)
 
-            Qy[0:i0,0:j0,p] = halo_data_ghost[:,:]
+            Q[0:i0,0:j0,p] = halo_data_ghost[:,:]
 
 
 ####################################################################################
@@ -361,8 +361,8 @@ def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simul
             support_values = halo_data_north[:,:,p]
 
             for g in range(0, ngl):
-                for k in range(i0, iend):
-                    halo_data_y[k,g,:] = support_values[Kmin_north[k,g]-i0:Kmax_north[k,g]-i0,g]
+                for k in range(ngl, N+ngl):
+                    halo_data_y[k,g,:] = support_values[Kmin_north[k,g]-ngl:Kmax_north[k,g]-ngl,g]
 
             interpolation_data = halo_data_y*lagrange_poly_north
 
@@ -374,8 +374,8 @@ def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simul
             support_values = halo_data_south[:,:,p]
 
             for g in range(0, ngl):
-                for k in range(i0, iend):
-                    halo_data_y[k,g,:] = support_values[Kmin_south[k,g]-i0:Kmax_south[k,g]-i0,g]
+                for k in range(ngl, N+ngl):
+                    halo_data_y[k,g,:] = support_values[Kmin_south[k,g]-ngl:Kmax_south[k,g]-ngl,g]
             interpolation_data = halo_data_y*lagrange_poly_south
 
             halo_data_ghost_y = np.sum(interpolation_data[:,:,:], axis=2)
@@ -386,7 +386,7 @@ def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simul
 # Ghost cells interpolation using Lagrange polynomials - consider only ghost
 # cells at west and east adjacent panels
 ####################################################################################
-def ghost_cells_lagrange_interpolation_WE(Qx, Qy, cs_grid, transformation, simulation,\
+def ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation,\
                                        lagrange_poly, Kmin, Kmax):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.nghost   # Number o ghost cells
@@ -403,7 +403,7 @@ def ghost_cells_lagrange_interpolation_WE(Qx, Qy, cs_grid, transformation, simul
     jend = cs_grid.jend
 
     # Get halo data
-    halodata = get_halo_data_interpolation_WE(Qx, Qy, cs_grid)
+    halodata = get_halo_data_interpolation_WE(Qy, Qx, cs_grid)
     halo_data_east  = halodata[0]
     halo_data_west  = halodata[1]
 
@@ -425,8 +425,8 @@ def ghost_cells_lagrange_interpolation_WE(Qx, Qy, cs_grid, transformation, simul
             # Interpolate ghost cells of panel p at east
             support_values = halo_data_east[:,:,p]
             for g in range(0, ngl):
-                for k in range(j0, jend):
-                    halo_data_x[g,k,:] = support_values[g,Kmin_east[g,k]-j0:Kmax_east[g,k]-j0]
+                for k in range(ngl, N+ngl):
+                    halo_data_x[g,k,:] = support_values[g,Kmin_east[g,k]-ngl:Kmax_east[g,k]-ngl]
 
             interpolation_data = halo_data_x*lagrange_poly_east
 
@@ -438,8 +438,8 @@ def ghost_cells_lagrange_interpolation_WE(Qx, Qy, cs_grid, transformation, simul
             support_values = halo_data_west[:,:,p]
 
             for g in range(0, ngl):
-                for k in range(j0,jend):
-                    halo_data_x[g,k,:] = support_values[g,Kmin_west[g,k]-j0:Kmax_west[g,k]-j0]
+                for k in range(ngl, N+ngl):
+                    halo_data_x[g,k,:] = support_values[g,Kmin_west[g,k]-ngl:Kmax_west[g,k]-ngl]
 
             interpolation_data = halo_data_x*lagrange_poly_west
 

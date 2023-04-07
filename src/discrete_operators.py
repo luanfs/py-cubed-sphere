@@ -43,13 +43,11 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     pxdF = px.dF
     pydF = py.dF
     dt = simulation.dt
-    metric_tensor = cs_grid.metric_tensor_centers[:,:,:]
-    #div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
+    metric_tensor = cs_grid.metric_tensor_centers
+    div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
 
     N = cs_grid.N
     ng = cs_grid.nghost
-    i0, iend = cs_grid.i0, cs_grid.iend
-    j0, jend = cs_grid.j0, cs_grid.jend
 
     # Splitting scheme
     if simulation.opsplit_name=='SP-AVLT':
@@ -73,7 +71,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         Qy = ne.evaluate('(gQ + 0.5*(pydF + (c1y-c2y)*gQ))')
     elif simulation.opsplit_name=='SP-PL07':
         # PL07 - equation 17 and 18
-        #Qx = 0.5*(gQ + (gQ + px.dF)/(1.0-(cx[1,:,:]-cx[:N+ng,:,:])))
+        #Qx = 0.5*(gQ + (gQ + px.dF)/(1.0-(cx[1:,:,:]-cx[:N+ng,:,:])))
         #Qy = 0.5*(gQ + (gQ + py.dF)/(1.0-(cy[:,1:,:]-cy[:,:N+ng,:])))
         pxdF = px.dF
         pydF = py.dF
@@ -82,18 +80,10 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         Qx = ne.evaluate('0.5*(gQ + (gQ + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(gQ + (gQ + pydF)/(1.0-(c1y-c2y)))')
 
-    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07':
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07' or \
+       simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF':
         # Fill ghost cell values
         edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
-
-    elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF':
-        #Qx[:,:,:] = Qx[:,:,:]/cs_grid.metric_tensor_centers[:,:,:]
-        #Qy[:,:,:] = Qy[:,:,:]/cs_grid.metric_tensor_centers[:,:,:]
-        # Fill ghost cell values
-        edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
-        # Multiply the fields Qx and Qy by metric tensor
-        #Qx[:,:,:] = Qx[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
-        #Qy[:,:,:] = Qy[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
 
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
@@ -109,10 +99,10 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     # Compute the divergence
     #i0, j0, iend, jend  = cs_grid.i0, cs_grid.j0, cs_grid.iend, cs_grid.jend
     #div[i0:iend,j0:jend,:] = -(px.dF[i0:iend,j0:jend,:] + py.dF[i0:iend,j0:jend,:])/simulation.dt/cs_grid.metric_tensor_centers[i0:iend,j0:jend,:]
-    metric_tensor = cs_grid.metric_tensor_centers[:,:,:]
     pxdF = px.dF
     pydF = py.dF
     dt = simulation.dt
+    metric_tensor = cs_grid.metric_tensor_centers
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
 
 ####################################################################################
