@@ -12,7 +12,7 @@ parfiles="../par/*.par "
 
 scripts="../sh/*.sh "
 
-others="../main.py\
+others="../main.py ../*.vim\
  ../README.*"
 
 files="$sourcefiles $parfiles $scripts $others"
