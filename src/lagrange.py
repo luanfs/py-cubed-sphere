@@ -74,8 +74,9 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
     Kmax = np.minimum(K + order, N+ng).astype(int)
     Kmin = np.maximum(Kmax-order, 0).astype(int)
 
+    # modify interior indexes to use only interior indexes
     K[:,i0:iend] =  (np.floor((halo_ghost_points_east[:,i0:iend]-xc[0])/dx)).astype(int)
-    Kmax[:,i0:iend] = np.minimum(K[:,i0:iend] + order, N+ngl).astype(int)
+    Kmax[:,i0:iend] = np.minimum(K[:,i0:iend] + order, N+ngl-1).astype(int)
     Kmin[:,i0:iend] = np.maximum(Kmax[:,i0:iend]-order, ngl).astype(int)
 
     halo_lagrange_nodes = np.zeros((ngr, N+ng, order))
