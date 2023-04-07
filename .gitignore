@@ -2,3 +2,5 @@ src/__pycache__/
 data/
 graphs/
 grid/
+par/*.swp
+src/*.swp
