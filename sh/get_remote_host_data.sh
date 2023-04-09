@@ -14,7 +14,7 @@ user2="luansantos"                   # user at remote_host2
 # Directories and output
 output_dir_remote_host1="/var/tmp/"                                #remote host data directory (remote_host1)
 output_dir_remote_host2="/home/luansantos/doc/py-cs/"              #remote host data directory (remote_host2)
-output_dir_local_host="/home/luan/doc/code/py-cubedsphere/"  #local data directory
+output_dir_local_host="/home/luan/doc/code/py-cubed-sphere/"  #local data directory
 data='graphs'           #name of directory where data is in output_dir_remote_host2
 output='cs_data'   #output file (.tar)
 
