@@ -186,7 +186,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
         Nc[i]  = Nc[i-1]*2
 
     # Errors array
-    recons = (3,)
+    recons = (3,4)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     et_names = ['ET-S72','ET-PL07','ET-R96','ET-Z21']
 
@@ -195,7 +195,6 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     else:
         ets = (1,2)
 
-    ets = (3,4)
     error_linf = np.zeros((Ntest, len(ets), len(recons)))
     error_l1   = np.zeros((Ntest, len(ets), len(recons)))
     error_l2   = np.zeros((Ntest, len(ets), len(recons)))
