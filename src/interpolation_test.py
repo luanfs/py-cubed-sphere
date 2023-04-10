@@ -19,6 +19,7 @@ from reconstruction_1d      import ppm_reconstruction
 from edges_treatment        import edges_ghost_cell_treatment_scalar
 from lagrange               import lagrange_poly_ghostcells
 from interpolation          import ghost_cells_lagrange_interpolation
+
 ####################################################################################
 # Interpolation simulation class
 ####################################################################################

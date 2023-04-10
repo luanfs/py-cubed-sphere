@@ -22,8 +22,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         # Fill ghost cell values - scalar field
         edges_ghost_cell_treatment_scalar(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
-    elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF' or \
-         simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF':
+    elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF':
         # Fill ghost cell values - scalar field
         edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
         # Multiply the field Q by metric tensor
@@ -33,7 +32,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
 
     # Flux averaging
-    if simulation.et_name=='ET-R96-AF' or simulation.et_name=='ET-Z21-AF':
+    if simulation.et_name=='ET-Z21-AF':
         average_flux_cube_edges(px, py, cs_grid)
 
     # Applies F and G operators in each panel
@@ -80,8 +79,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
         Qx = ne.evaluate('0.5*(gQ + (gQ + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(gQ + (gQ + pydF)/(1.0-(c1y-c2y)))')
 
-    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07' or \
-       simulation.et_name=='ET-R96' or simulation.et_name=='ET-R96-AF':
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07' or simulation.et_name=='ET-R96':
         # Fill ghost cell values
         edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
@@ -89,7 +87,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
 
     # Flux averaging
-    if simulation.et_name=='ET-R96-AF' or simulation.et_name=='ET-Z21-AF':
+    if simulation.et_name=='ET-Z21-AF':
         average_flux_cube_edges(px, py, cs_grid)
 
     # Applies F and G operators in each panel again
