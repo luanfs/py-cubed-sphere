@@ -72,7 +72,7 @@ def q_scalar_field(lon, lat, simulation):
 ####################################################################################
 def error_analysis_interpolation(map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 6
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -176,7 +176,7 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
 ####################################################################################
 def error_analysis_recon(map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 6
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -276,7 +276,7 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 +'_et'+str(simulation.edge_treatment)
                 filename = 'Reconstruction error, ic='+ str(simulation.ic)+\
                 ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
-                plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
+                #plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
             rec = rec+1
         ET = ET + 1
 

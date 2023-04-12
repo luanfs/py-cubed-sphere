@@ -8,6 +8,7 @@
 
 
 import numpy as np
+from math import floor, ceil
 from constants import pio4
 from cs_transform import inverse_equidistant_gnomonic_map, inverse_equiangular_gnomonic_map
 
@@ -38,13 +39,14 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
 
     if transformation == "gnomonic_equiangular":
         inverse = inverse_equiangular_gnomonic_map
-        x_min, x_max = [-pio4, pio4] # Angular coordinates
+        y_min, y_max = [-pio4, pio4] # Angular coordinates
     else:
         print('ERROR in lagrange_poly_ghostcells: grid is not gnomonic_equiangular.')
         exit()
 
-    dx = cs_grid.dx
-    xc = np.linspace(x_min+dx/2.0-ngl*dx, x_max-dx/2.0+ngr*dx, N+ng) # Centers
+    dy = cs_grid.dy
+    yc = np.linspace(y_min+dy/2.0-ngl*dy, y_max-dy/2.0+ngr*dy, N+ng) # Centers
+    ye = np.linspace(y_min-ngl*dy, y_max+ngr*dy, N+ng+1) # edges 
     degree = simulation.degree
     order = degree+1
 
@@ -69,26 +71,71 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
     halo_ghost_points_east  = np.zeros((ngl, N+ng))
     halo_ghost_points_east[:,:] = y_ghost
 
+    rad2deg = 180.0/np.pi
+
     # Interpolation indexes
-    K = (np.floor((halo_ghost_points_east-xc[0])/dx)).astype(int)
-    Kmax = np.minimum(K + order, N+ng).astype(int)
-    Kmin = np.maximum(Kmax-order, 0).astype(int)
+    K = np.zeros((ngl, N+ng))
+    Kmin = np.zeros((ngl, N+ng))
+    Kmax = np.zeros((ngl, N+ng))
 
+    for g in range(0, ngl):
+        for i in range(0, N+ng):
+            K[g,i] =((halo_ghost_points_east[g,i]-y[g,0])/dy)
+            Kmax[g,i] = K[g,i]+ceil(order/2)
+            Kmin[g,i] = Kmax[g,i]-order+1
+ 
+            # Shift stencils if needed
+            if i in range(i0, iend):
+                if Kmax[g,i]>=iend:
+                    Kmax[g,i] = iend-1
+                    Kmin[g,i] = Kmax[g,i]-order+1
+                elif Kmin[g,i]<i0:
+                    Kmin[g,i] = i0
+                    Kmax[g,i] = Kmin[g,i]+order-1
+            
+            elif i>=iend:
+                if Kmax[g,i]>=N+ng:
+                    Kmax[g,i] = N+ng-1
+                    Kmin[g,i] = Kmax[g,i]-order+1
+            else: #i<i0
+                if Kmin[g,i]<0:
+                    Kmin[g,i] = 0
+                    Kmax[g,i] = Kmin[g,i]+order-1
 
-    # modify interior indexes to use only interior indexes
-    K[:,i0:iend] =  (np.floor((halo_ghost_points_east[:,i0:iend]-xc[0])/dx)).astype(int)
-    Kmax[:,i0:iend] = np.minimum(K[:,i0:iend] + order, N+ngl-1).astype(int)
-    Kmin[:,i0:iend] = np.maximum(Kmax[:,i0:iend]-order, ngl).astype(int)
+    K = K.astype(int)
+    Kmin = Kmin.astype(int)
+    Kmax = Kmax.astype(int)
 
+    # Debugging
+    for g in range(0, ngl):
+        for i in range(i0, iend):
+        #for i in range(0,N+ng):
+            #print(i,'K=',K[g,i],', stencil: ',Kmin[g,i],Kmax[g,i])
+            #print(i,Kmin[g,i],Kmax[g,i], Kmax[g,i]-Kmin[g,i])
+            #print('g = ',g,' ', y_ghost[g,i]*rad2deg, y[g,Kmin[g,i]]*rad2deg,y[g,Kmax[g,i]]*rad2deg)
+
+            if (Kmax[g,i]-Kmin[g,i] != degree):
+                print('ERROR in lagrange_poly_ghostcells', degree)
+                exit()
+            if Kmin[g,i]<i0 or Kmax[g,i]>iend:
+                print('Error in lagrange_poly_ghostcells')
+                exit()
+            if order>1:
+                if not ((y_ghost[g,i]>=y[g,Kmin[g,i]]) and (y_ghost[g,i]<=y[g,Kmax[g,i]]) ):
+                    print('ERROR in lagrange_poly_ghostcells')
+                    exit()
+        #print()
+        #print('\n',g, iend, ye[i0]*rad2deg, ye[iend]*rad2deg) 
+    #exit()
     halo_lagrange_nodes = np.zeros((ngr, N+ng, order))
     lagrange_poly = np.zeros((ngr, N+ng, order))
 
     # Compute the Lagrange nodes at halo region
     for g in range(0, ngl):
         for j in range(0, N+ng):
-            halo_lagrange_nodes[g,j,:] = y[g,Kmin[g,j]:Kmax[g,j]]
+            halo_lagrange_nodes[g,j,:] = y[g,Kmin[g,j]:Kmax[g,j]+1]
 
-   # Compute the Lagrange nodes at halo region
+    # Compute the Lagrange nodes at halo region
     for g in range(0, ngr):
         for k in range(0, N+ng):
             for l in range(0, order):
@@ -107,4 +154,5 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
     Kmin = [Kmin_east, Kmin_west, Kmin_north, Kmin_south]
     Kmax = [Kmax_east, Kmax_west, Kmax_north, Kmax_south]
     lagrange_poly = [lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south]
+
     return lagrange_poly, Kmin, Kmax
