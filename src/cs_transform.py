@@ -433,45 +433,39 @@ def metric_tensor(x, y, R, projection):
 #  spherical cube: Gnomonic versus conformal coordinates. Q.J.R. Meteorol. Soc., 122: 959-982.
 #  https://doi.org/10.1002/qj.49712253209
 ####################################################################################
-def conformal_map(ξ, η, N, M):
-    #print(ξ)
-    swap = ξ
-    ξ = -η
-    η = swap
-    ξ, η = np.meshgrid(ξ, η)
-    #print(np.shape(ξ))
-    ξc = abs(ξ)
-    ηc = abs(η)
+def conformal_map(x, y, N, M):
+    swap = x
+    x = -y
+    y = swap
+    x, y = np.meshgrid(x, y)
 
-    kξ  =  ξ < 0
-    kη  =  η < 0
-    kξη = ηc > ξc
+    # map all points to the first quadrant where y>x
+    kxy = abs(y) > abs(x)
+    xc = 1.0 - np.maximum(abs(x),abs(y))
+    yc = 1.0 - np.minimum(abs(x),abs(y))
 
-    #plt.plot(ξ, η,'x')
-    #plt.show()
-    X = ξc
-    Y = ηc
-    #plt.plot(ξc, ηc,'x')
-    #plt.show()
-    ξc = 1 - ξc
-    ηc = 1 - ηc
+    # Evaluation of the truncated Taylor series
+    z = (xc+1j*yc)
+    Z = (z/2.0)**4 # change z by z^4
+    W = WofZ(Z)
 
-    ξc[kξη] = 1 - Y[kξη]
-    ηc[kξη] = 1 - X[kξη]
-    #plt.plot(ξc, ηc,'x')
-    #plt.show()
-    z = ((ξc+1j*ηc)/2.0)**4
-    W = WofZ(z)
-
+    # 
     thrd = 1.0/3.0
     i3 = 1j**thrd
     ra = np.sqrt(3.0)-1.0
     cb = 1j-1.0
     cc = ra*cb/2.0
+    w = i3*(W*1j)**thrd
+    W = (w - ra)/(cb + cc*w)
 
-    W = i3*(W*1j)**thrd
-    W = (W - ra)/(cb + cc*W)
+    #plt.plot(xc, yc,'x')
+    #plt.plot(W.real, W.imag,'.')
+    plt.xlim([-1.1, 1.1])
+    plt.ylim([-1.1, 1.1])
+    #plt.plot(z.real, z.imag,'+')
+    #plt.show()
 
+    # Stereographic projection
     X = W.real
     Y = W.imag
     H = 2.0/(1+X**2+Y**2)
@@ -479,19 +473,23 @@ def conformal_map(ξ, η, N, M):
     Y = Y*H
     Z = H-1
 
-    #T = X
+    plt.plot(X,Y,'.')
+    # Fill other quadrants
+    X[kxy], Y[kxy] =  Y[kxy], X[kxy]
+    Y[y<0] = -Y[y<0]
+    X[x<0] = -X[x<0]
 
-    X[kξη], Y[kξη] =  Y[kξη], X[kξη]
-    #Y[kxy] =  T[kxy]
-    Y[kη]  = -Y[kη]
-    X[kξ]  = -X[kξ]
 
     # Fix truncation for x = 0 or y = 0
-    X[ξ==0]=0
-    Y[η==0]=0
-
-    #print(np.amax(abs(X**2+Y**2+Z**2-1)))
-    #print(np.shape(X))
+    X[x==0]=0
+    Y[y==0]=0
+    plt.plot(X,Y,'+')
+    plt.xlim([-1.1, 1.1])
+    plt.ylim([-1.1, 1.1])
+    #plt.show()
+    plt.close()
+    # ----------------------------------------------------
+    # Fill all panels
     # Cartesian coordinates of the projected points
     x = np.zeros((N, M, nbfaces))
     y = np.zeros((N, M, nbfaces))
@@ -536,101 +534,86 @@ def conformal_map(ξ, η, N, M):
 # Given a panel, this routine computes the inverse of the conformal map
 # The points given in the arrays x,y,z are assumed to lie in the same panel
 ####################################################################################
-def inverse_conformal_map(x0, y0, z0, panel, cs_grid):
-    # Maps back to panel 4
-    if panel == 0:
-        Z =  x0
-        Y =  y0
-        X = -z0
-    elif panel == 1:
-        Y = -x0
-        Z =  y0
-        X = -z0
-    elif panel == 2:
-        Z = -x0
-        Y = -y0
-        X = -z0
-    elif panel == 3:
-        Y =  x0
-        Z = -y0
-        X = -z0
-    elif panel == 4:
-        X =  x0
-        Y =  y0
-        Z =  z0
-    elif panel == 5:
-        X = -x0
-        Y =  y0
-        Z = -z0
-    else:
-        print("ERROR: invalid panel.")
-        exit()
+def inverse_conformal_map(Xll, Yll, Zll, panel, cs_grid):
+    # Get centers
+    i0, j0, iend, jend = cs_grid.i0, cs_grid.j0, cs_grid.iend, cs_grid.jend
+    Xc, Yc, Zc = cs_grid.centers.X[i0:iend,j0:jend,panel], cs_grid.centers.Y[i0:iend,j0:jend,panel], cs_grid.centers.Z[i0:iend,j0:jend,panel]
 
-    #H  = Z + 1
-    #Xˢ = X / H
-    #Yˢ = Y / H
-    #im = 1j
-    #ω  = Xˢ + im * Yˢ
-    #ra = np.sqrt(3.0) - 1
-    #cb = -1 + im
-    #cc = ra * cb / 2
-    #ω0 = (ω * cb + ra) / (1 - ω * cc)
-    #W0 = im * ω0**3*im
-    #Z  = ZofW(W0)
-    #z  = 2 * Z**(1/4)
-    #x, y = z.real, z.imag
+    # map centers to the cube face
+    xc, yc = inverse_equidistant_gnomonic_map(Xc, Yc, Zc, panel)
 
-    #kxy = abs(y) > abs(x)
-    #xx = x
-    #yy = y
-    #x[~kxy] = 1 - abs(yy[~kxy])
-    #y[~kxy] = 1 - abs(xx[~kxy])
+    # map target points to the cube face
+    xll, yll = inverse_equidistant_gnomonic_map(Xll, Yll, Zll, panel)
 
-    #xf = x
-    #yf = y
+    # 
+    i = np.zeros(np.shape(xll), dtype=np.uint32)
+    j = np.zeros(np.shape(xll), dtype=np.uint32)
+    N = cs_grid.N
 
-    #xf[X < Y] = y[X < Y]
-    #yf[X < Y] = x[X < Y]
+    Nll = len(xll)
+    for k in range(0, Nll):
+        dist = (xc[:,:]-xll[k])**2 + (yc[:,:]-yll[k])** 2
+        #print(np.where(dist == dist.min()))
+        k_nearest = np.argmin(dist)
+        i[k], j[k]= divmod(k_nearest,N)
+        print(k,i[k],j[k])
+        #print()
 
-    #x = xf
-    #y = yf
+    #exit()
+    #plt.plot(xll,yll,'+')
+    #plt.plot(xc,yc,'.')
+    #plt.xlim([-0.6, 0.6])
+    #plt.ylim([-0.6, 0.6])
+    #plt.show()
+    return i,j
+    """
+    kx = X<0
+    ky = Y<0
+    plt.plot(X, Y,'+')
+    X[kx] = -X[kx]
+    Y[ky] = -Y[ky]
+    kxy = Y>=X
+    X[kxy], Y[kxy] = Y[kxy], X[kxy]
 
-    # Cell centers
-    i0, iend = cs_grid.i0, cs_grid.iend
-    j0, jend = cs_grid.j0, cs_grid.jend
-    xc = cs_grid.centers.X[i0:iend,j0:jend,panel]
-    yc = cs_grid.centers.Y[i0:iend,j0:jend,panel]
-    zc = cs_grid.centers.Z[i0:iend,j0:jend,panel]
-    N  = cs_grid.N
+    plt.plot(X, Y,'.')
+    plt.xlim([-1.1, 1.1])
+    plt.ylim([-1.1, 1.1])
+    plt.show()
+    plt.close()
 
-    # centroid points
-    xc = np.ndarray.flatten(xc)
-    yc = np.ndarray.flatten(yc)
-    zc = np.ndarray.flatten(zc)
-    Pc = (xc,yc,zc)
-    Pc = np.transpose(Pc)
+    xd, yd = inverse_equidistant_gnomonic_map(X, Y, Z, 4)
+    plt.plot(xd,yd,'+')
+    plt.xlim([-0.6, 0.6])
+    plt.ylim([-0.6, 0.6])
 
-    # Given points
-    X = np.ndarray.flatten(X)
-    Y = np.ndarray.flatten(Y)
-    Z = np.ndarray.flatten(Z)
-    P = (X,Y,Z)
-    P = np.transpose(P)
+    plt.show()
+    plt.close()
 
-    print(np.shape(P))
-    print(np.shape(Pc))
+    # Inverse of stereographic projection
+    H  = Z+1
+    xc = X/H
+    yc = Y/H
+    im = 1j
 
-    #for k in range(0, np.shape(P)[0]):
-    for k in range(0, 1000):
-        dist = (P[k,0]-Pc[:,0])**2 + (P[k,1]-Pc[:,1])**2 + (P[k,2]-Pc[:,2])**2
-        print(k, np.amin(dist))
-        print(dist)
-        #print(ii)
-
-    exit()
-    #x, y = inverse_equiangular_gnomonic_map(X, Y, Z, 4)
-
-    return x, y
+    # 
+    w  = xc + im * yc
+    ra = np.sqrt(3.0) - 1
+    cb = -1 + im
+    cc = ra * cb / 2
+    w0 = (w * cb + ra) / (1 - w * cc)
+    W = im * w0**3*im
+    Z  = ZofW(W)
+    z  = 2 * Z**(1/4)
+    y,x = z.real, -z.imag
+    x[kx] = -x[kx]
+    y[ky] = -y[ky]
+    #plt.plot(xc,yc,'.')
+    plt.plot(x,y,'+')
+    plt.xlim([-1.1, 1.1])
+    plt.ylim([-1.1, 1.1])
+    plt.show()
+    plt.close()
+    """
 ####################################################################################
 # Evaluates the Taylor series W(z) (equation A.3a from Rancic et al 1996)
 ####################################################################################
