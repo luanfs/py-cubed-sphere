@@ -121,6 +121,7 @@ def ll2cs(cs_grid, latlon_grid):
         mask = np.logical_and(PM == abs(Zll), Zll<=0)
         panel_list[mask] = 5
 
+        i0, iend = cs_grid.i0, cs_grid.iend
         # Compute inverse transformation (sphere to cube) for each panel p
         for p in range(0, nbfaces):
             mask = (panel_list == p)
@@ -131,9 +132,10 @@ def ll2cs(cs_grid, latlon_grid):
                 x, y = inverse_equidistant_gnomonic_map(Xll[mask], Yll[mask], Zll[mask], p)
                 i[mask], j[mask] = find_closest_index(x, y)
             elif cs_grid.projection == 'conformal':
-                x, y = inverse_conformal_map(Xll[mask], Yll[mask], Zll[mask], p, cs_grid)
-                i[mask], j[mask] = find_closest_index(x, y)
+                i[mask], j[mask] = inverse_conformal_map(Xll[mask], Yll[mask], Zll[mask], p, cs_grid)
+                #i[mask], j[mask] = find_closest_index(x, y)
 
+        #exit()
         # Finish time counting
         elapsed_time = time.time() - start_time
 
