@@ -275,9 +275,6 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         #plt.plot([C_lon, D_lon], [C_lat, D_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
         #plt.plot([D_lon, A_lon], [D_lat, A_lat],linewidth=0.2, color='black', transform=ccrs.Geodetic())
 
-    ax.coastlines()
-
-
     if map_projection == 'mercator':
         ax.gridlines(draw_labels=True)
 
@@ -294,8 +291,12 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     if filename:
         plt.title(filename)
 
+    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap,  levels = np.linspace(qmin, qmax, 101))
+    ax.projection = ccrs.PlateCarree()
+    #plt.show()
+    #exit()
     # Plot the scalar field
-    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
+    #plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
     # Plot colorbar
     plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.1e')
