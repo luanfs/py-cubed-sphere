@@ -28,7 +28,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 3
+    Ntest  = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -56,9 +56,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (3,)
-    deps = (1,2)
-    split =(1,3)
-    ets = (1,2,3,4)
+    split = (3,3,1,1)
+    ets = (1,2,4,5)
+    deps = (1,1,2,2)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
@@ -68,9 +68,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
     et_names = ['ET-S72', 'ET-PL07', 'ET-R96', 'ET-Z21', 'ET-Z21-AF']
-    error_linf = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
-    error_l1   = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
-    error_l2   = np.zeros((Ntest, len(recons), len(split), len(ets), len(deps)))
+    error_linf = np.zeros((Ntest, len(recons), len(split)))
+    error_l1   = np.zeros((Ntest, len(recons), len(split)))
+    error_l2   = np.zeros((Ntest, len(recons), len(split)))
 
     # Let us test and compute the error!
     dt, Tf, tc, ic, vf, recon, dp, opsplit, et = get_advection_parameters()
@@ -79,35 +79,30 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     Tf = 5
 
     # Let us test and compute the error
-    d = 0
-    for dp in deps:
-        et = 0
-        for ET in ets:
-            sp = 0
-            for opsplit in split:
-                rec = 0
-                for recon in recons:
-                    for i in range(0, Ntest):
-                        dt = dts[i]
-                        simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
-                        N = int(Nc[i])
+    for d in range(0,len(deps)):
+        dp = deps[d]
+        opsplit = split[d]
+        ET = ets[d]
+        rec = 0
+        for recon in recons:
+            for i in range(0, Ntest):
+                dt = dts[i]
+                simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
+                N = int(Nc[i])
 
-                        # Create CS mesh
-                        cs_grid = cubed_sphere(N, transformation, False, gridload)
+                # Create CS mesh
+                cs_grid = cubed_sphere(N, transformation, False, gridload)
 
-                        # Create the latlon mesh (for plotting)
-                        ll_grid = latlon_grid(Nlat, Nlon)
-                        ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+                # Create the latlon mesh (for plotting)
+                ll_grid = latlon_grid(Nlat, Nlon)
+                ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
-                        # Get advection error
-                        error_linf[i,rec,sp,et,d], error_l1[i,rec,sp,et,d], error_l2[i,rec,sp,et,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, False)
+                # Get advection error
+                error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, False)
 
-                        # Print errors
-                        print_errors_simul(error_linf[:,rec,sp,et,d], error_l1[:,rec,sp,et,d], error_l2[:,rec,sp,et,d], i)
-                    rec = rec+1
-                sp = sp+1
-            et = et+1
-        d = d+1
+                # Print errors
+                print_errors_simul(error_linf[:,rec,d], error_l1[:,rec,d], error_l2[:,rec,d], i)
+            rec = rec+1
 
     # Outputs
     # plot errors for different all schemes in  different norms
@@ -115,34 +110,29 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     norm_list  = ['linf','l1','l2']
     norm_title  = [r'$L_{\infty}$',r'$L_1$',r'$L_2$']
 
-    for d in range(0, len(deps)):
-        e = 0
-        for error in error_list:
-            emin, emax = np.amin(error[:]), np.amax(error[:])
+    e = 0
+    for error in error_list:
+        emin, emax = np.amin(error[:]), np.amax(error[:])
 
-            # convergence rate min/max
-            n = len(error)
-            CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
-            CRmin, CRmax = np.amin(CR), np.amax(CR)
-            errors = []
-            dep_name = []
-            for sp in range(0, len(split)):
-                for r in range(0, len(recons)):
-                    for et in range(0, len(ets)):
-                        errors.append(error[:,r,sp,et,d])
-                        dep_name.append(sp_names[split[sp]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[et]-1])
+        # convergence rate min/max
+        n = len(error)
+        CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
+        CRmin, CRmax = np.amin(CR), np.amax(CR)
+        errors = []
+        dep_name = []
+        for r in range(0, len(recons)):
+            for d in range(0, len(deps)):
+                errors.append(error[:,r,d])
+                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1])
 
-            title = simulation.title + '- ic=' + str(simulation.ic)+', vf='+ str(simulation.vf)+\
-            ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]
-            filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_dp'+dp_names[deps[d]-1]\
-            +'_norm'+norm_list[e]+'_parabola_errors.pdf'
+        title = simulation.title + '- ic=' + str(simulation.ic)+', vf='+ str(simulation.vf)+', norm='+norm_title[e]
+        filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
 
-            plot_errors_loglog(Nc, errors, dep_name, filename, title, emin, emax)
+        plot_errors_loglog(Nc, errors, dep_name, filename, title, emin, emax)
 
-            # Plot the convergence rate
-            title = 'Convergence rate - ic=' + str(simulation.ic) +', vf=' + str(simulation.vf)+\
-            ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]
-            filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_dp'+dp_names[deps[d]-1]\
-            +'_norm'+norm_list[e]+'_convergence_rate.pdf'
-            plot_convergence_rate(Nc, errors, dep_name, filename, title, CRmin, CRmax)
-            e = e+1
+        # Plot the convergence rate
+        title = 'Convergence rate - ic=' + str(simulation.ic) +', vf=' + str(simulation.vf)+\
+        ', dp='+dp_names[deps[d]-1]+', norm='+norm_title[e]
+        filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
+        plot_convergence_rate(Nc, errors, dep_name, filename, title, CRmin, CRmax)
+        e = e+1
