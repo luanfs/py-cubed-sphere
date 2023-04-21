@@ -4,3 +4,4 @@ graphs/
 grid/
 par/*.swp
 src/*.swp
+*.vim
