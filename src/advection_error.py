@@ -28,7 +28,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 6
+    Ntest  = 3
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,7 +57,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     # Errors array
     recons = (3,)
     split = (3,3)
-    ets   = (4,5)
+    ets   = (5,4)
     deps  = (1,1)
 
     #recons = (simulation.recon,)

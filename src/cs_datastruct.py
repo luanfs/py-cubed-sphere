@@ -13,7 +13,7 @@
 import numpy as np
 from constants import*
 from cs_transform import*
-from sphgeo import point, tg_vector_geodesic_edx_midpoints, tg_vector_geodesic_edy_midpoints
+from sphgeo import point, tg_vector_geodesic_pu_midpoints, tg_vector_geodesic_pv_midpoints
 import time
 import os.path
 import netCDF4 as nc
@@ -78,12 +78,12 @@ class cubed_sphere:
             # Create points
             vertices  = point(N+1+nghost, N+1+nghost)
             centers   = point(N+nghost, N+nghost)
-            edx       = point(N+1+nghost, N+nghost)
-            edy       = point(N+nghost, N+1+nghost)
-            tg_ex_edx = point(N+1+nghost, N+nghost)
-            tg_ey_edx = point(N+1+nghost, N+nghost)
-            tg_ex_edy = point(N+nghost, N+1+nghost)
-            tg_ey_edy = point(N+nghost, N+1+nghost)
+            pu       = point(N+1+nghost, N+nghost)
+            pv       = point(N+nghost, N+1+nghost)
+            ex_pu = point(N+1+nghost, N+nghost)
+            ey_pu = point(N+1+nghost, N+nghost)
+            ex_pv = point(N+nghost, N+1+nghost)
+            ey_pv = point(N+nghost, N+1+nghost)
 
 
             # Get values from file
@@ -99,91 +99,89 @@ class cubed_sphere:
             centers.lon = griddata['centers'][:,:,:,3]
             centers.lat = griddata['centers'][:,:,:,4]
 
-            edx.X   = griddata['edx'][:,:,:,0]
-            edx.Y   = griddata['edx'][:,:,:,1]
-            edx.Z   = griddata['edx'][:,:,:,2]
-            edx.lon = griddata['edx'][:,:,:,3]
-            edx.lat = griddata['edx'][:,:,:,4]
+            pu.X   = griddata['pu'][:,:,:,0]
+            pu.Y   = griddata['pu'][:,:,:,1]
+            pu.Z   = griddata['pu'][:,:,:,2]
+            pu.lon = griddata['pu'][:,:,:,3]
+            pu.lat = griddata['pu'][:,:,:,4]
 
-            edy.X   = griddata['edy'][:,:,:,0]
-            edy.Y   = griddata['edy'][:,:,:,1]
-            edy.Z   = griddata['edy'][:,:,:,2]
-            edy.lon = griddata['edy'][:,:,:,3]
-            edy.lat = griddata['edy'][:,:,:,4]
+            pv.X   = griddata['pv'][:,:,:,0]
+            pv.Y   = griddata['pv'][:,:,:,1]
+            pv.Z   = griddata['pv'][:,:,:,2]
+            pv.lon = griddata['pv'][:,:,:,3]
+            pv.lat = griddata['pv'][:,:,:,4]
 
-            """
-            tg_ex_edx.X   = griddata['tg_ex_edx'][:,:,:,0]
-            tg_ex_edx.Y   = griddata['tg_ex_edx'][:,:,:,1]
-            tg_ex_edx.Z   = griddata['tg_ex_edx'][:,:,:,2]
-            tg_ex_edx.lon = griddata['tg_ex_edx'][:,:,:,3]
-            tg_ex_edx.lat = griddata['tg_ex_edx'][:,:,:,4]
+            ex_pu.X   = griddata['ex_pu'][:,:,:,0]
+            ex_pu.Y   = griddata['ex_pu'][:,:,:,1]
+            ex_pu.Z   = griddata['ex_pu'][:,:,:,2]
+            ex_pu.lon = griddata['ex_pu'][:,:,:,3]
+            ex_pu.lat = griddata['ex_pu'][:,:,:,4]
 
-            tg_ey_edx.X   = griddata['tg_ey_edx'][:,:,:,0]
-            tg_ey_edx.Y   = griddata['tg_ey_edx'][:,:,:,1]
-            tg_ey_edx.Z   = griddata['tg_ey_edx'][:,:,:,2]
-            tg_ey_edx.lon = griddata['tg_ey_edx'][:,:,:,3]
-            tg_ey_edx.lat = griddata['tg_ey_edx'][:,:,:,4]
+            ey_pu.X   = griddata['ey_pu'][:,:,:,0]
+            ey_pu.Y   = griddata['ey_pu'][:,:,:,1]
+            ey_pu.Z   = griddata['ey_pu'][:,:,:,2]
+            ey_pu.lon = griddata['ey_pu'][:,:,:,3]
+            ey_pu.lat = griddata['ey_pu'][:,:,:,4]
 
-            tg_ex_edy.X   = griddata['tg_ex_edy'][:,:,:,0]
-            tg_ex_edy.Y   = griddata['tg_ex_edy'][:,:,:,1]
-            tg_ex_edy.Z   = griddata['tg_ex_edy'][:,:,:,2]
-            tg_ex_edy.lon = griddata['tg_ex_edy'][:,:,:,3]
-            tg_ex_edy.lat = griddata['tg_ex_edy'][:,:,:,4]
+            ex_pv.X   = griddata['ex_pv'][:,:,:,0]
+            ex_pv.Y   = griddata['ex_pv'][:,:,:,1]
+            ex_pv.Z   = griddata['ex_pv'][:,:,:,2]
+            ex_pv.lon = griddata['ex_pv'][:,:,:,3]
+            ex_pv.lat = griddata['ex_pv'][:,:,:,4]
 
-            tg_ey_edx.X   = griddata['tg_ey_edy'][:,:,:,0]
-            tg_ey_edx.Y   = griddata['tg_ey_edy'][:,:,:,1]
-            tg_ey_edx.Z   = griddata['tg_ey_edy'][:,:,:,2]
-            tg_ey_edx.lon = griddata['tg_ey_edy'][:,:,:,3]
-            tg_ey_edx.lat = griddata['tg_ey_edy'][:,:,:,4]
-            """
-
+            ey_pu.X   = griddata['ey_pv'][:,:,:,0]
+            ey_pu.Y   = griddata['ey_pv'][:,:,:,1]
+            ey_pu.Z   = griddata['ey_pv'][:,:,:,2]
+            ey_pu.lon = griddata['ey_pv'][:,:,:,3]
+            ey_pu.lat = griddata['ey_pv'][:,:,:,4]
 
             # Geometric properties
-            areas           = griddata['areas'][:,:,:]
-            length_edx      = griddata['length_edx'][:,:,:]
-            length_edy      = griddata['length_edy'][:,:,:]
+            areas     = griddata['areas'][:,:,:]
+            length_pu = griddata['length_pu'][:,:,:]
+            length_pv = griddata['length_pv'][:,:,:]
 
             # Metric tensor/contravariant-covariant conversion tools
             metric_tensor_centers = griddata['metric_tensor_centers'][:,:,:]
+            metric_tensor_pu = griddata['metric_tensor_pu'][:,:,:]
+            metric_tensor_pv = griddata['metric_tensor_pv'][:,:,:]
 
-            prod_ex_elon_edx          = griddata['prod_ex_elon_edx'][:,:,:]
-            prod_ex_elat_edx          = griddata['prod_ex_elat_edx'][:,:,:]
-            prod_ey_elon_edx          = griddata['prod_ey_elon_edx'][:,:,:]
-            prod_ey_elat_edx          = griddata['prod_ey_elat_edx'][:,:,:]
-            determinant_ll2contra_edx = griddata['determinant_ll2contra_edx'][:,:,:]
+            prod_ex_elon_pu          = griddata['prod_ex_elon_pu'][:,:,:]
+            prod_ex_elat_pu          = griddata['prod_ex_elat_pu'][:,:,:]
+            prod_ey_elon_pu          = griddata['prod_ey_elon_pu'][:,:,:]
+            prod_ey_elat_pu          = griddata['prod_ey_elat_pu'][:,:,:]
+            determinant_ll2contra_pu = griddata['determinant_ll2contra_pu'][:,:,:]
 
-            prod_ex_elon_edy          = griddata['prod_ex_elon_edy'][:,:,:]
-            prod_ex_elat_edy          = griddata['prod_ex_elat_edy'][:,:,:]
-            prod_ey_elon_edy          = griddata['prod_ey_elon_edy'][:,:,:]
-            prod_ey_elat_edy          = griddata['prod_ey_elat_edy'][:,:,:]
-            determinant_ll2contra_edy = griddata['determinant_ll2contra_edy'][:,:,:]
+            prod_ex_elon_pv          = griddata['prod_ex_elon_pv'][:,:,:]
+            prod_ex_elat_pv          = griddata['prod_ex_elat_pv'][:,:,:]
+            prod_ey_elon_pv          = griddata['prod_ey_elon_pv'][:,:,:]
+            prod_ey_elat_pv          = griddata['prod_ey_elat_pv'][:,:,:]
+            determinant_ll2contra_pv = griddata['determinant_ll2contra_pv'][:,:,:]
 
             Xu = griddata['Xu'][:,:,:]
             Yv = griddata['Yv'][:,:,:]
 
-
             # Attributes
             self.centers         = centers
             self.vertices        = vertices
-            self.edx             = edx
-            self.edy             = edy
-            self.length_edx      = length_edx
-            self.length_edy      = length_edy
+            self.pu             = pu
+            self.pv             = pv
+            self.length_pu      = length_pu
+            self.length_pv      = length_pv
             self.areas           = areas
 
             self.metric_tensor_centers = metric_tensor_centers
 
-            self.prod_ex_elon_edx = prod_ex_elon_edx
-            self.prod_ex_elat_edx = prod_ex_elat_edx
-            self.prod_ey_elon_edx = prod_ey_elon_edx
-            self.prod_ey_elat_edx = prod_ey_elat_edx
-            self.determinant_ll2contra_edx = determinant_ll2contra_edx
+            self.prod_ex_elon_pu = prod_ex_elon_pu
+            self.prod_ex_elat_pu = prod_ex_elat_pu
+            self.prod_ey_elon_pu = prod_ey_elon_pu
+            self.prod_ey_elat_pu = prod_ey_elat_pu
+            self.determinant_ll2contra_pu = determinant_ll2contra_pu
 
-            self.prod_ex_elon_edy = prod_ex_elon_edy
-            self.prod_ex_elat_edy = prod_ex_elat_edy
-            self.prod_ey_elon_edy = prod_ey_elon_edy
-            self.prod_ey_elat_edy = prod_ey_elat_edy
-            self.determinant_ll2contra_edy = determinant_ll2contra_edy
+            self.prod_ex_elon_pv = prod_ex_elon_pv
+            self.prod_ex_elat_pv = prod_ex_elat_pv
+            self.prod_ey_elon_pv = prod_ey_elon_pv
+            self.prod_ey_elat_pv = prod_ey_elat_pv
+            self.determinant_ll2contra_pv = determinant_ll2contra_pv
 
             self.Xu = Xu
             self.Yv = Yv
@@ -284,9 +282,9 @@ class cubed_sphere:
             if showonscreen==True:
                 print("Generating cell edges and tangent vectors in x direction...")
 
-            edx       = point(N+1+nghost, N+nghost)
-            tg_ex_edx = point(N+1+nghost, N+nghost)
-            tg_ey_edx = point(N+1+nghost, N+nghost)
+            pu       = point(N+1+nghost, N+nghost)
+            ex_pu = point(N+1+nghost, N+nghost)
+            ey_pu = point(N+1+nghost, N+nghost)
 
             x = np.linspace(x_min-nghost_left*dx, x_max+nghost_right*dx, N+1+nghost) # Edges
             y = np.linspace(y_min+dy/2.0-nghost_left*dy, y_max-dy/2.0+nghost_right*dy, N+nghost) # Centers
@@ -294,60 +292,60 @@ class cubed_sphere:
             # edges
             Xu, Yu = np.meshgrid(x, y,indexing='ij')
             if transformation == "gnomonic_equiangular":
-                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equiangular_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
-                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equiangular_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
-                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equiangular_tg_ydir(x, y, N+1+nghost, N+nghost, self.R)
-                #tg_ex_edx2 = point(N+1+nghost, N+nghost)
-                #tg_ey_edx2 = point(N+1+nghost, N+nghost)
-                #tg_ex_edx2, tg_ey_edx2 = tg_vector_geodesic_edx_midpoints(edx, vertices, N, nghost)
+                pu.X, pu.Y, pu.Z, pu.lon, pu.lat = equiangular_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
+                ex_pu.X, ex_pu.Y, ex_pu.Z = equiangular_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
+                ey_pu.X, ey_pu.Y, ey_pu.Z = equiangular_tg_ydir(x, y, N+1+nghost, N+nghost, self.R)
+                #ex_pu2 = point(N+1+nghost, N+nghost)
+                #ey_pu2 = point(N+1+nghost, N+nghost)
+                #ex_pu2, ey_pu2 = tg_vector_geodesic_pu_midpoints(pu, vertices, N, nghost)
             elif transformation=="gnomonic_equidistant":
-                edx.X, edx.Y, edx.Z, edx.lon, edx.lat = equidistant_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
-                tg_ex_edx.X, tg_ex_edx.Y, tg_ex_edx.Z = equidistant_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
-                tg_ey_edx.X, tg_ey_edx.Y, tg_ey_edx.Z = equidistant_tg_ydir(x, y, N+1+nghost, N+nghost, self.R)
-                #tg_ex_edx2 = point(N+1+nghost, N+nghost)
-                #tg_ey_edx2 = point(N+1+nghost, N+nghost)
-                #tg_ex_edx2, tg_ey_edx2 = tg_vector_geodesic_edx_midpoints(edx, vertices, N, nghost)
+                pu.X, pu.Y, pu.Z, pu.lon, pu.lat = equidistant_gnomonic_map(x, y, N+1+nghost, N+nghost, self.R)
+                ex_pu.X, ex_pu.Y, ex_pu.Z = equidistant_tg_xdir(x, y, N+1+nghost, N+nghost, self.R)
+                ey_pu.X, ey_pu.Y, ey_pu.Z = equidistant_tg_ydir(x, y, N+1+nghost, N+nghost, self.R)
+                #ex_pu2 = point(N+1+nghost, N+nghost)
+                #ey_pu2 = point(N+1+nghost, N+nghost)
+                #ex_pu2, ey_pu2 = tg_vector_geodesic_pu_midpoints(pu, vertices, N, nghost)
 
             elif transformation=="conformal":
-                edx.X[i0:iend+1,j0:jend], edx.Y[i0:iend+1,j0:jend], edx.Z[i0:iend+1,j0:jend], edx.lon[i0:iend+1,j0:jend], edx.lat[i0:iend+1,j0:jend] \
+                pu.X[i0:iend+1,j0:jend], pu.Y[i0:iend+1,j0:jend], pu.Z[i0:iend+1,j0:jend], pu.lon[i0:iend+1,j0:jend], pu.lat[i0:iend+1,j0:jend] \
                 = conformal_map(x[i0:iend+1], y[j0:jend], N+1, N)
 
-            self.edx = edx
+            self.pu = pu
 
             # Normalize the tangent vectors in x dir
-            norm = tg_ex_edx.X*tg_ex_edx.X + tg_ex_edx.Y*tg_ex_edx.Y + tg_ex_edx.Z*tg_ex_edx.Z
+            norm = ex_pu.X*ex_pu.X + ex_pu.Y*ex_pu.Y + ex_pu.Z*ex_pu.Z
             norm = np.sqrt(norm)
-            tg_ex_edx.X = tg_ex_edx.X#/norm
-            tg_ex_edx.Y = tg_ex_edx.Y#/norm
-            tg_ex_edx.Z = tg_ex_edx.Z#/norm
+            ex_pu.X = ex_pu.X#/norm
+            ex_pu.Y = ex_pu.Y#/norm
+            ex_pu.Z = ex_pu.Z#/norm
 
             # Normalize the tangent vectors in y dir
-            norm = tg_ey_edx.X*tg_ey_edx.X + tg_ey_edx.Y*tg_ey_edx.Y + tg_ey_edx.Z*tg_ey_edx.Z
+            norm = ey_pu.X*ey_pu.X + ey_pu.Y*ey_pu.Y + ey_pu.Z*ey_pu.Z
             norm = np.sqrt(norm)
-            tg_ey_edx.X = tg_ey_edx.X#/norm
-            tg_ey_edx.Y = tg_ey_edx.Y#/norm
-            tg_ey_edx.Z = tg_ey_edx.Z#/norm
+            ey_pu.X = ey_pu.X#/norm
+            ey_pu.Y = ey_pu.Y#/norm
+            ey_pu.Z = ey_pu.Z#/norm
 
-            #print(np.amax(abs(tg_ex_edx2.X-tg_ex_edx.X)))
-            #print(np.amax(abs(tg_ex_edx2.Y-tg_ex_edx.Y)))
-            #print(np.amax(abs(tg_ex_edx2.Z-tg_ex_edx.Z)))
-            #print(np.amax(abs(tg_ey_edx2.X-tg_ey_edx.X)))
-            #print(np.amax(abs(tg_ey_edx2.Y-tg_ey_edx.Y)))
-            #print(np.amax(abs(tg_ey_edx2.Z-tg_ey_edx.Z)))
+            #print(np.amax(abs(ex_pu2.X-ex_pu.X)))
+            #print(np.amax(abs(ex_pu2.Y-ex_pu.Y)))
+            #print(np.amax(abs(ex_pu2.Z-ex_pu.Z)))
+            #print(np.amax(abs(ey_pu2.X-ey_pu.X)))
+            #print(np.amax(abs(ey_pu2.Y-ey_pu.Y)))
+            #print(np.amax(abs(ey_pu2.Z-ey_pu.Z)))
 
             # Metric tensor on edges in x direction
-            metric_tensor_edx = np.zeros((N+1+nghost, N+nghost, nbfaces))
-            metric_tensor_edx[:,:,0] = metric_tensor(x, y, self.R, transformation)
-            for p in range(1, nbfaces): metric_tensor_edx[:,:,p] = metric_tensor_edx[:,:,0]
-            self.metric_tensor_edx = metric_tensor_edx
+            metric_tensor_pu = np.zeros((N+1+nghost, N+nghost, nbfaces))
+            metric_tensor_pu[:,:,0] = metric_tensor(x, y, self.R, transformation)
+            for p in range(1, nbfaces): metric_tensor_pu[:,:,p] = metric_tensor_pu[:,:,0]
+            self.metric_tensor_pu = metric_tensor_pu
 
             # Generate cell edges in y direction
             if showonscreen==True:
                 print("Generating cell edges and tangent vectors in y direction...")
 
-            edy = point(N+nghost, N+nghost+1)
-            tg_ex_edy = point(N+nghost, N+nghost+1)
-            tg_ey_edy = point(N+nghost, N+nghost+1)
+            pv = point(N+nghost, N+nghost+1)
+            ex_pv = point(N+nghost, N+nghost+1)
+            ey_pv = point(N+nghost, N+nghost+1)
 
             x = np.linspace(x_min+dx/2.0-nghost_left*dx, x_max-dx/2.0+nghost_right*dx, N+nghost) # Centers
             y = np.linspace(y_min-nghost_left*dx, y_max + nghost_right*dy, N+1+nghost) # Edges
@@ -356,50 +354,50 @@ class cubed_sphere:
             Xv, Yv = np.meshgrid(x, y,indexing='ij')
 
             if transformation == "gnomonic_equiangular":
-                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equiangular_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
-                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equiangular_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
-                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equiangular_tg_ydir(x, y, N+nghost, N+nghost+1, self.R)
-                #tg_ex_edy2 = point(N+nghost, N+1+nghost)
-                #tg_ey_edy2 = point(N+nghost, N+1+nghost)
-                #tg_ex_edy2, tg_ey_edy2 = tg_vector_geodesic_edy_midpoints(edy, vertices, N, nghost)
+                pv.X, pv.Y, pv.Z, pv.lon, pv.lat = equiangular_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
+                ex_pv.X, ex_pv.Y, ex_pv.Z = equiangular_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
+                ey_pv.X, ey_pv.Y, ey_pv.Z = equiangular_tg_ydir(x, y, N+nghost, N+nghost+1, self.R)
+                #ex_pv2 = point(N+nghost, N+1+nghost)
+                #ey_pv2 = point(N+nghost, N+1+nghost)
+                #ex_pv2, ey_pv2 = tg_vector_geodesic_pv_midpoints(pv, vertices, N, nghost)
             elif transformation=="gnomonic_equidistant":
-                edy.X, edy.Y, edy.Z, edy.lon, edy.lat = equidistant_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
-                tg_ex_edy.X, tg_ex_edy.Y, tg_ex_edy.Z = equidistant_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
-                tg_ey_edy.X, tg_ey_edy.Y, tg_ey_edy.Z = equidistant_tg_ydir(x, y, N+nghost, N+nghost+1, self.R)
-                #tg_ex_edy2 = point(N+nghost, N+1+nghost)
-                #tg_ey_edy2 = point(N+nghost, N+1+nghost)
-                #tg_ex_edy2, tg_ey_edy2 = tg_vector_geodesic_edy_midpoints(edy, vertices, N, nghost)
+                pv.X, pv.Y, pv.Z, pv.lon, pv.lat = equidistant_gnomonic_map(x, y, N+nghost, N+nghost+1, self.R)
+                ex_pv.X, ex_pv.Y, ex_pv.Z = equidistant_tg_xdir(x, y, N+nghost, N+nghost+1, self.R)
+                ey_pv.X, ey_pv.Y, ey_pv.Z = equidistant_tg_ydir(x, y, N+nghost, N+nghost+1, self.R)
+                #ex_pv2 = point(N+nghost, N+1+nghost)
+                #ey_pv2 = point(N+nghost, N+1+nghost)
+                #ex_pv2, ey_pv2 = tg_vector_geodesic_pv_midpoints(pv, vertices, N, nghost)
             elif transformation=="conformal":
-                edy.X[i0:iend,j0:jend+1], edy.Y[i0:iend,j0:jend+1], edy.Z[i0:iend,j0:jend+1], edy.lon[i0:iend,j0:jend+1], edy.lat[i0:iend,j0:jend+1] \
+                pv.X[i0:iend,j0:jend+1], pv.Y[i0:iend,j0:jend+1], pv.Z[i0:iend,j0:jend+1], pv.lon[i0:iend,j0:jend+1], pv.lat[i0:iend,j0:jend+1] \
                 = conformal_map(x[i0:iend], y[j0:jend+1], N, N+1)
-            self.edy = edy
+            self.pv = pv
 
             # Normalize the tangent vectors in x dir
-            norm = tg_ex_edy.X*tg_ex_edy.X + tg_ex_edy.Y*tg_ex_edy.Y + tg_ex_edy.Z*tg_ex_edy.Z
+            norm = ex_pv.X*ex_pv.X + ex_pv.Y*ex_pv.Y + ex_pv.Z*ex_pv.Z
             norm = np.sqrt(norm)
-            tg_ex_edy.X = tg_ex_edy.X#/norm
-            tg_ex_edy.Y = tg_ex_edy.Y#/norm
-            tg_ex_edy.Z = tg_ex_edy.Z#/norm
+            ex_pv.X = ex_pv.X#/norm
+            ex_pv.Y = ex_pv.Y#/norm
+            ex_pv.Z = ex_pv.Z#/norm
 
             # Normalize the tangent vectors in y dir
-            norm = tg_ey_edy.X*tg_ey_edy.X + tg_ey_edy.Y*tg_ey_edy.Y + tg_ey_edy.Z*tg_ey_edy.Z
+            norm = ey_pv.X*ey_pv.X + ey_pv.Y*ey_pv.Y + ey_pv.Z*ey_pv.Z
             norm = np.sqrt(norm)
-            tg_ey_edy.X = tg_ey_edy.X#/norm
-            tg_ey_edy.Y = tg_ey_edy.Y#/norm
-            tg_ey_edy.Z = tg_ey_edy.Z#/norm
+            ey_pv.X = ey_pv.X#/norm
+            ey_pv.Y = ey_pv.Y#/norm
+            ey_pv.Z = ey_pv.Z#/norm
 
-            #print(np.amax(abs(tg_ex_edy2.X-tg_ex_edy.X)))
-            #print(np.amax(abs(tg_ex_edy2.Y-tg_ex_edy.Y)))
-            #print(np.amax(abs(tg_ex_edy2.Z-tg_ex_edy.Z)))
-            #print(np.amax(abs(tg_ey_edy2.X-tg_ey_edy.X)))
-            #print(np.amax(abs(tg_ey_edy2.Y-tg_ey_edy.Y)))
-            #print(np.amax(abs(tg_ey_edy2.Z-tg_ey_edy.Z)))
+            #print(np.amax(abs(ex_pv2.X-ex_pv.X)))
+            #print(np.amax(abs(ex_pv2.Y-ex_pv.Y)))
+            #print(np.amax(abs(ex_pv2.Z-ex_pv.Z)))
+            #print(np.amax(abs(ey_pv2.X-ey_pv.X)))
+            #print(np.amax(abs(ey_pv2.Y-ey_pv.Y)))
+            #print(np.amax(abs(ey_pv2.Z-ey_pv.Z)))
 
             # Metric tensor on edges in y direction
-            metric_tensor_edy = np.zeros((N+nghost, N+nghost+1, nbfaces))
-            metric_tensor_edy[:,:,0] = metric_tensor(x, y, self.R, transformation)
-            for p in range(1, nbfaces): metric_tensor_edy[:,:,p] = metric_tensor_edy[:,:,0]
-            self.metric_tensor_edy = metric_tensor_edy
+            metric_tensor_pv = np.zeros((N+nghost, N+nghost+1, nbfaces))
+            metric_tensor_pv[:,:,0] = metric_tensor(x, y, self.R, transformation)
+            for p in range(1, nbfaces): metric_tensor_pv[:,:,p] = metric_tensor_pv[:,:,0]
+            self.metric_tensor_pv = metric_tensor_pv
 
             # Compute cell lenghts
             if showonscreen==True:
@@ -472,10 +470,10 @@ class cubed_sphere:
                 print("Computing cell areas...")
             self.areas = (self.R**2)*areas
 
-            # Cell edx length
+            # Cell pu length
             # Given points
-            p1 = [edx.X[0:N+nghost,0:N+nghost,:]  , edx.Y[0:N+nghost,0:N+nghost,:]  , edx.Z[0:N+nghost,0:N+nghost,:]]
-            p2 = [edx.X[1:N+nghost+1,0:N+nghost,:], edx.Y[1:N+nghost+1,0:N+nghost,:], edx.Z[1:N+nghost+1,0:N+nghost,:]]
+            p1 = [pu.X[0:N+nghost,0:N+nghost,:]  , pu.Y[0:N+nghost,0:N+nghost,:]  , pu.Z[0:N+nghost,0:N+nghost,:]]
+            p2 = [pu.X[1:N+nghost+1,0:N+nghost,:], pu.Y[1:N+nghost+1,0:N+nghost,:], pu.Z[1:N+nghost+1,0:N+nghost,:]]
 
             # Reshape
             p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost)*nbfaces))
@@ -485,13 +483,13 @@ class cubed_sphere:
             d = sphgeo.arclen(p1,p2)
             d = np.reshape(d,(N+nghost,N+nghost,nbfaces))
 
-            self.length_edx = self.R*d
-            #print(np.amin(self.length_edx),np.amax(self.length_edx))
+            self.length_pu = self.R*d
+            #print(np.amin(self.length_pu),np.amax(self.length_pu))
 
-            # Cell edy length
+            # Cell pv length
             # Given points
-            p1 = [edy.X[0:N+nghost,0:N+nghost,:]  , edy.Y[0:N+nghost,0:N+nghost,:]  , edy.Z[0:N+nghost,0:N+nghost,:]]
-            p2 = [edy.X[0:N+nghost,1:N+nghost+1,:], edy.Y[0:N+nghost,1:N+nghost+1,:], edy.Z[0:N+nghost,1:N+nghost+1,:]]
+            p1 = [pv.X[0:N+nghost,0:N+nghost,:]  , pv.Y[0:N+nghost,0:N+nghost,:]  , pv.Z[0:N+nghost,0:N+nghost,:]]
+            p2 = [pv.X[0:N+nghost,1:N+nghost+1,:], pv.Y[0:N+nghost,1:N+nghost+1,:], pv.Z[0:N+nghost,1:N+nghost+1,:]]
 
             # Reshape
             p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost)*nbfaces))
@@ -501,74 +499,72 @@ class cubed_sphere:
             d = sphgeo.arclen(p1,p2)
             d = np.reshape(d,(N+nghost,N+nghost,nbfaces))
 
-            self.length_edy = self.R*d
-            #print(np.amin(self.length_edy),np.amax(self.length_edy))
+            self.length_pv = self.R*d
+            #print(np.amin(self.length_pv),np.amax(self.length_pv))
 
             # Generate tangent vectors
             if showonscreen==True:
                 print("Generating latlon tangent vectors...")
 
             # Lat-lon tangent unit vectors
-            self.elon_edx = sphgeo.tangent_geo_lon(edx.lon)
-            self.elat_edx = sphgeo.tangent_geo_lat(edx.lon, edx.lat)
-            self.elon_edy = sphgeo.tangent_geo_lon(edy.lon)
-            self.elat_edy = sphgeo.tangent_geo_lat(edy.lon, edy.lat)
+            self.elon_pu = sphgeo.tangent_geo_lon(pu.lon)
+            self.elat_pu = sphgeo.tangent_geo_lat(pu.lon, pu.lat)
+            self.elon_pv = sphgeo.tangent_geo_lon(pv.lon)
+            self.elat_pv = sphgeo.tangent_geo_lat(pv.lon, pv.lat)
 
             # CS map tangent unit vectors at edges points
             # latlon coordinates
-            tg_ex_edx.lon = tg_ex_edx.X[:,:,:]*self.elon_edx[:,:,:,0] + tg_ex_edx.Y[:,:,:]*self.elon_edx[:,:,:,1] + tg_ex_edx.Z[:,:,:]*self.elon_edx[:,:,:,2]
-            tg_ex_edx.lat = tg_ex_edx.X[:,:,:]*self.elat_edx[:,:,:,0] + tg_ex_edx.Y[:,:,:]*self.elat_edx[:,:,:,1] + tg_ex_edx.Z[:,:,:]*self.elat_edx[:,:,:,2]
-            #norm =  tg_ex_edx.lon* tg_ex_edx.lon +  tg_ex_edx.lat*tg_ex_edx.lat
+            ex_pu.lon = ex_pu.X[:,:,:]*self.elon_pu[:,:,:,0] + ex_pu.Y[:,:,:]*self.elon_pu[:,:,:,1] + ex_pu.Z[:,:,:]*self.elon_pu[:,:,:,2]
+            ex_pu.lat = ex_pu.X[:,:,:]*self.elat_pu[:,:,:,0] + ex_pu.Y[:,:,:]*self.elat_pu[:,:,:,1] + ex_pu.Z[:,:,:]*self.elat_pu[:,:,:,2]
+            #norm =  ex_pu.lon* ex_pu.lon +  ex_pu.lat*ex_pu.lat
             #print(norm)
-            tg_ex_edy.lon = tg_ex_edy.X[:,:,:]*self.elon_edy[:,:,:,0] + tg_ex_edy.Y[:,:,:]*self.elon_edy[:,:,:,1] + tg_ex_edy.Z[:,:,:]*self.elon_edy[:,:,:,2]
-            tg_ex_edy.lat = tg_ex_edy.X[:,:,:]*self.elat_edy[:,:,:,0] + tg_ex_edy.Y[:,:,:]*self.elat_edy[:,:,:,1] + tg_ex_edy.Z[:,:,:]*self.elat_edy[:,:,:,2]
+            ex_pv.lon = ex_pv.X[:,:,:]*self.elon_pv[:,:,:,0] + ex_pv.Y[:,:,:]*self.elon_pv[:,:,:,1] + ex_pv.Z[:,:,:]*self.elon_pv[:,:,:,2]
+            ex_pv.lat = ex_pv.X[:,:,:]*self.elat_pv[:,:,:,0] + ex_pv.Y[:,:,:]*self.elat_pv[:,:,:,1] + ex_pv.Z[:,:,:]*self.elat_pv[:,:,:,2]
 
-            tg_ey_edx.lon = tg_ey_edx.X[:,:,:]*self.elon_edx[:,:,:,0] + tg_ey_edx.Y[:,:,:]*self.elon_edx[:,:,:,1] + tg_ey_edx.Z[:,:,:]*self.elon_edx[:,:,:,2]
-            tg_ey_edx.lat = tg_ey_edx.X[:,:,:]*self.elat_edx[:,:,:,0] + tg_ey_edx.Y[:,:,:]*self.elat_edx[:,:,:,1] + tg_ey_edx.Z[:,:,:]*self.elat_edx[:,:,:,2]
+            ey_pu.lon = ey_pu.X[:,:,:]*self.elon_pu[:,:,:,0] + ey_pu.Y[:,:,:]*self.elon_pu[:,:,:,1] + ey_pu.Z[:,:,:]*self.elon_pu[:,:,:,2]
+            ey_pu.lat = ey_pu.X[:,:,:]*self.elat_pu[:,:,:,0] + ey_pu.Y[:,:,:]*self.elat_pu[:,:,:,1] + ey_pu.Z[:,:,:]*self.elat_pu[:,:,:,2]
 
-            tg_ey_edy.lon = tg_ey_edy.X[:,:,:]*self.elon_edy[:,:,:,0] + tg_ey_edy.Y[:,:,:]*self.elon_edy[:,:,:,1] + tg_ey_edy.Z[:,:,:]*self.elon_edy[:,:,:,2]
-            tg_ey_edy.lat = tg_ey_edy.X[:,:,:]*self.elat_edy[:,:,:,0] + tg_ey_edy.Y[:,:,:]*self.elat_edy[:,:,:,1] + tg_ey_edy.Z[:,:,:]*self.elat_edy[:,:,:,2]
+            ey_pv.lon = ey_pv.X[:,:,:]*self.elon_pv[:,:,:,0] + ey_pv.Y[:,:,:]*self.elon_pv[:,:,:,1] + ey_pv.Z[:,:,:]*self.elon_pv[:,:,:,2]
+            ey_pv.lat = ey_pv.X[:,:,:]*self.elat_pv[:,:,:,0] + ey_pv.Y[:,:,:]*self.elat_pv[:,:,:,1] + ey_pv.Z[:,:,:]*self.elat_pv[:,:,:,2]
 
-            """
-            self.tg_ex_edx = tg_ex_edx
-            self.tg_ey_edx = tg_ey_edx
-            self.tg_ex_edy = tg_ex_edy
-            self.tg_ey_edy = tg_ey_edy
-            """
+            self.ex_pu = ex_pu
+            self.ey_pu = ey_pu
+            self.ex_pv = ex_pv
+            self.ey_pv = ey_pv
 
             # Latlon/Contravariant conversion
             if showonscreen==True:
                 print("Generating latlon/contravariant conversion variables... \n")
 
-            # Latlon/Contravariant conversion  at edx
-            prod_ex_elon_edx = tg_ex_edx.X*self.elon_edx[:,:,:,0] + tg_ex_edx.Y*self.elon_edx[:,:,:,1] + tg_ex_edx.Z*self.elon_edx[:,:,:,2]
-            prod_ex_elat_edx = tg_ex_edx.X*self.elat_edx[:,:,:,0] + tg_ex_edx.Y*self.elat_edx[:,:,:,1] + tg_ex_edx.Z*self.elat_edx[:,:,:,2]
-            prod_ey_elon_edx = tg_ey_edx.X*self.elon_edx[:,:,:,0] + tg_ey_edx.Y*self.elon_edx[:,:,:,1] + tg_ey_edx.Z*self.elon_edx[:,:,:,2]
-            prod_ey_elat_edx = tg_ey_edx.X*self.elat_edx[:,:,:,0] + tg_ey_edx.Y*self.elat_edx[:,:,:,1] + tg_ey_edx.Z*self.elat_edx[:,:,:,2]
-            determinant_ll2contra_edx = prod_ex_elon_edx*prod_ey_elat_edx - prod_ey_elon_edx*prod_ex_elat_edx
+            # Latlon/Contravariant conversion  at pu
+            prod_ex_elon_pu = ex_pu.X*self.elon_pu[:,:,:,0] + ex_pu.Y*self.elon_pu[:,:,:,1] + ex_pu.Z*self.elon_pu[:,:,:,2]
+            prod_ex_elat_pu = ex_pu.X*self.elat_pu[:,:,:,0] + ex_pu.Y*self.elat_pu[:,:,:,1] + ex_pu.Z*self.elat_pu[:,:,:,2]
+            prod_ey_elon_pu = ey_pu.X*self.elon_pu[:,:,:,0] + ey_pu.Y*self.elon_pu[:,:,:,1] + ey_pu.Z*self.elon_pu[:,:,:,2]
+            prod_ey_elat_pu = ey_pu.X*self.elat_pu[:,:,:,0] + ey_pu.Y*self.elat_pu[:,:,:,1] + ey_pu.Z*self.elat_pu[:,:,:,2]
+            determinant_ll2contra_pu = prod_ex_elon_pu*prod_ey_elat_pu - prod_ey_elon_pu*prod_ex_elat_pu
 
-            self.prod_ex_elon_edx = prod_ex_elon_edx
-            self.prod_ex_elat_edx = prod_ex_elat_edx
-            self.prod_ey_elon_edx = prod_ey_elon_edx
-            self.prod_ey_elat_edx = prod_ey_elat_edx
-            self.determinant_ll2contra_edx = determinant_ll2contra_edx
+            self.prod_ex_elon_pu = prod_ex_elon_pu
+            self.prod_ex_elat_pu = prod_ex_elat_pu
+            self.prod_ey_elon_pu = prod_ey_elon_pu
+            self.prod_ey_elat_pu = prod_ey_elat_pu
+            self.determinant_ll2contra_pu = determinant_ll2contra_pu
 
-            # Latlon/Contravariant conversion at edy
-            prod_ex_elon_edy = tg_ex_edy.X*self.elon_edy[:,:,:,0] + tg_ex_edy.Y*self.elon_edy[:,:,:,1] + tg_ex_edy.Z*self.elon_edy[:,:,:,2]
-            prod_ex_elat_edy = tg_ex_edy.X*self.elat_edy[:,:,:,0] + tg_ex_edy.Y*self.elat_edy[:,:,:,1] + tg_ex_edy.Z*self.elat_edy[:,:,:,2]
-            prod_ey_elon_edy = tg_ey_edy.X*self.elon_edy[:,:,:,0] + tg_ey_edy.Y*self.elon_edy[:,:,:,1] + tg_ey_edy.Z*self.elon_edy[:,:,:,2]
-            prod_ey_elat_edy = tg_ey_edy.X*self.elat_edy[:,:,:,0] + tg_ey_edy.Y*self.elat_edy[:,:,:,1] + tg_ey_edy.Z*self.elat_edy[:,:,:,2]
-            determinant_ll2contra_edy = prod_ex_elon_edy*prod_ey_elat_edy - prod_ey_elon_edy*prod_ex_elat_edy
+            # Latlon/Contravariant conversion at pv
+            prod_ex_elon_pv = ex_pv.X*self.elon_pv[:,:,:,0] + ex_pv.Y*self.elon_pv[:,:,:,1] + ex_pv.Z*self.elon_pv[:,:,:,2]
+            prod_ex_elat_pv = ex_pv.X*self.elat_pv[:,:,:,0] + ex_pv.Y*self.elat_pv[:,:,:,1] + ex_pv.Z*self.elat_pv[:,:,:,2]
+            prod_ey_elon_pv = ey_pv.X*self.elon_pv[:,:,:,0] + ey_pv.Y*self.elon_pv[:,:,:,1] + ey_pv.Z*self.elon_pv[:,:,:,2]
+            prod_ey_elat_pv = ey_pv.X*self.elat_pv[:,:,:,0] + ey_pv.Y*self.elat_pv[:,:,:,1] + ey_pv.Z*self.elat_pv[:,:,:,2]
+            determinant_ll2contra_pv = prod_ex_elon_pv*prod_ey_elat_pv - prod_ey_elon_pv*prod_ex_elat_pv
 
-            self.prod_ex_elon_edy = prod_ex_elon_edy
-            self.prod_ex_elat_edy = prod_ex_elat_edy
-            self.prod_ey_elon_edy = prod_ey_elon_edy
-            self.prod_ey_elat_edy = prod_ey_elat_edy
-            self.determinant_ll2contra_edy = determinant_ll2contra_edy
-            #tg_ex_edx, tg_ey_edx
-            #tg_ex_edy, tg_ey_edy
-            #self.elon_edx, self.elat_edx
-            #self.elon_edy, self.elat_edy
+            self.prod_ex_elon_pv = prod_ex_elon_pv
+            self.prod_ex_elat_pv = prod_ex_elat_pv
+            self.prod_ey_elon_pv = prod_ey_elon_pv
+            self.prod_ey_elat_pv = prod_ey_elat_pv
+            self.determinant_ll2contra_pv = determinant_ll2contra_pv
+            #ex_pu, ey_pu
+            #ex_pv, ey_pv
+            #self.elon_pu, self.elat_pu
+            #self.elon_pv, self.elat_pv
 
             Xu = np.repeat(Xu[:, :, np.newaxis], 6, axis=2)
             Yv = np.repeat(Yv[:, :, np.newaxis], 6, axis=2)
@@ -579,10 +575,10 @@ class cubed_sphere:
 
             if showonscreen==True:
                 # Print some grid properties
-                print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
-                print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
-                print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_edx[i0:iend+1,j0:jend,:])*erad/10**3))
-                print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_edx[i0:iend+1,j0:jend,:])/np.amin(self.length_edx[i0:iend+1,j0:jend+1,:])))
+                print("\nMin  edge length (km)  : ","{:.2e}".format(np.amin(self.length_pu[i0:iend+1,j0:jend,:])*erad/10**3))
+                print("Max  edge length (km)  : ","{:.2e}".format(np.amax(self.length_pu[i0:iend+1,j0:jend,:])*erad/10**3))
+                print("Mean edge length (km)  : ","{:.2e}".format(np.mean(self.length_pu[i0:iend+1,j0:jend,:])*erad/10**3))
+                print("Ratio max/min length   : ","{:.2e}".format(np.amax(self.length_pu[i0:iend+1,j0:jend,:])/np.amin(self.length_pu[i0:iend+1,j0:jend+1,:])))
 
                 print("Min  area (km2)        : ","{:.2e}".format(np.amin(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))
                 print("Max  area (km2)        : ","{:.2e}".format(np.amax(self.areas[i0:iend,j0:jend,:])*erad*erad/10**6))

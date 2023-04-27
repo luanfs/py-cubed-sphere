@@ -236,8 +236,8 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 # Get values at centers
                 Q = np.zeros((N+nghost, N+nghost, nbfaces))
                 Qexact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
-                q_edx = q_scalar_field(cs_grid.edx.lon, cs_grid.edx.lat, simulation)
-                q_edy = q_scalar_field(cs_grid.edy.lon, cs_grid.edy.lat, simulation)
+                q_pu = q_scalar_field(cs_grid.pu.lon, cs_grid.pu.lat, simulation)
+                q_pv = q_scalar_field(cs_grid.pv.lon, cs_grid.pv.lat, simulation)
 
                 Q[i0:iend,j0:jend,:] = Qexact[i0:iend,j0:jend,:]
 
@@ -257,11 +257,11 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 # Plot the error
                 error_plot = scalar_field(cs_grid, 'error', 'center')
                 error_plot.f = 0.0
-                error_plot.f = abs(q_edx[i0:iend,j0:jend,:]-px.q_L[i0:iend,j0:jend,:])
-                error_plot.f = np.maximum(abs(q_edx[i0:iend,j0:jend,:]-px.q_L[i0:iend,j0:jend,:]),\
-                                          abs(q_edx[i0+1:iend+1,j0:jend,:]-px.q_R[i0:iend,j0:jend,:]))
-                error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0:jend,:]-py.q_L[i0:iend:,j0:jend,:]))
-                error_plot.f = np.maximum(error_plot.f, abs(q_edy[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
+                error_plot.f = abs(q_pu[i0:iend,j0:jend,:]-px.q_L[i0:iend,j0:jend,:])
+                error_plot.f = np.maximum(abs(q_pu[i0:iend,j0:jend,:]-px.q_L[i0:iend,j0:jend,:]),\
+                                          abs(q_pu[i0+1:iend+1,j0:jend,:]-px.q_R[i0:iend,j0:jend,:]))
+                error_plot.f = np.maximum(error_plot.f, abs(q_pv[i0:iend,j0:jend,:]-py.q_L[i0:iend:,j0:jend,:]))
+                error_plot.f = np.maximum(error_plot.f, abs(q_pv[i0:iend,j0+1:jend+1,:]-py.q_R[i0:iend:,j0:jend,:]))
 
                 # Relative errors in different metrics
                 error_linf[i,ET,rec], error_l1[i,ET,rec], error_l2[i,ET,rec] = compute_errors(error_plot.f,0*error_plot.f)
