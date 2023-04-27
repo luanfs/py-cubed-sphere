@@ -25,6 +25,8 @@ def init_vars_adv(cs_grid, simulation, transformation):
     # other grid vars
     N = cs_grid.N
     nghost = cs_grid.nghost
+    ngl = cs_grid.nghost_left
+    ngr = cs_grid.nghost_right
 
     # Velocity at edges
     U_pu = velocity_edges(cs_grid, 'pu')
@@ -73,6 +75,16 @@ def init_vars_adv(cs_grid, simulation, transformation):
 
     # Get Lagrange polynomials
     lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+
+    # Edge treatment may modify the metric tensor in ghost cells using adjacent panel values
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
+        # x direction
+        cs_grid.metric_tensor_centers[iend:N+nghost,:] = cs_grid.metric_tensor_centers[i0:i0+ngr,:]
+        cs_grid.metric_tensor_centers[0:i0,:]      = cs_grid.metric_tensor_centers[N:N+ngl,:]
+
+        # y direction
+        cs_grid.metric_tensor_centers[:,jend:N+nghost] = cs_grid.metric_tensor_centers[:,j0:j0+ngr]
+        cs_grid.metric_tensor_centers[:,0:j0]      = cs_grid.metric_tensor_centers[:,N:N+ngl]
 
     return Q, gQ, div_numerical, px, py, cx, cy, \
            U_pu, U_pv, lagrange_poly, Kmin, Kmax, CFL

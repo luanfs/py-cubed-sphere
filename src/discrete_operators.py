@@ -16,17 +16,11 @@ from edges_treatment    import edges_ghost_cell_treatment_scalar, average_flux_c
 ####################################################################################
 def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
                transformation, lagrange_poly, Kmin, Kmax):
-    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
-        # Multiply the field Q by metric tensor
-        gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
-        # Fill ghost cell values - scalar field
-        edges_ghost_cell_treatment_scalar(gQ, gQ, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
 
-    elif simulation.et_name=='ET-R96' or simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF':
-        # Fill ghost cell values - scalar field
-        edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
-        # Multiply the field Q by metric tensor
-        gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
+    # Fill ghost cell values - scalar field
+    edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+    # Multiply the field Q by metric tensor
+    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
 
     # compute the fluxes
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
