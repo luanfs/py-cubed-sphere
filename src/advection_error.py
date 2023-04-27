@@ -28,7 +28,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 5
+    Ntest  = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -36,7 +36,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
     Nc[0] = 16
 
     if simulation.vf==1 or simulation.vf==2:
-        dts[0] = 0.05
+        dts[0] = 0.025
     elif simulation.vf==3:
         dts[0] = 0.025
     elif simulation.vf==4:
@@ -56,13 +56,14 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (3,)
-    split = (3,3,1,1)
-    ets = (1,2,4,5)
-    deps = (1,1,2,2)
+    split = (3,3)
+    ets   = (4,5)
+    deps  = (1,1)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
     #split = (simulation.opsplit,)
+    #ets = (5,)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
@@ -97,6 +98,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
                 ll_grid = latlon_grid(Nlat, Nlon)
                 ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
+                # Print parameters
+                print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', simulation.recon_name,', split=', simulation.opsplit_name, ', dp=', simulation.dp_name, ', et=', simulation.et_name)
+
                 # Get advection error
                 error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, False)
 
@@ -123,7 +127,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, showons
         for r in range(0, len(recons)):
             for d in range(0, len(deps)):
                 errors.append(error[:,r,d])
-                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1])
+                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1]+'/'+str(dp_names[deps[d]-1]))
 
         title = simulation.title + '- ic=' + str(simulation.ic)+', vf='+ str(simulation.vf)+', norm='+norm_title[e]
         filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
