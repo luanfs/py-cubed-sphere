@@ -66,7 +66,7 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
         U_pv.vcontra_averaged[:,j0:jend+1,:][vpos] = (1.0-a[vpos])*v_interp[:,j0:jend+1,:][vpos] + a[vpos]*v_interp[:,j0-1:jend,:][vpos]
         U_pv.vcontra_averaged[:,j0:jend+1,:][vneg] = -a[vneg]*v_interp[:,j0+1:jend+2,:][vneg] + (1.0+a[vneg])*v_interp[:,j0:jend+1,:][vneg]
 
-        if simulation.et_name=='ET-R96-AF' or simulation.et_name=='ET-Z21-AF':
+        if simulation.et_name=='ET-Z21-AF':
             # Average panels 0-1,1-2,2-3,3-4
             U_pu.ucontra_averaged[iend,j0:jend,0:3] = (U_pu.ucontra_averaged[iend,j0:jend,0:3] + U_pu.ucontra_averaged[i0,j0:jend,1:4])*0.5
             U_pu.ucontra_averaged[i0,j0:jend,1:4] = U_pu.ucontra_averaged[iend,j0:jend,0:3]
