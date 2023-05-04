@@ -8,7 +8,7 @@
 
 import numpy as np
 import numexpr as ne
-from interpolation import ghost_cells_adjacent_panels, ghost_cells_lagrange_interpolation, ghost_cells_lagrange_interpolation_NS, ghost_cells_lagrange_interpolation_WE
+from interpolation import ghost_cells_adjacent_panels, ghost_cell_centers_lagrange_interpolation, ghost_cells_lagrange_interpolation_NS, ghost_cells_lagrange_interpolation_WE
 
 ####################################################################################
 #  The quadrilateral points are labeled as below
@@ -255,20 +255,20 @@ def average_flux_cube_edges(px, py, cs_grid):
 # This routine fill the halo data using the scheme given in simulation
 # Qx and Qy are scalar fields
 ####################################################################################
-def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax):
+def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, stencil):
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
     elif simulation.et_name=='ET-R96':
         # Interpolate to ghost cells - north and south neighbors
-        ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+        ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly, stencil)
 
         # Interpolate to ghost cells - west and east neighbors
-        ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+        ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly, stencil)
 
     elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF': # Uses ghost cells interpolation - using corner ghost cells
-        ghost_cells_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
-                                           lagrange_poly, Kmin, Kmax)
+        ghost_cell_centers_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
+                                           lagrange_poly, stencil)
 
 ####################################################################################
 # This routine fill the halo data with the scheme given in simulation
