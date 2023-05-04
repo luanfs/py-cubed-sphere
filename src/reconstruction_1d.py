@@ -26,7 +26,7 @@ from edges_treatment import average_parabola_cube_edges, edges_extrapolation
 def ppm_reconstruction_x(Q, px, cs_grid, simulation):
     N = cs_grid.N
     M = cs_grid.N
-    ng = cs_grid.nghost
+    ng = cs_grid.ng
     i0 = cs_grid.i0
     iend = cs_grid.iend
 
@@ -204,7 +204,7 @@ def ppm_reconstruction_x(Q, px, cs_grid, simulation):
 def ppm_reconstruction_y(Q, py, cs_grid, simulation):
     N = cs_grid.N
     M = cs_grid.N
-    ng = cs_grid.nghost
+    ng = cs_grid.ng
     j0 = cs_grid.j0
     jend = cs_grid.jend
 
