@@ -15,7 +15,7 @@ sys.path.append(srcdir)
 
 # Imports
 from miscellaneous      import createDirs
-from configuration      import get_parameters, get_advection_parameters, get_interpolation_parameters
+from configuration      import get_parameters, get_advection_parameters
 from cs_datastruct      import cubed_sphere, latlon_grid
 from interpolation      import ll2cs
 from gridquality        import grid_quality
@@ -25,7 +25,7 @@ from advection_ic       import adv_simulation_par
 from advection_sphere   import adv_sphere
 from advection_error    import error_analysis_adv
 from operator_accuracy  import error_analysis_div
-from interpolation_test import error_analysis_interpolation, error_analysis_recon
+from interpolation_test import interpolation_test 
 
 def main():
     # Create the directories
@@ -48,7 +48,7 @@ def main():
             save_grid_netcdf4(cs_grid)
 
     else:
-        if test_case == 2 or test_case ==6:
+        if test_case == 2 or test_case == 5:
             # Create the CS mesh
             cs_grid = cubed_sphere(N, transformation, showonscreen, gridload)
 
@@ -67,24 +67,19 @@ def main():
 
         elif test_case == 3:
             # Call interpolation test case
-            print("Test case 3: Interpolation test case.\n")
-            error_analysis_interpolation(map_projection, transformation, showonscreen, True)
+            interpolation_test(map_projection, transformation, showonscreen, True)
 
         elif test_case == 4:
-            print("Test case 4: Reconstruction test case.\n")
-            error_analysis_recon(map_projection, transformation, showonscreen, gridload)
-
-        elif test_case == 5:
             # Call divergence test case
-            print("Test case 5: Divergence test case.\n")
+            print("Test case 4: Divergence test case.\n")
             dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
             simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
             plot = True
             error_analysis_div(simulation, map_projection, plot, transformation, showonscreen, gridload)
 
-        elif test_case == 6:
+        elif test_case == 5:
             # Call advection test case
-            print("Test case 6: Advection test case.\n")
+            print("Test case 5: Advection test case.\n")
             dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
             simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
 

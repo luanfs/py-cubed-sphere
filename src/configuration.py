@@ -163,25 +163,31 @@ def get_interpolation_parameters():
         # Read the grid file lines
         confpar.readline()
         confpar.readline()
+        tc = confpar.readline()
+        confpar.readline()
         ic = confpar.readline()
         confpar.readline()
-        #interpol_degree = confpar.readline()
-        #confpar.readline()
+        vf = confpar.readline()
+        confpar.readline()
 
         # Close the file
         confpar.close()
 
         # Convert from str to int
+        tc = int(tc)
         ic = int(ic)
-        #degree = int(interpol_degree)
+        vf = int(vf)
+
         #Print the parameters on the screen
         print("\n--------------------------------------------------------")
         print("Parameters from file", file_path,"\n")
+        print("Test case: ", tc)
         print("Scalar field: ", ic)
+        print("Vector field: ", vf)
         #print("Ghost cells interpolation degree: ", degree)
         print("--------------------------------------------------------\n")
 
     else:   # The file does not exist
         print("ERROR in get_grid_parameters: file "+ filename +" not found in /par.")
         exit()
-    return ic#, degree
+    return tc, ic, vf

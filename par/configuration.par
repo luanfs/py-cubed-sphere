@@ -1,21 +1,22 @@
 #Parameters
 #Number of cells N along a coordinates axis (total number of cells is 6*N*N)
-50
+10
 #Transformation?  1-equidistant; 2-equiangular; 3-conformal
 2
 #Loadable grid? 0-No; 1-Yes
-0
+1
 #Show ongoing process details on screen? 0-No; 1-Yes
 0
 #Test case to be done
-6
+3
 #Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------
 #Possible test cases
 #  case(1) - Cubed-sphere generation and plotting
 #  case(2) - Grid quality testing
-#  case(3) - Interpolation  testing (see interpolation.par)
-#  case(4) - Reconstruction testing (see interpolation.par)
-#  case(5) - Divergence computation on the sphere (see divergence.par)
-#  case(6) - Advection on the sphere (see advection.par)
+#  case(3) - Scalar field interpolation  testing (see interpolation.par)
+#  case(4) - Vector field interpolation  testing (see interpolation.par)
+#  case(5) - Reconstruction testing (see interpolation.par)
+#  case(6) - Divergence computation on the sphere (see divergence.par)
+#  case(7) - Advection on the sphere (see advection.par)
