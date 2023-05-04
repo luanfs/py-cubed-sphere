@@ -14,9 +14,9 @@ from constants import nbfaces
 ######################################################################
 def get_halo_data_interpolation(Q, cs_grid):
     N   = cs_grid.N
-    ng  = cs_grid.nghost
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
 
     # Interior cells index
     i0   = cs_grid.i0
@@ -190,9 +190,9 @@ def get_halo_data_interpolation(Q, cs_grid):
 ######################################################################
 def get_halo_data_interpolation_NS(Qx, Qy, cs_grid):
     N   = cs_grid.N
-    ng  = cs_grid.nghost
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
 
     # Interior cells index
     i0   = cs_grid.i0
@@ -304,9 +304,9 @@ def get_halo_data_interpolation_NS(Qx, Qy, cs_grid):
 ######################################################################
 def get_halo_data_interpolation_WE(Qx, Qy, cs_grid):
     N   = cs_grid.N
-    ng  = cs_grid.nghost
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
 
     # Interior cells index
     i0   = cs_grid.i0
