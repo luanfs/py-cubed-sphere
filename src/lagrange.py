@@ -186,12 +186,14 @@ def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
     dx = cs_grid.dx
 
     # Define the stencil
-    Kmin = np.zeros(N+ng, dtype=int)
+    K    = np.zeros(N+ng, dtype=int)
     Kmax = np.zeros(N+ng, dtype=int)
-
+    Kmin = np.zeros(N+ng, dtype=int)
+ 
     for i in range(i0, iend):
-        Kmin[i] = i # Cell where the center point is located
-        Kmax[i] = Kmin[i]+order-1
+        K[i] = i
+        Kmax[i] = K[i]+ceil(order/2) 
+        Kmin[i] = Kmax[i]-order+1
 
         # Shift stencils if needed
         if Kmin[i]<i0:
@@ -203,7 +205,7 @@ def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
             Kmin[i] = Kmax[i]-order+1
 
         if Kmax[i]-Kmin[i] != order-1:
-            print('Error in edges2center_lagrange_interpolation.')
+            print('Error in wind_edges2center_lagrange_poly.')
             exit()
         #print(Kmin[i], Kmax[i], i)
 
@@ -218,7 +220,7 @@ def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
         # Debugging
         if nodes[i,0]>x_pc[i] or nodes[i,order-1]<x_pc[i]:
             if degree>=1:
-                print('Error 2 in edges2center_lagrange_interpolation.')
+                print('Error in wind_edges2center_lagrange_poly.')
                 exit()
 
     # Compute the Lagrange polynomial basis at pc
@@ -259,12 +261,15 @@ def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformati
     dx = cs_grid.dx
 
     # Define the stencil
+    K = np.zeros(N+ng, dtype=int)
     Kmin = np.zeros(N+ng, dtype=int)
     Kmax = np.zeros(N+ng, dtype=int)
 
     for i in range(i0, iend+1):
-        Kmin[i] = i-1 # Cell where the center point is located
-        Kmax[i] = Kmin[i]+order-1
+        #Kmin[i] = i-1 # Cell where the center point is located
+        K[i] = i-1
+        Kmax[i] = K[i]+ceil(order/2) 
+        Kmin[i] = Kmax[i]-order+1
 
         # Shift stencils if needed
         if Kmin[i]<0:
@@ -277,8 +282,9 @@ def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformati
 
         #print(Kmin[i], Kmax[i], i)
         if Kmax[i]-Kmin[i] != order-1:
-            print('Error in center2edges_lagrange_poly_ghost')
+            print('Error in wind_center2ghostedges_lagrange_poly_ghost')
             exit()
+        #print(Kmin[i],Kmax[i],i)
 
     lagrange_poly_east = np.zeros((ngl, N+ng+1, nbfaces, order))
     lagrange_poly_west = np.zeros((ngl, N+ng+1, nbfaces, order))
@@ -293,7 +299,7 @@ def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformati
         # Debugging
         if nodes[i,0]>x_pu[i] or nodes[i,order-1]<x_pu[i]:
             if degree>=1:
-                print('Error 2 in center2edges_lagrange_poly_ghost.')
+                print('Error in wind_center2ghostedges_lagrange_poly_ghost.')
                 exit()
 
     # Compute the Lagrange polynomial basis at pc

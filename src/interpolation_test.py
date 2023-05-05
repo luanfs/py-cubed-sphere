@@ -304,8 +304,9 @@ def error_analysis_vf_interpolation(vf, map_projection, transformation, showonsc
             e_north = max(eu_north, ev_north)
             e_south = max(eu_south, ev_south)
             e_edges = max(e_east, e_west, e_north, e_south)
-            error_linf[i,d] = e_edges
-            #error_linf[i,d] = e_pc
+
+            #error_linf[i,d] = e_edges
+            error_linf[i,d] = e_pc
             # Print errors
             print_errors_simul(error_linf[:,d], error_linf[:,d], error_linf[:,d], i)
 
