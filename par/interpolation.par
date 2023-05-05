@@ -12,7 +12,10 @@
 #Possible scalar fields (only for tc1 or tc3)
 #  case(1) - gaussian hill
 #  case(2) - trigonometric field
-#Possible scalar fields (only for tc2)
-#  case(1) - gaussian hill
-#  case(2) - trigonometric field
+#Possible vector fields (only for tc2)
+#  case(1) - zonal wind (divergence free)
+#  case(2) - rotated zonal wind (divergence free)
+#  case(3) - Non divergent field 2 from Nair and Lauritzen 2010
+#  case(4) - Non divergent field 4 from Nair and Lauritzen 2010
+#  case(5) - Divergent field 3 from Nair and Lauritzen 2010
 
