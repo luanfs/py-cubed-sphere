@@ -6,10 +6,10 @@
 import numpy as np
 from constants import*
 from advection_ic           import velocity_adv, q0_adv
-from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola, velocity_edges
+from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola, velocity
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
-from lagrange               import lagrange_poly_ghostcells
+from lagrange               import lagrange_poly_ghostcell_pc
 from edges_treatment    import edges_ghost_cell_treatment_vector
 
 ####################################################################################
@@ -65,10 +65,10 @@ def init_vars_adv(cs_grid, simulation, transformation):
     px = ppm_parabola(cs_grid,simulation,'x')
     py = ppm_parabola(cs_grid,simulation,'y')
 
-    # Compute average values of Q (initial condition) at cell centers
+    # Compute average values of Q (initial condition) at cell pc
     Q = np.zeros((N+nghost, N+nghost, nbfaces))
     gQ = np.zeros((N+nghost, N+nghost, nbfaces))
-    Q[i0:iend,j0:jend,:] = q0_adv(cs_grid.centers.lon[i0:iend,j0:jend,:], cs_grid.centers.lat[i0:iend,j0:jend,:], simulation)
+    Q[i0:iend,j0:jend,:] = q0_adv(cs_grid.pc.lon[i0:iend,j0:jend,:], cs_grid.pc.lat[i0:iend,j0:jend,:], simulation)
 
     # Numerical divergence
     div_numerical = np.zeros((N+nghost, N+nghost, nbfaces))
@@ -79,12 +79,12 @@ def init_vars_adv(cs_grid, simulation, transformation):
     # Edge treatment may modify the metric tensor in ghost cells using adjacent panel values
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         # x direction
-        cs_grid.metric_tensor_centers[iend:N+nghost,:] = cs_grid.metric_tensor_centers[i0:i0+ngr,:]
-        cs_grid.metric_tensor_centers[0:i0,:]      = cs_grid.metric_tensor_centers[N:N+ngl,:]
+        cs_grid.metric_tensor_pc[iend:N+nghost,:] = cs_grid.metric_tensor_pc[i0:i0+ngr,:]
+        cs_grid.metric_tensor_pc[0:i0,:]      = cs_grid.metric_tensor_pc[N:N+ngl,:]
 
         # y direction
-        cs_grid.metric_tensor_centers[:,jend:N+nghost] = cs_grid.metric_tensor_centers[:,j0:j0+ngr]
-        cs_grid.metric_tensor_centers[:,0:j0]      = cs_grid.metric_tensor_centers[:,N:N+ngl]
+        cs_grid.metric_tensor_pc[:,jend:N+nghost] = cs_grid.metric_tensor_pc[:,j0:j0+ngr]
+        cs_grid.metric_tensor_pc[:,0:j0]      = cs_grid.metric_tensor_pc[:,N:N+ngl]
 
     return Q, gQ, div_numerical, px, py, cx, cy, \
            U_pu, U_pv, lagrange_poly, Kmin, Kmax, CFL

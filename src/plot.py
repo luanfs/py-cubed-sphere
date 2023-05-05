@@ -66,8 +66,8 @@ def plot_grid(grid, map_projection):
         lat = grid.vertices.lat[:,:,p]*rad2deg
 
         # Centers
-        lonc = grid.centers.lon[:,:,p]*rad2deg
-        latc = grid.centers.lat[:,:,p]*rad2deg
+        lonc = grid.pc.lon[:,:,p]*rad2deg
+        latc = grid.pc.lat[:,:,p]*rad2deg
 
         # Edges in x direction
         lon_pu = grid.pu.lon[:,:,p]*rad2deg
@@ -97,7 +97,7 @@ def plot_grid(grid, map_projection):
 
         if plot_gc:
             if p==0:
-                # Plot centers geodesics
+                # Plot pc geodesics
                 A_lon, A_lat = lonc[0:Nt-1, 0:Nt-1], latc[0:Nt-1, 0:Nt-1]
                 A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
@@ -115,7 +115,7 @@ def plot_grid(grid, map_projection):
                 plt.plot([C_lon, D_lon], [C_lat, D_lat], '--', linewidth=0.75, color='yellow', transform=ccrs.Geodetic())
                 plt.plot([D_lon, A_lon], [D_lat, A_lat], '--', linewidth=0.75, color='yellow', transform=ccrs.Geodetic())
 
-                # Plot centers
+                # Plot pc
                 A_lon, A_lat = lonc[:,:], latc[:,:]
                 for i in range(0, Nt):
                     for j in range(0, Nt):
@@ -127,7 +127,7 @@ def plot_grid(grid, map_projection):
                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'yellow', transform=ccrs.Geodetic())
 
             elif p==1 or p==3:
-                # Plot centers geodesics
+                # Plot pc geodesics
                 A_lon, A_lat = lonc[0:Nt-1, 0:Nt-1], latc[0:Nt-1, 0:Nt-1]
                 A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
@@ -140,7 +140,7 @@ def plot_grid(grid, map_projection):
                 D_lon, D_lat = lonc[0:Nt-1, 1:Nt], latc[0:Nt-1, 1:Nt]
                 D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-                # Plot centers
+                # Plot pc
                 A_lon, A_lat = lonc[:,:], latc[:,:]
                 for i in range(0, Nt):
                     for j in range(0, Nt):
@@ -150,7 +150,7 @@ def plot_grid(grid, map_projection):
                             plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'cyan', transform=ccrs.Geodetic())
 
             if p != 0:
-                # Plot centers
+                # Plot pc
                 A_lon, A_lat = lonc[:,:], latc[:,:]
                 for i in range(i0, iend):
                     for j in range(j0, jend ):
@@ -533,7 +533,7 @@ def save_grid_netcdf4(grid):
 
     # Create variables
     vertices = griddata.createVariable('vertices', 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
-    centers  = griddata.createVariable('centers' , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
+    pc  = griddata.createVariable('pc' , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
     pu = griddata.createVariable('pu'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     pv = griddata.createVariable('pv'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
     ex_pc = griddata.createVariable('ex_pc', 'f8', ('ix2' , 'jy2', 'panel', 'coorddim'))
@@ -553,7 +553,7 @@ def save_grid_netcdf4(grid):
     prod_ey_elon_pc          = griddata.createVariable('prod_ey_elon_pc'    , 'f8', ('ix2', 'jy2' , 'panel'))
     prod_ey_elat_pc          = griddata.createVariable('prod_ey_elat_pc'    , 'f8', ('ix2', 'jy2' , 'panel'))
     determinant_ll2contra_pc = griddata.createVariable('determinant_ll2contra_pc', 'f8', ('ix2', 'jy2' , 'panel'))
-    metric_tensor_centers   = griddata.createVariable('metric_tensor_centers', 'f8', ('ix2', 'jy2', 'panel'))
+    metric_tensor_pc   = griddata.createVariable('metric_tensor_pc', 'f8', ('ix2', 'jy2', 'panel'))
 
     prod_ex_elon_pu          = griddata.createVariable('prod_ex_elon_pu'    , 'f8', ('ix', 'jy2' , 'panel'))
     prod_ex_elat_pu          = griddata.createVariable('prod_ex_elat_pu'    , 'f8', ('ix', 'jy2' , 'panel'))
@@ -579,11 +579,11 @@ def save_grid_netcdf4(grid):
     vertices[:,:,:,3] = grid.vertices.lon
     vertices[:,:,:,4] = grid.vertices.lat
 
-    centers[:,:,:,0] = grid.centers.X
-    centers[:,:,:,1] = grid.centers.Y
-    centers[:,:,:,2] = grid.centers.Z
-    centers[:,:,:,3] = grid.centers.lon
-    centers[:,:,:,4] = grid.centers.lat
+    pc[:,:,:,0] = grid.pc.X
+    pc[:,:,:,1] = grid.pc.Y
+    pc[:,:,:,2] = grid.pc.Z
+    pc[:,:,:,3] = grid.pc.lon
+    pc[:,:,:,4] = grid.pc.lat
 
     pu[:,:,:,0] = grid.pu.X
     pu[:,:,:,1] = grid.pu.Y
@@ -637,7 +637,7 @@ def save_grid_netcdf4(grid):
     length_pu[:,:,:] = grid.length_pu[:,:,:]
     length_pv[:,:,:] = grid.length_pv[:,:,:]
 
-    metric_tensor_centers[:,:,:] = grid.metric_tensor_centers[:,:,:]
+    metric_tensor_pc[:,:,:] = grid.metric_tensor_pc[:,:,:]
     metric_tensor_pu[:,:,:] = grid.metric_tensor_pu[:,:,:]
     metric_tensor_pv[:,:,:] = grid.metric_tensor_pv[:,:,:]
 

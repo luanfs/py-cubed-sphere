@@ -64,9 +64,9 @@ class cubed_sphere:
             self.dx, self.dy = dx, dy
 
             # Get some integers
-            self.ng        = griddata['ng'][:]
-            self.ngl   = griddata['ngl'][:]
-            self.ngr  = griddata['ngr'][:]
+            self.ng  = griddata['ng'][:]
+            self.ngl = griddata['ngl'][:]
+            self.ngr = griddata['ngr'][:]
 
             # Interior indexes
             self.i0, self.iend = griddata['i0'][:], griddata['iend'][:]
@@ -76,8 +76,8 @@ class cubed_sphere:
             ng = self.ng
 
             # Create points
-            vertices  = point(N+1+ng, N+1+ng)
-            centers   = point(N+ng, N+ng)
+            vertices = point(N+1+ng, N+1+ng)
+            pc       = point(N+ng, N+ng)
             pu       = point(N+1+ng, N+ng)
             pv       = point(N+ng, N+1+ng)
             ex_pc = point(N+ng, N+ng)
@@ -94,11 +94,11 @@ class cubed_sphere:
             vertices.lon = griddata['vertices'][:,:,:,3]
             vertices.lat = griddata['vertices'][:,:,:,4]
 
-            centers.X   = griddata['centers'][:,:,:,0]
-            centers.Y   = griddata['centers'][:,:,:,1]
-            centers.Z   = griddata['centers'][:,:,:,2]
-            centers.lon = griddata['centers'][:,:,:,3]
-            centers.lat = griddata['centers'][:,:,:,4]
+            pc.X   = griddata['pc'][:,:,:,0]
+            pc.Y   = griddata['pc'][:,:,:,1]
+            pc.Z   = griddata['pc'][:,:,:,2]
+            pc.lon = griddata['pc'][:,:,:,3]
+            pc.lat = griddata['pc'][:,:,:,4]
 
             pu.X   = griddata['pu'][:,:,:,0]
             pu.Y   = griddata['pu'][:,:,:,1]
@@ -154,7 +154,7 @@ class cubed_sphere:
             length_pv = griddata['length_pv'][:,:,:]
 
             # Metric tensor/contravariant-covariant conversion tools
-            metric_tensor_centers = griddata['metric_tensor_centers'][:,:,:]
+            metric_tensor_pc = griddata['metric_tensor_pc'][:,:,:]
             metric_tensor_pu = griddata['metric_tensor_pu'][:,:,:]
             metric_tensor_pv = griddata['metric_tensor_pv'][:,:,:]
 
@@ -180,14 +180,14 @@ class cubed_sphere:
             Yv = griddata['Yv'][:,:,:]
 
             # Attributes
-            self.centers = centers
+            self.pc = pc
             self.vertices = vertices
             self.pu = pu
             self.pv = pv
             self.length_pu = length_pu
             self.length_pv = length_pv
             self.areas = areas
-            self.metric_tensor_centers = metric_tensor_centers
+            self.metric_tensor_pc = metric_tensor_pc
 
             self.prod_ex_elon_pc = prod_ex_elon_pc
             self.prod_ex_elat_pc = prod_ex_elat_pc
@@ -276,11 +276,11 @@ class cubed_sphere:
 
             self.vertices = vertices
 
-            # Generate cell centers
+            # Generate cell pc
             if showonscreen==True:
-                print("Generating cell centers...")
+                print("Generating cell pc...")
 
-            centers = point(N+ng, N+ng)
+            pc = point(N+ng, N+ng)
             ex_pc   = point(N+ng, N+ng)
             ey_pc   = point(N+ng, N+ng)
 
@@ -288,27 +288,27 @@ class cubed_sphere:
             y = np.linspace(y_min+dy/2.0-ngl*dy, y_max-dy/2.0+ngr*dy, N+ng) # Centers
 
             if transformation == "gnomonic_equiangular":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equiangular_gnomonic_map(x, y, N+ng, N+ng, self.R)
+                pc.X, pc.Y, pc.Z, pc.lon, pc.lat = equiangular_gnomonic_map(x, y, N+ng, N+ng, self.R)
                 ex_pc.X, ex_pc.Y, ex_pc.Z = equiangular_tg_xdir(x, y, N+ng, N+ng, self.R)
                 ey_pc.X, ey_pc.Y, ey_pc.Z = equiangular_tg_ydir(x, y, N+ng, N+ng, self.R)
 
             elif transformation=="gnomonic_equidistant":
-                centers.X, centers.Y, centers.Z, centers.lon, centers.lat = equidistant_gnomonic_map(x, y, N+ng, N+ng, self.R)
+                pc.X, pc.Y, pc.Z, pc.lon, pc.lat = equidistant_gnomonic_map(x, y, N+ng, N+ng, self.R)
                 ex_pc.X, ex_pc.Y, ex_pc.Z = equidistant_tg_xdir(x, y, N+ng, N+ng, self.R)
                 ey_pc.X, ey_pc.Y, ey_pc.Z = equidistant_tg_ydir(x, y, N+ng, N+ng, self.R)
             elif transformation=="conformal":
-                centers.X[i0:iend,j0:jend], centers.Y[i0:iend,j0:jend], centers.Z[i0:iend,j0:jend], centers.lon[i0:iend,j0:jend], centers.lat[i0:iend,j0:jend] \
+                pc.X[i0:iend,j0:jend], pc.Y[i0:iend,j0:jend], pc.Z[i0:iend,j0:jend], pc.lon[i0:iend,j0:jend], pc.lat[i0:iend,j0:jend] \
                 = conformal_map(x[i0:iend], y[j0:jend], N, N)
 
-            self.centers = centers
+            self.pc = pc
             self.ex_pc = ex_pc
             self.ey_pc = ey_pc
 
-            # Metric tensor on centers
-            metric_tensor_centers = np.zeros((N+ng, N+ng, nbfaces))
-            metric_tensor_centers[:,:,0] = metric_tensor(x, y, self.R, transformation)
-            for p in range(1, nbfaces): metric_tensor_centers[:,:,p] = metric_tensor_centers[:,:,0]
-            self.metric_tensor_centers = metric_tensor_centers
+            # Metric tensor on pc
+            metric_tensor_pc = np.zeros((N+ng, N+ng, nbfaces))
+            metric_tensor_pc[:,:,0] = metric_tensor(x, y, self.R, transformation)
+            for p in range(1, nbfaces): metric_tensor_pc[:,:,p] = metric_tensor_pc[:,:,0]
+            self.metric_tensor_pc = metric_tensor_pc
 
             # Generate cell edges in x direction
             if showonscreen==True:
@@ -525,8 +525,8 @@ class cubed_sphere:
                 print("Generating latlon tangent vectors...")
 
             # Lat-lon tangent unit vectors
-            elon_pc = sphgeo.tangent_geo_lon(centers.lon)
-            elat_pc = sphgeo.tangent_geo_lat(centers.lon, centers.lat)
+            elon_pc = sphgeo.tangent_geo_lon(pc.lon)
+            elat_pc = sphgeo.tangent_geo_lat(pc.lon, pc.lat)
 
             # CS map tangent unit vectors at edges points
             # latlon coordinates
@@ -797,7 +797,7 @@ class ppm_parabola:
 #  po--------pv-------po
 #
 ####################################################################################
-class velocity_edges:
+class velocity:
     def __init__(self, cs_grid, pos):
         N = cs_grid.N
         ng = cs_grid.ng
@@ -816,7 +816,7 @@ class velocity_edges:
             self.vcontra = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vcontra_averaged = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
             self.vcontra_old      = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
-        elif pos == 'pc': # Velocity at centers
+        elif pos == 'pc': # Velocity at pc
             self.ulon = np.zeros((N+ng, N+ng, nbfaces))
             self.vlat = np.zeros((N+ng, N+ng, nbfaces))
             self.ucontra = np.zeros((N+ng, N+ng, nbfaces))

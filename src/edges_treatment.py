@@ -8,7 +8,7 @@
 
 import numpy as np
 import numexpr as ne
-from interpolation import ghost_cells_adjacent_panels, ghost_cell_centers_lagrange_interpolation, ghost_cells_lagrange_interpolation_NS, ghost_cells_lagrange_interpolation_WE
+from interpolation import ghost_cells_adjacent_panels, ghost_cell_pc_lagrange_interpolation, ghost_cells_lagrange_interpolation_NS, ghost_cells_lagrange_interpolation_WE
 
 ####################################################################################
 #  The quadrilateral points are labeled as below
@@ -267,7 +267,7 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformatio
         ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly, stencil)
 
     elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF': # Uses ghost cells interpolation - using corner ghost cells
-        ghost_cell_centers_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
+        ghost_cell_pc_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
                                            lagrange_poly, stencil)
 
 ####################################################################################

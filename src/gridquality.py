@@ -23,33 +23,33 @@ def grid_quality(cs_grid, ll_grid, map_projection):
 
     # Computation of some distance that shall be needed
     N = cs_grid.N
-    nghost = cs_grid.nghost
+    ng = cs_grid.ng
     # Compute the geodesic distance of cell edges in x direction
     # Given points
-    p1 = [cs_grid.vertices.X[0:N+nghost,:,:], cs_grid.vertices.Y[0:N+nghost  ,:,:], cs_grid.vertices.Z[0:N+nghost  ,:,:]]
-    p2 = [cs_grid.vertices.X[1:N+nghost+1,:,:], cs_grid.vertices.Y[1:N+nghost+1,:,:], cs_grid.vertices.Z[1:N+nghost+1,:,:]]
+    p1 = [cs_grid.vertices.X[0:N+ng,:,:], cs_grid.vertices.Y[0:N+ng  ,:,:], cs_grid.vertices.Z[0:N+ng  ,:,:]]
+    p2 = [cs_grid.vertices.X[1:N+ng+1,:,:], cs_grid.vertices.Y[1:N+ng+1,:,:], cs_grid.vertices.Z[1:N+ng+1,:,:]]
 
     # Reshape
-    p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost+1)*nbfaces))
-    p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost+1)*nbfaces))
+    p1 = np.reshape(p1,(3,(N+ng)*(N+ng+1)*nbfaces))
+    p2 = np.reshape(p2,(3,(N+ng)*(N+ng+1)*nbfaces))
 
     # Compute arclen
     d = arclen(p1, p2)
-    d = np.reshape(d,(N+nghost,N+nghost+1,nbfaces))
+    d = np.reshape(d,(N+ng,N+ng+1,nbfaces))
     length_x = d
 
     # Compute the geodesic distance of cell edges in y direction
     # Given points
-    p1 = [cs_grid.vertices.X[:,0:N+nghost  ,:], cs_grid.vertices.Y[:,0:N+nghost  ,:], cs_grid.vertices.Z[:,0:N+nghost  ,:]]
-    p2 = [cs_grid.vertices.X[:,1:N+nghost+1,:], cs_grid.vertices.Y[:,1:N+nghost+1,:], cs_grid.vertices.Z[:,1:N+nghost+1,:]]
+    p1 = [cs_grid.vertices.X[:,0:N+ng  ,:], cs_grid.vertices.Y[:,0:N+ng  ,:], cs_grid.vertices.Z[:,0:N+ng  ,:]]
+    p2 = [cs_grid.vertices.X[:,1:N+ng+1,:], cs_grid.vertices.Y[:,1:N+ng+1,:], cs_grid.vertices.Z[:,1:N+ng+1,:]]
 
     # Reshape
-    p1 = np.reshape(p1,(3,(N+nghost)*(N+nghost+1)*nbfaces))
-    p2 = np.reshape(p2,(3,(N+nghost)*(N+nghost+1)*nbfaces))
+    p1 = np.reshape(p1,(3,(N+ng)*(N+ng+1)*nbfaces))
+    p2 = np.reshape(p2,(3,(N+ng)*(N+ng+1)*nbfaces))
 
     # Compute arclen
     d = arclen(p1,p2)
-    d = np.reshape(d,(N+nghost+1,N+nghost,nbfaces))
+    d = np.reshape(d,(N+ng+1,N+ng,nbfaces))
     length_y = d
 
     # Compute the quality measures
@@ -109,7 +109,7 @@ def metrictensor(grid):
     j0   = grid.j0
     jend = grid.jend
     metrictensor = scalar_field(grid, 'metric_tensor', 'center')
-    metrictensor.f = grid.metric_tensor_centers[i0:iend,j0:jend,:]
+    metrictensor.f = grid.metric_tensor_pc[i0:iend,j0:jend,:]
     return metrictensor
 
 ####################################################################################

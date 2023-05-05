@@ -18,8 +18,8 @@ from advection_timestep     import adv_time_step
 from advection_sphere       import adv_sphere
 from sphgeo                 import sph2cart, cart2sph
 from scipy.special          import sph_harm
-from interpolation          import ll2cs, nearest_neighbour, ghost_cells_lagrange_interpolation
-from lagrange               import lagrange_poly_ghostcells
+from interpolation          import ll2cs, nearest_neighbour 
+from lagrange               import lagrange_poly_ghostcell_pc
 from plot                   import plot_scalar_field
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
@@ -29,7 +29,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     vf = simulation.vf
 
     # Number of tests
-    Ntest = 7
+    Ntest = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,9 +57,9 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (3,)
-    split = (3,3,3,1,3)
-    ets   = (1,2,4,4,5)
-    deps  = (1,1,1,2,1)
+    split = (3,3)
+    ets   = (5,4)
+    deps  = (1,1)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
