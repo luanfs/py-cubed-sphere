@@ -9,7 +9,7 @@
 
 import numpy as np
 from math import floor, ceil
-from constants import pio4
+from constants import pio4, nbfaces, rad2deg
 from cs_transform import inverse_equidistant_gnomonic_map, inverse_equiangular_gnomonic_map
 
 ####################################################################################
@@ -23,13 +23,13 @@ def lagrange_basis(x, nodes, N, j):
     return Lj
 
 ####################################################################################
-#Compute the Lagrange polynomial basis at the ghost cells
+#Compute the Lagrange polynomial basis at the ghost cells centers
 ####################################################################################
-def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
+def lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation):
     N   = cs_grid.N        # Number of cells in x direction
-    ng  = cs_grid.nghost   # Number o ghost cells
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+    ng  = cs_grid.ng   # Number o ghost cells
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
 
     # Interior cells index (ignoring ghost cells)
     i0   = cs_grid.i0
@@ -57,15 +57,15 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
     west  = 3
 
     # Ghost cells at east
-    X_ghost = cs_grid.centers.X[iend:iend+ngr,:,p]
-    Y_ghost = cs_grid.centers.Y[iend:iend+ngr,:,p]
-    Z_ghost = cs_grid.centers.Z[iend:iend+ngr,:,p]
+    X_ghost = cs_grid.pc.X[iend:iend+ngr,:,p]
+    Y_ghost = cs_grid.pc.Y[iend:iend+ngr,:,p]
+    Z_ghost = cs_grid.pc.Z[iend:iend+ngr,:,p]
     x_ghost, y_ghost = inverse(X_ghost, Y_ghost, Z_ghost, east)
 
     # Support points
-    X = cs_grid.centers.X[i0:i0+ngr,:,east]
-    Y = cs_grid.centers.Y[i0:i0+ngr,:,east]
-    Z = cs_grid.centers.Z[i0:i0+ngr,:,east]
+    X = cs_grid.pc.X[i0:i0+ngr,:,east]
+    Y = cs_grid.pc.Y[i0:i0+ngr,:,east]
+    Z = cs_grid.pc.Z[i0:i0+ngr,:,east]
     x, y = inverse(X, Y, Z, east)
 
     halo_ghost_points_east  = np.zeros((ngl, N+ng))
@@ -153,6 +153,161 @@ def lagrange_poly_ghostcells(cs_grid, simulation, transformation):
 
     Kmin = [Kmin_east, Kmin_west, Kmin_north, Kmin_south]
     Kmax = [Kmax_east, Kmax_west, Kmax_north, Kmax_south]
+
+    stencil = [Kmin, Kmax]
     lagrange_poly = [lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south]
 
-    return lagrange_poly, Kmin, Kmax
+    return lagrange_poly, stencil 
+
+####################################################################################
+# Compute the Lagrange polynomial basis needed to interpolate a vector field given in
+# a C grid (contravariant) to the center
+####################################################################################
+def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
+    N   = cs_grid.N        # Number of cells in x direction
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
+    dx = cs_grid.dx
+
+    # Order
+    degree = simulation.degree
+    order  = degree + 1
+
+    # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+
+    # Positions
+    x_pu = np.linspace(-pio4-ngl*dx, pio4+ngr*dx, N+1+ng) # vertices
+    x_pc = np.linspace(-pio4+dx/2.0-ngl*dx, pio4-dx/2.0+ngr*dx, N+ng) # Centers
+    dx = cs_grid.dx
+
+    # Define the stencil
+    Kmin = np.zeros(N+ng, dtype=int)
+    Kmax = np.zeros(N+ng, dtype=int)
+
+    for i in range(i0, iend):
+        Kmin[i] = i # Cell where the center point is located
+        Kmax[i] = Kmin[i]+order-1
+
+        # Shift stencils if needed
+        if Kmin[i]<i0:
+            Kmin[i] = i0
+            Kmax[i] = Kmin[i]+order-1
+
+        if Kmax[i]>iend:
+            Kmax[i] = iend
+            Kmin[i] = Kmax[i]-order+1
+
+        if Kmax[i]-Kmin[i] != order-1:
+            print('Error in edges2center_lagrange_interpolation.')
+            exit()
+        #print(Kmin[i], Kmax[i], i)
+
+    lagrange_poly_x = np.zeros((N+ng, N+ng, nbfaces, order))
+    lagrange_poly_y = np.zeros((N+ng, N+ng, nbfaces, order))
+    nodes = np.zeros((N+ng, order))
+
+    # Compute the Lagrange nodes for each x_pc 
+    for i in range(i0, iend):
+        nodes[i,:] = x_pu[Kmin[i]:Kmax[i]+1]
+        #print(nodes[i,:]*rad2deg, x_pc[i]*rad2deg, Kmin[i],Kmax[i])
+        # Debugging
+        if nodes[i,0]>x_pc[i] or nodes[i,order-1]<x_pc[i]:
+            if degree>=1:
+                print('Error 2 in edges2center_lagrange_interpolation.')
+                exit()
+
+    # Compute the Lagrange polynomial basis at pc
+    for i in range(i0, iend):
+        for k in range(0, order):
+            lagrange_poly_x[i,:,:,k] = lagrange_basis(x_pc[i], nodes[i,:], degree, k)
+            lagrange_poly_y[:,i,:,k] = lagrange_poly_x[i,:,:,k]
+
+    stencil = [Kmin, Kmax]
+    lagrange_poly = [lagrange_poly_x, lagrange_poly_y]
+
+    return lagrange_poly, stencil
+
+####################################################################################
+# Compute the Lagrange polynomial basis needed to interpolate a latlon vector field 
+# given at the cell center (including ghost cells) to the ghost cell edges
+####################################################################################
+def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformation):
+    N   = cs_grid.N        # Number of cells in x direction
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
+    dx = cs_grid.dx
+
+    # Order
+    degree = simulation.degree
+    order  = degree + 1
+
+    # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+
+    # Positions
+    x_pu = np.linspace(-pio4-ngl*dx, pio4+ngr*dx, N+1+ng) # vertices
+    x_pc = np.linspace(-pio4+dx/2.0-ngl*dx, pio4-dx/2.0+ngr*dx, N+ng) # Centers
+    dx = cs_grid.dx
+
+    # Define the stencil
+    Kmin = np.zeros(N+ng, dtype=int)
+    Kmax = np.zeros(N+ng, dtype=int)
+
+    for i in range(i0, iend+1):
+        Kmin[i] = i-1 # Cell where the center point is located
+        Kmax[i] = Kmin[i]+order-1
+
+        # Shift stencils if needed
+        if Kmin[i]<0:
+            Kmin[i] = 0
+            Kmax[i] = Kmin[i]+order-1
+
+        if Kmax[i]>=N+ng:
+            Kmax[i] = N+ng-1
+            Kmin[i] = Kmax[i]-order+1
+
+        #print(Kmin[i], Kmax[i], i)
+        if Kmax[i]-Kmin[i] != order-1:
+            print('Error in center2edges_lagrange_poly_ghost')
+            exit()
+
+    lagrange_poly_east = np.zeros((ngl, N+ng+1, nbfaces, order))
+    lagrange_poly_west = np.zeros((ngl, N+ng+1, nbfaces, order))
+    lagrange_poly_north = np.zeros((N+ng+1, ngl, nbfaces, order))
+    lagrange_poly_south = np.zeros((N+ng+1, ngl, nbfaces, order))
+    nodes = np.zeros((N+ng, order))
+
+    # Compute the Lagrange nodes for each x_pc 
+    for i in range(i0, iend+1):
+        nodes[i,:] = x_pc[Kmin[i]:Kmax[i]+1]
+        #print(nodes[i,:]*rad2deg, x_pu[i]*rad2deg, Kmin[i],Kmax[i])
+        # Debugging
+        if nodes[i,0]>x_pu[i] or nodes[i,order-1]<x_pu[i]:
+            if degree>=1:
+                print('Error 2 in center2edges_lagrange_poly_ghost.')
+                exit()
+
+    # Compute the Lagrange polynomial basis at pc
+    for j in range(j0, jend+1):
+        for k in range(0, order):
+            lagrange_poly_east[:,j,:,k] = lagrange_basis(x_pu[j], nodes[j,:], degree, k)
+
+    for i in range(0, ngl):
+        lagrange_poly_west[i,:,:,:] = lagrange_poly_east[ngl-1-i,:,:,:]
+        lagrange_poly_north[:,i,:,:] = lagrange_poly_east[i,:,:,:]
+        lagrange_poly_south[:,i,:,:] = lagrange_poly_east[ngl-1-i,:,:,:]
+    #print(lagrange_poly[i0:iend+1,0,0,:])
+
+    stencil = [Kmin, Kmax]
+    lagrange_poly = [lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south] 
+
+    return lagrange_poly, stencil

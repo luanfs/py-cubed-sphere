@@ -157,14 +157,15 @@ def nearest_neighbour(Q, cs_grid, latlon_grid):
     return Q_ll
 
 ####################################################################################
-# Ghost cells interpolation using Lagrange polynomials
+# Ghost cell center interpolation using Lagrange polynomials
 ####################################################################################
-def ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
-                                       lagrange_poly, Kmin, Kmax):
+def ghost_cell_pc_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
+                                       lagrange_poly, stencil):
     N   = cs_grid.N        # Number of cells in x direction
-    ng  = cs_grid.nghost   # Number o ghost cells
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
+    Kmin, Kmax = stencil[0], stencil[1]
 
     # Order
     interpol_degree = simulation.degree
@@ -324,12 +325,13 @@ def ghost_cells_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
 # cells at south and north
 ####################################################################################
 def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation,\
-                                       lagrange_poly, Kmin, Kmax):
+                                       lagrange_poly, stencil):
     N   = cs_grid.N        # Number of cells in x direction
-    ng  = cs_grid.nghost   # Number o ghost cells
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+    ng  = cs_grid.ng   # Number o ghost cells
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
 
+    Kmin, Kmax = stencil[0], stencil[1]
     # Order
     interpol_degree = simulation.degree
 
@@ -384,11 +386,13 @@ def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simul
 # cells at west and east adjacent panels
 ####################################################################################
 def ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation,\
-                                       lagrange_poly, Kmin, Kmax):
-    N   = cs_grid.N        # Number of cells in x direction
-    ng  = cs_grid.nghost   # Number o ghost cells
-    ngl = cs_grid.nghost_left
-    ngr = cs_grid.nghost_right
+                                       lagrange_poly, stencil):
+    N   = cs_grid.N   # Number of cells in x direction
+    ng  = cs_grid.ng  # Number o ghost cells
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
+
+    Kmin, Kmax = stencil[0], stencil[1]
 
     # Order
     interpol_degree = simulation.degree
@@ -449,7 +453,7 @@ def ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation):
     iend = cs_grid.iend
     j0   = cs_grid.j0
     jend = cs_grid.jend
-    ngl = cs_grid.nghost_left
+    ngl = cs_grid.ngl
 
     # Get halo data
     halodata = get_halo_data_interpolation_WE(Qx, Qy, cs_grid)
@@ -464,3 +468,155 @@ def ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation):
     Qy[iend:,:,:] = halo_data_east[:,:,:]
     Qx[:,0:j0,:]  = halo_data_south[:,:,:]
     Qx[:,jend:,:] = halo_data_north[:,:,:]
+
+####################################################################################
+# This routine interpolates the wind given in a C grid edges
+# to the cell pc (including ghost cell centers)
+# using Lagrange polynomials
+####################################################################################
+def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, \
+                                        simulation, lagrange_poly_U, stencil_U,\
+                                        lagrange_poly_ghost_pc, stencil_ghost_pc):
+    # Parameters of the grid
+    N   = cs_grid.N
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
+    dx  = cs_grid.dx
+
+    # Order
+    degree = simulation.degree
+    order  = degree + 1
+
+    # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+
+    # Stencil indexes
+    Kmin, Kmax = stencil_U[0], stencil_U[1]
+
+    # Lagrange polynomials for the wind interpolation
+    lagrange_poly_u, lagrange_poly_v = lagrange_poly_U[0], lagrange_poly_U[1]
+
+    # First, we interpolate the wind at pc only at the interior of each panel
+    interpd_u = np.zeros((N+ng, N+ng, nbfaces, order)) # Data used in the interpolation
+    interpd_v = np.zeros((N+ng, N+ng, nbfaces, order)) # Data used in the interpolation
+
+    # Get the contravariant wind data from the C grid for interpolation 
+    for i in range(i0, iend):
+        for j in range(j0, jend):
+            for p in range(0,nbfaces):
+                interpd_u[i,j,p,:] = U_pu.ucontra[Kmin[i]:Kmax[i]+1,j,p]
+                interpd_v[j,i,p,:] = U_pv.vcontra[j,Kmin[i]:Kmax[i]+1,p]
+
+    # Lagrange interpolation
+    U_pc.ucontra[i0:iend,j0:jend,:] = np.sum(interpd_u[i0:iend,j0:jend,:,:]*lagrange_poly_u[i0:iend,j0:jend,:,:], axis = 3)  
+    U_pc.vcontra[i0:iend,j0:jend,:] = np.sum(interpd_v[i0:iend,j0:jend,:,:]*lagrange_poly_v[i0:iend,j0:jend,:,:], axis = 3)  
+
+    # Convert from contravariant to latlon
+    U_pc.ulon[i0:iend,j0:jend,:], U_pc.vlat[i0:iend,j0:jend,:] = contravariant_to_latlon\
+    (U_pc.ucontra[i0:iend,j0:jend,:], U_pc.vcontra[i0:iend,j0:jend,:],\
+     cs_grid.prod_ex_elon_pc[i0:iend,j0:jend,:], cs_grid.prod_ex_elat_pc[i0:iend,j0:jend,:],\
+     cs_grid.prod_ey_elon_pc[i0:iend,j0:jend,:], cs_grid.prod_ey_elat_pc[i0:iend,j0:jend,:])
+
+    # Now let us interpolate the latlon wind to the center of ghost cells
+    ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+    ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+
+####################################################################################
+# This routine interpolates the wind (latlon) from cell centers
+# to ghost cell edges
+####################################################################################
+def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
+    lagrange_poly_ghost_edge, stencil_ghost_edge):
+    # Parameters of the grid
+    N   = cs_grid.N
+    ng  = cs_grid.ng
+    ngl = cs_grid.ngl
+    ngr = cs_grid.ngr
+    dx  = cs_grid.dx
+
+    # Order
+    degree = simulation.degree
+    order  = degree + 1
+
+    # Interior cells index (ignoring ghost cells)
+    i0   = cs_grid.i0
+    iend = cs_grid.iend
+    j0   = cs_grid.j0
+    jend = cs_grid.jend
+
+
+    # Stencil indexes
+    Kmin, Kmax = stencil_ghost_edge[0], stencil_ghost_edge[1]
+    lagrange_poly_east = lagrange_poly_ghost_edge[0]
+    lagrange_poly_west = lagrange_poly_ghost_edge[1]
+    lagrange_poly_north = lagrange_poly_ghost_edge[2]
+    lagrange_poly_south = lagrange_poly_ghost_edge[3]
+
+    # Get interpolation data 
+    interpd_u_east = np.zeros((ngl, N+ng, nbfaces, order))
+    interpd_v_east = np.zeros((ngl, N+ng, nbfaces, order))
+    interpd_u_west = np.zeros((ngl, N+ng, nbfaces, order))
+    interpd_v_west = np.zeros((ngl, N+ng, nbfaces, order))
+    interpd_u_north = np.zeros((N+ng, ngl, nbfaces, order))
+    interpd_v_north = np.zeros((N+ng, ngl, nbfaces, order))
+    interpd_u_south = np.zeros((N+ng, ngl, nbfaces, order))
+    interpd_v_south = np.zeros((N+ng, ngl, nbfaces, order))
+
+    for j in range(j0, jend+1):
+        for i in range(0, ngl):
+            for p in range(0, nbfaces):
+                interpd_u_east[i,j,p,:] = U_pc.ulon[iend+i,Kmin[j]:Kmax[j]+1,p]
+                interpd_v_east[i,j,p,:] = U_pc.vlat[iend+i,Kmin[j]:Kmax[j]+1,p]
+                interpd_u_west[i,j,p,:] = U_pc.ulon[i,Kmin[j]:Kmax[j]+1,p]
+                interpd_v_west[i,j,p,:] = U_pc.vlat[i,Kmin[j]:Kmax[j]+1,p]
+                interpd_u_north[j,i,p,:] = U_pc.ulon[Kmin[j]:Kmax[j]+1,iend+i,p]
+                interpd_v_north[j,i,p,:] = U_pc.vlat[Kmin[j]:Kmax[j]+1,iend+i,p]
+                interpd_u_south[j,i,p,:] = U_pc.ulon[Kmin[j]:Kmax[j]+1,i,p]
+                interpd_v_south[j,i,p,:] = U_pc.vlat[Kmin[j]:Kmax[j]+1,i,p]
+
+    # Interpolate from ghost cell center to ghost cell edges in east layer
+    U_pv.ulon[iend:,j0:jend+1,:] = np.sum(interpd_u_east[0:,j0:jend+1,:,:]*lagrange_poly_east[0:,j0:jend+1,:,:],axis=3)
+    U_pv.vlat[iend:,j0:jend+1,:] = np.sum(interpd_v_east[0:,j0:jend+1,:,:]*lagrange_poly_east[0:,j0:jend+1,:,:],axis=3)
+
+    # Interpolate from ghost cell center to ghost cell edges in west layer
+    U_pv.ulon[:i0,j0:jend+1,:] = np.sum(interpd_u_west[0:,j0:jend+1,:,:]*lagrange_poly_west[0:,j0:jend+1,:,:],axis=3)
+    U_pv.vlat[:i0,j0:jend+1,:] = np.sum(interpd_v_west[0:,j0:jend+1,:,:]*lagrange_poly_west[0:,j0:jend+1,:,:],axis=3)
+
+    # Interpolate from ghost cell center to ghost cell edges in north layer
+    U_pu.ulon[i0:iend+1,jend:,:] = np.sum(interpd_u_north[i0:iend+1,0:,:]*lagrange_poly_north[i0:iend+1,0:,:],axis=3)
+    U_pu.vlat[i0:iend+1,jend:,:] = np.sum(interpd_v_north[i0:iend+1,0:,:]*lagrange_poly_north[i0:iend+1,0:,:],axis=3)
+
+    # Interpolate from ghost cell center to ghost cell edges in south layer
+    U_pu.ulon[i0:iend+1,:j0,:] = np.sum(interpd_u_south[i0:iend+1,0:,:]*lagrange_poly_south[i0:iend+1,0:,:],axis=3)
+    U_pu.vlat[i0:iend+1,:j0,:] = np.sum(interpd_v_south[i0:iend+1,0:,:]*lagrange_poly_south[i0:iend+1,0:,:],axis=3)
+
+    # Convert latlon to contravariant
+    U_pv.ucontra[iend:,j0:jend+1,:], U_pv.vcontra[iend:,j0:jend+1,:] =\
+    latlon_to_contravariant(U_pv.ulon[iend:,j0:jend+1,:], U_pv.vlat[iend:,j0:jend+1,:],\
+                            cs_grid.prod_ex_elon_pv[iend:,j0:jend+1,:], cs_grid.prod_ex_elat_pv[iend:,j0:jend+1,:],\
+                            cs_grid.prod_ey_elon_pv[iend:,j0:jend+1,:], cs_grid.prod_ey_elat_pv[iend:,j0:jend+1,:],\
+                            cs_grid.determinant_ll2contra_pv[iend:,j0:jend+1,:])
+
+    U_pv.ucontra[:i0,j0:jend+1,:], U_pv.vcontra[:i0,j0:jend+1,:] =\
+    latlon_to_contravariant(U_pv.ulon[:i0,j0:jend+1,:], U_pv.vlat[:i0,j0:jend+1,:],\
+                            cs_grid.prod_ex_elon_pv[:i0,j0:jend+1,:], cs_grid.prod_ex_elat_pv[:i0,j0:jend+1,:],\
+                            cs_grid.prod_ey_elon_pv[:i0,j0:jend+1,:], cs_grid.prod_ey_elat_pv[:i0,j0:jend+1,:],\
+                            cs_grid.determinant_ll2contra_pv[:i0,j0:jend+1,:])
+
+    U_pu.ucontra[i0:iend+1,jend:,:], U_pu.vcontra[i0:iend+1,jend:,:] =\
+    latlon_to_contravariant(U_pu.ulon[i0:iend+1,jend:,:], U_pu.vlat[i0:iend+1,jend:,:],\
+                            cs_grid.prod_ex_elon_pu[i0:iend+1,jend:,:], cs_grid.prod_ex_elat_pu[i0:iend+1,jend:,:],\
+                            cs_grid.prod_ey_elon_pu[i0:iend+1,jend:,:], cs_grid.prod_ey_elat_pu[i0:iend+1,jend:,:],\
+                            cs_grid.determinant_ll2contra_pu[i0:iend+1,jend:,:])
+
+    U_pu.ucontra[i0:iend+1,:j0,:], U_pu.vcontra[i0:iend+1,:j0,:] =\
+    latlon_to_contravariant(U_pu.ulon[i0:iend+1,:j0,:], U_pu.vlat[i0:iend+1,:j0,:],\
+                            cs_grid.prod_ex_elon_pu[i0:iend+1,:j0,:], cs_grid.prod_ex_elat_pu[i0:iend+1,:j0,:],\
+                            cs_grid.prod_ey_elon_pu[i0:iend+1,:j0,:], cs_grid.prod_ey_elat_pu[i0:iend+1,:j0,:],\
+                            cs_grid.determinant_ll2contra_pu[i0:iend+1,:j0,:])
+
+

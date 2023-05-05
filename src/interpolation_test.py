@@ -8,7 +8,7 @@
 import numpy as np
 from constants import*
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon, sph2cart, cart2sph
-from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola
+from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola, velocity
 from plot                   import plot_scalar_field
 from errors                 import compute_errors, print_errors_simul, plot_convergence_rate, plot_errors_loglog
 from configuration          import get_interpolation_parameters
@@ -17,8 +17,9 @@ from interpolation          import ll2cs, nearest_neighbour
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
 from reconstruction_1d      import ppm_reconstruction
 from edges_treatment        import edges_ghost_cell_treatment_scalar
-from lagrange               import lagrange_poly_ghostcells
-from interpolation          import ghost_cells_lagrange_interpolation
+from lagrange               import lagrange_poly_ghostcell_pc, wind_edges2center_lagrange_poly, wind_center2ghostedges_lagrange_poly_ghost
+from interpolation          import ghost_cell_pc_lagrange_interpolation, wind_edges2center_lagrange_interpolation, wind_center2ghostedge_lagrange_interpolation
+from advection_ic           import velocity_adv
 
 ####################################################################################
 # Interpolation simulation class
@@ -27,18 +28,19 @@ class interpolation_simulation_par:
     def __init__(self, ic, degree):
         # Scalar field
         self.ic = ic
+        self.vf = ic
 
         # Define the scalar field name
-        if ic == 1:
-            name = 'Gaussian hill'
-        elif ic == 2:
-            name = 'Trigonometric field'
-        else:
-            print("Error - invalid scalar field")
-            exit()
+        #if ic == 1:
+        #    name = 'Gaussian hill'
+        #elif ic == 2:
+        #    name = 'Trigonometric field'
+        #else:
+        #    print("Error - invalid scalar field")
+        #    exit()
 
         # IC name
-        self.icname = name
+        #self.icname = name
 
         # degree
         self.degree = degree
@@ -67,10 +69,31 @@ def q_scalar_field(lon, lat, simulation):
             4.0 * np.sin(lon) * np.cos(m * lon) * np.cos(n * lat) ** 3 * np.sin(n * lat) * n * np.sin(lat)) / np.cos(lat)
     return q
 
+
 ###################################################################################
-# Routine to compute the interpolation error convergence in L_inf, L1 and L2 norms
+# Routine to call the test
+###################################################################################
+def interpolation_test(map_projection, transformation, showonscreen, gridload):
+    # Let us test and compute the error!
+    tc, ic, vf = get_interpolation_parameters()
+
+    if tc==1:
+        print("Test case 1: Interpolation of scalar field test case.\n")
+        error_analysis_sf_interpolation(ic, map_projection, transformation, showonscreen, gridload)
+    elif tc==2:
+        print("Test case 2: Interpolation of vector field test case.\n")
+        error_analysis_vf_interpolation(vf, map_projection, transformation, showonscreen, gridload)
+    elif tc==3:
+        print("Test case 3: Reconstruction test case.\n")
+        error_analysis_recon(ic, map_projection, transformation, showonscreen, gridload)
+    else:
+        print('ERROR in interpolation_test: invalid test case ', tc)
+        exit()
+
+###################################################################################
+# Routine to compute the scalar field interpolation error convergence in L_inf, L1 and L2 norms
 ####################################################################################
-def error_analysis_interpolation(map_projection, transformation, showonscreen, gridload):
+def error_analysis_sf_interpolation(ic, map_projection, transformation, showonscreen, gridload):
     # Number of tests
     Ntest = 7
 
@@ -88,9 +111,6 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
     error_l1   = np.zeros((Ntest, len(degrees)))
     error_l2   = np.zeros((Ntest, len(degrees)))
 
-    # Let us test and compute the error!
-    ic = get_interpolation_parameters()
-
     d = 0
     for degree in degrees:
         for i in range(0, Ntest):
@@ -106,15 +126,15 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
             iend = cs_grid.iend
             j0   = cs_grid.j0
             jend = cs_grid.jend
-            ngl = cs_grid.nghost_left
-            ngr = cs_grid.nghost_right
+            ngl = cs_grid.ngl
+            ngr = cs_grid.ngr
 
             # Create the latlon mesh (for plotting)
             ll_grid = latlon_grid(Nlat, Nlon)
             ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
             # Exact field
-            Q_exact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
+            Q_exact = q_scalar_field(cs_grid.pc.lon, cs_grid.pc.lat, simulation)
             Qexact = scalar_field(cs_grid, 'Q', 'center')
             Qexact.f = Q_exact[i0:iend,j0:jend,:]
 
@@ -128,25 +148,25 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
             #    plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
 
             # Get Lagrange polynomials
-            lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+            lagrange_poly, stencil = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
 
             # Interpolate to ghost cells
-            ghost_cells_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, Kmin, Kmax)
+            ghost_cell_pc_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, stencil)
 
             # Compute the errors
-            error_linf[i,d], error_l1[i,d], error_l2[i,d] = compute_errors(Q_numerical, Q_exact)
+            error_linf[i,d], _, _ = compute_errors(Q_numerical, Q_exact)
 
             # Print errors
-            print_errors_simul(error_linf[:,d], error_l1[:,d], error_l2[:,d], i)
+            print_errors_simul(error_linf[:,d], error_linf[:,d], error_linf[:,d], i)
 
         d = d+1
         print()
 
     # Outputs
     # plot errors for different all schemes in  different norms
-    error_list = [error_linf, error_l1, error_l2]
-    norm_list  = ['linf','l1','l2']
-    norm_title  = [r'$L_{\infty}$',r'$L_1$',r'$L_2$']
+    error_list = [error_linf,]
+    norm_list  = ['linf',]
+    norm_title  = [r'$L_{\infty}$',]
     e = 0
     for error in error_list:
         emin, emax = np.amin(error[:]), np.amax(error[:])
@@ -171,10 +191,160 @@ def error_analysis_interpolation(map_projection, transformation, showonscreen, g
         plot_convergence_rate(Nc, errors, name, filename, title, CRmin, CRmax)
         e = e+1
 
+
+###################################################################################
+# Routine to compute the vector field interpolation error convergence in L_inf, L1 and L2 norms
+####################################################################################
+def error_analysis_vf_interpolation(vf, map_projection, transformation, showonscreen, gridload):
+    # Number of tests
+    Ntest = 5
+
+    # Number of cells along a coordinate axis
+    Nc = np.zeros(Ntest)
+    Nc[0] = 16
+
+    # Compute number of cells for each simulation
+    for i in range(1, Ntest):
+        Nc[i] = Nc[i-1]*2
+
+    # Errors array
+    degrees = (0,1,2,3,4,)
+    error_linf = np.zeros((Ntest, len(degrees)))
+    error_l1   = np.zeros((Ntest, len(degrees)))
+    error_l2   = np.zeros((Ntest, len(degrees)))
+
+    # Let us test and compute the error!
+    d = 0
+    for degree in degrees:
+        for i in range(0, Ntest):
+            simulation = interpolation_simulation_par(vf, degree)
+            N = int(Nc[i])
+            print('\nParameters: N = '+str(int(Nc[i]))+', degree = '+str(degree))
+
+            # Create CS mesh
+            cs_grid = cubed_sphere(N, transformation, False, gridload)
+
+            # Interior cells index (ignoring ghost cells)
+            i0   = cs_grid.i0
+            iend = cs_grid.iend
+            j0   = cs_grid.j0
+            jend = cs_grid.jend
+            ngl = cs_grid.ngl
+            ngr = cs_grid.ngr
+
+            # Order
+            interpol_degree = simulation.degree
+            order = interpol_degree + 1
+
+            # Velocity at edges
+            U_pu = velocity(cs_grid, 'pu')
+            U_pu_exact = velocity(cs_grid, 'pu')
+            U_pv = velocity(cs_grid, 'pv')
+            U_pv_exact = velocity(cs_grid, 'pv')
+            U_pc = velocity(cs_grid, 'pc')
+            U_pc_exact = velocity(cs_grid, 'pc')
+
+            # Get velocities at pu, pv, pc
+            U_pu_exact.ulon[:,:,:], U_pu_exact.vlat[:,:,:] = velocity_adv(cs_grid.pu.lon, cs_grid.pu.lat, 0.0, simulation)
+            U_pv_exact.ulon[:,:,:], U_pv_exact.vlat[:,:,:] = velocity_adv(cs_grid.pv.lon, cs_grid.pv.lat, 0.0, simulation)
+            U_pc_exact.ulon[:,:,:], U_pc_exact.vlat[:,:,:] = velocity_adv(cs_grid.pc.lon, cs_grid.pc.lat, 0.0, simulation)
+
+            # Convert latlon to contravariant at pu
+            U_pu_exact.ucontra[:,:,:], U_pu_exact.vcontra[:,:,:] = latlon_to_contravariant(U_pu_exact.ulon, U_pu_exact.vlat, cs_grid.prod_ex_elon_pu, cs_grid.prod_ex_elat_pu,\
+                                                               cs_grid.prod_ey_elon_pu, cs_grid.prod_ey_elat_pu, cs_grid.determinant_ll2contra_pu)
+
+            # Convert latlon to contravariant at pv
+            U_pv_exact.ucontra[:,:,:], U_pv_exact.vcontra[:,:,:] = latlon_to_contravariant(U_pv_exact.ulon, U_pv_exact.vlat, cs_grid.prod_ex_elon_pv, cs_grid.prod_ex_elat_pv,\
+                                                               cs_grid.prod_ey_elon_pv, cs_grid.prod_ey_elat_pv, cs_grid.determinant_ll2contra_pv)
+
+            # Convert latlon to contravariant at pc
+            U_pc_exact.ucontra[:,:,:], U_pc_exact.vcontra[:,:,:] = latlon_to_contravariant(U_pc_exact.ulon, U_pc_exact.vlat, cs_grid.prod_ex_elon_pc, cs_grid.prod_ex_elat_pc,\
+                                                               cs_grid.prod_ey_elon_pc, cs_grid.prod_ey_elat_pc, cs_grid.determinant_ll2contra_pc)
+
+            U_pu.ucontra[i0:iend+1,j0:jend,:] = U_pu_exact.ucontra[i0:iend+1,j0:jend,:]
+            U_pv.vcontra[i0:iend,j0:jend+1,:] = U_pv_exact.vcontra[i0:iend,j0:jend+1,:]
+
+            # Compute the Lagrange polynomials
+            lagrange_poly_edge, stencil_edge = wind_edges2center_lagrange_poly(cs_grid, simulation, transformation)
+            lagrange_poly_ghost_pc, stencil_ghost_pc = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
+            lagrange_poly_ghost_edge, stencil_ghost_edge = wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformation)
+
+            # Interpolate the wind to cells pc
+            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
+            lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc)
+
+            # Interpolate the wind from pc to ghost cells edges
+            wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
+            lagrange_poly_ghost_edge, stencil_ghost_edge)
+
+            # Error at pc
+            eu = np.amax(abs(U_pc.ulon-U_pc_exact.ulon))#/np.amax(abs(U_pc_exact.ulon))
+            ev = np.amax(abs(U_pc.vlat-U_pc_exact.vlat))#/np.amax(abs(U_pc_exact.vlat))
+            e_pc = max(eu, ev)
+
+            # Error at ghost cell edges
+            # East
+            eu_east = np.amax(abs(U_pv.ucontra[iend:,j0:jend+1,:] - U_pv_exact.ucontra[iend:,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.ucontra[iend:,j0:jend+1,:]))
+            ev_east = np.amax(abs(U_pv.vcontra[iend:,j0:jend+1,:] - U_pv_exact.vcontra[iend:,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.vcontra[iend:,j0:jend+1,:]))
+
+            # West
+            eu_west = np.amax(abs(U_pv.ucontra[:i0,j0:jend+1,:] - U_pv_exact.ucontra[:i0,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.ucontra[:i0,j0:jend+1,:]))
+            ev_west = np.amax(abs(U_pv.vcontra[:i0,j0:jend+1,:] - U_pv_exact.vcontra[:i0,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.vcontra[:i0,j0:jend+1,:]))
+
+            # North
+            eu_north = np.amax(abs(U_pu.ucontra[i0:iend+1,jend:,:] - U_pu_exact.ucontra[i0:iend+1,jend:,:]))/ np.amax(abs(U_pu_exact.ucontra[i0:iend+1,jend:,:]))
+            ev_north = np.amax(abs(U_pu.vcontra[i0:iend+1,iend:,:] - U_pu_exact.vcontra[i0:iend+1,jend:,:]))/ np.amax(abs(U_pu_exact.vcontra[i0:iend+1,jend:,:]))
+
+            # South
+            eu_south = np.amax(abs(U_pu.ucontra[i0:iend+1,:j0,:] - U_pu_exact.ucontra[i0:iend+1,:j0,:]))/ np.amax(abs(U_pu_exact.ucontra[i0:iend+1,:j0,:]))
+            ev_south = np.amax(abs(U_pu.vcontra[i0:iend+1,:j0,:] - U_pu_exact.vcontra[i0:iend+1,:j0,:]))/ np.amax(abs(U_pu_exact.vcontra[i0:iend+1,:j0,:]))
+
+            e_east = max(eu_east, ev_east)
+            e_west = max(eu_west, ev_west)
+            e_north = max(eu_north, ev_north)
+            e_south = max(eu_south, ev_south)
+            e_edges = max(e_east, e_west, e_north, e_south)
+            error_linf[i,d] = e_edges
+            #error_linf[i,d] = e_pc
+            # Print errors
+            print_errors_simul(error_linf[:,d], error_linf[:,d], error_linf[:,d], i)
+
+        d = d+1
+        print()
+
+    # Outputs
+    # plot errors for different all schemes in  different norms
+    error_list = [error_linf,]
+    norm_list  = ['linf',]
+    norm_title  = [r'$L_{\infty}$',]
+    e = 0
+    for error in error_list:
+        emin, emax = np.amin(error[:]), np.amax(error[:])
+
+        # convergence rate min/max
+        n = len(error)
+        CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
+        CRmin, CRmax = np.amin(CR), np.amax(CR)
+        errors = []
+        name = []
+        for d in degrees:
+            errors.append(error[:,d])
+            name.append('Degree='+str(d))
+
+        title = 'Interpolation error, vf='+ str(simulation.vf)+', norm='+norm_title[e]
+        filename = graphdir+'cs_interp_vf'+str(vf)+'_norm'+norm_list[e]+'_errors.pdf'
+        plot_errors_loglog(Nc, errors, name, filename, title, emin, emax)
+
+        # Plot the convergence rate
+        title = 'Interpolation convergence rate, vf=' + str(simulation.vf)+', norm='+norm_title[e]
+        filename = graphdir+'cs_interp_vf'+str(vf)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
+        plot_convergence_rate(Nc, errors, name, filename, title, CRmin, CRmax)
+        e = e+1
+
 ###################################################################################
 # Routine to compute the error of the PPM reconstruction at edges in L_inf, L1 and L2 norms
 ####################################################################################
-def error_analysis_recon(map_projection, transformation, showonscreen, gridload):
+def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridload):
     # Number of tests
     Ntest = 7
 
@@ -199,10 +369,6 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
     error_linf = np.zeros((Ntest, len(ets), len(recons)))
     error_l1   = np.zeros((Ntest, len(ets), len(recons)))
     error_l2   = np.zeros((Ntest, len(ets), len(recons)))
-
-    # Edge treatment
-    # Function to be reconstructed
-    ic = get_interpolation_parameters()
 
     # colormap for plotting
     colormap = 'Blues'
@@ -231,11 +397,11 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 j0   = cs_grid.j0
                 jend = cs_grid.jend
                 N = cs_grid.N
-                nghost = cs_grid.nghost
+                ng = cs_grid.ng
 
-                # Get values at centers
-                Q = np.zeros((N+nghost, N+nghost, nbfaces))
-                Qexact = q_scalar_field(cs_grid.centers.lon, cs_grid.centers.lat, simulation)
+                # Get values at pc
+                Q = np.zeros((N+ng, N+ng, nbfaces))
+                Qexact = q_scalar_field(cs_grid.pc.lon, cs_grid.pc.lat, simulation)
                 q_pu = q_scalar_field(cs_grid.pu.lon, cs_grid.pu.lat, simulation)
                 q_pv = q_scalar_field(cs_grid.pv.lon, cs_grid.pv.lat, simulation)
 
@@ -244,10 +410,10 @@ def error_analysis_recon(map_projection, transformation, showonscreen, gridload)
                 print('\nParameters: N = '+str(int(Nc[i]))+', et = '+str(et)+' , recon = ', recon)
 
                 # get lagrange_poly
-                lagrange_poly, Kmin, Kmax = lagrange_poly_ghostcells(cs_grid, simulation, transformation)
+                lagrange_poly, stencil = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
 
                 # Fill halo data
-                edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+                edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, stencil)
 
                 # PPM parabolas
                 px = ppm_parabola(cs_grid,simulation,'x')
@@ -325,6 +491,8 @@ class recon_simulation_par:
             name = 'Gaussian hill'
         elif ic == 2:
             name = 'Trigonometric field'
+        elif ic == 3:
+            name = 'Trigonometric field'
         else:
             print("Error - invalid scalar field")
             exit()
@@ -342,7 +510,7 @@ class recon_simulation_par:
         self.degree = 3
 
         # IC name
-        self.icname = name
+        #self.icname = name
         self.title = 'Reconstruction'
 
         # Edges treatment
