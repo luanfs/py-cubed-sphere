@@ -20,7 +20,7 @@ def compute_fluxes(Qx, Qy, px, py, cx, cy, cs_grid, simulation):
 def numerical_flux_ppm_x(px, cx, cs_grid, simulation):
     N = cs_grid.N
     M = cs_grid.N
-    ng = cs_grid.nghost
+    ng = cs_grid.ng
     i0, iend = cs_grid.i0, cs_grid.iend
     j0, jend = cs_grid.j0, cs_grid.jend
 
@@ -54,7 +54,7 @@ def numerical_flux_ppm_x(px, cx, cs_grid, simulation):
 def numerical_flux_ppm_y(py, cy, cs_grid, simulation):
     N = cs_grid.N
     M = cs_grid.N
-    ng = cs_grid.nghost
+    ng = cs_grid.ng
     j0 = cs_grid.j0
     jend = cs_grid.jend
 

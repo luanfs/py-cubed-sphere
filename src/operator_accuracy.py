@@ -21,6 +21,8 @@ from scipy.special          import sph_harm
 from interpolation          import ll2cs, nearest_neighbour 
 from lagrange               import lagrange_poly_ghostcell_pc
 from plot                   import plot_scalar_field
+
+
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
 ####################################################################################

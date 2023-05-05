@@ -15,7 +15,7 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
     i0, iend = cs_grid.i0, cs_grid.iend
     j0, jend = cs_grid.j0, cs_grid.jend
     N = cs_grid.N
-    ng = cs_grid.nghost
+    ng = cs_grid.ng
 
     # Fill ghost cell - velocity field
     edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)

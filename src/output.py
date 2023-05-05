@@ -32,7 +32,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
         # Exact field
         q_exact = scalar_field(cs_grid, 'q_exact', 'center')
         q = scalar_field(cs_grid, 'q', 'center')
-        q_exact.f[:,:,:] = qexact_adv(cs_grid.centers.lon[i0:iend,j0:jend,:], cs_grid.centers.lat[i0:iend,j0:jend,:], t, simulation)
+        q_exact.f[:,:,:] = qexact_adv(cs_grid.pc.lon[i0:iend,j0:jend,:], cs_grid.pc.lat[i0:iend,j0:jend,:], t, simulation)
         #Q[i0:iend,j0:jend,:] = q_exact.f[:,:,:]
         q.f[:,:,:] = Q[i0:iend,j0:jend,:]
 
@@ -135,7 +135,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                 d = scalar_field(cs_grid, 'div', 'center')
                 dex = scalar_field(cs_grid, 'div_exact', 'center')
                 d.f[:,:,:] = div[i0:iend,j0:jend,:]
-                dex.f[:,:,:] = div_exact(cs_grid.centers.lon[i0:iend,j0:jend,:], cs_grid.centers.lat[i0:iend,j0:jend,:], simulation)
+                dex.f[:,:,:] = div_exact(cs_grid.pc.lon[i0:iend,j0:jend,:], cs_grid.pc.lat[i0:iend,j0:jend,:], simulation)
                 d_ll = nearest_neighbour(d, cs_grid, ll_grid)
                 dex_ll = nearest_neighbour(dex, cs_grid, ll_grid)
                 error_d = dex_ll - d_ll

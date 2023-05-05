@@ -15,12 +15,13 @@ from edges_treatment    import edges_ghost_cell_treatment_scalar, average_flux_c
 # The divergence is given by px.dF + py.dF
 ####################################################################################
 def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
-               transformation, lagrange_poly, Kmin, Kmax):
+               transformation, lagrange_poly_ghost_pc, stencil_ghost_pc):
 
     # Fill ghost cell values - scalar field
-    edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+    edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+
     # Multiply the field Q by metric tensor
-    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_centers[:,:,:]
+    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_pc[:,:,:]
 
     # compute the fluxes
     compute_fluxes(gQ, gQ, px, py, cx, cy, cs_grid, simulation)
@@ -36,11 +37,11 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     pxdF = px.dF
     pydF = py.dF
     dt = simulation.dt
-    metric_tensor = cs_grid.metric_tensor_centers
+    metric_tensor = cs_grid.metric_tensor_pc
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
 
     N = cs_grid.N
-    ng = cs_grid.nghost
+    ng = cs_grid.ng
 
     # Splitting scheme
     if simulation.opsplit_name=='SP-AVLT':
@@ -75,7 +76,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
 
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07' or simulation.et_name=='ET-R96':
         # Fill ghost cell values
-        edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly, Kmin, Kmax)
+        edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly_ghost_pc, stencil_ghost_pc)
 
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, cx, cy, cs_grid, simulation)
@@ -94,7 +95,7 @@ def divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
     pxdF = px.dF
     pydF = py.dF
     dt = simulation.dt
-    metric_tensor = cs_grid.metric_tensor_centers
+    metric_tensor = cs_grid.metric_tensor_pc
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
 
 ####################################################################################
