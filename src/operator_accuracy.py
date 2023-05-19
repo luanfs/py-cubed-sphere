@@ -26,7 +26,8 @@ from plot                   import plot_scalar_field
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
 ####################################################################################
-def error_analysis_div(simulation, map_projection, plot, transformation, showonscreen, gridload):
+def error_analysis_div(simulation, map_projection, plot, transformation, showonscreen,\
+                       gridload):
     # Initial condition
     vf = simulation.vf
 
@@ -59,10 +60,13 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (3,)
-    split = (3,3)
-    ets   = (5,4)
-    deps  = (1,1)
-
+    split = (3,1,1)
+    ets   = (5,4,4)
+    deps  = (1,1,2)
+    #recons = (1,)
+    #split = (3,3)
+    #ets   = (1,2)
+    #deps  = (1,1)
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
     #split = (simulation.opsplit,)
@@ -107,7 +111,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
                 error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, True)
 
                 # Print errors
-                #print_errors_simul(error_linf[:,rec,d], error_l1[:,rec,d], error_l2[:,rec,d], i)
+                print_errors_simul(error_linf[:,rec,d], error_l1[:,rec,d], error_l2[:,rec,d], i)
             rec= rec+1
 
     # Outputs

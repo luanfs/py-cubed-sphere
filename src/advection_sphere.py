@@ -30,8 +30,10 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plo
 
     # Initialize the variables
     Q, gQ, div, px, py, cx, cy, \
-    U_pu, U_pv, lagrange_poly_ghost_pc, stencil_ghost_pc, CFL \
-    = init_vars_adv(cs_grid, simulation, transformation)
+    U_pu, U_pv, lagrange_poly_ghost_pc, stencil_ghost_pc, \
+    lagrange_poly_edge, stencil_edge, \
+    lagrange_poly_ghost_edge, stencil_ghost_edge, CFL \
+     = init_vars_adv(cs_grid, simulation, transformation)
 
     # Compute initial mass
     total_mass0, _ = mass_computation(Q, cs_grid, 1.0)

@@ -33,43 +33,44 @@ def average_parabola_cube_edges(Qx, Qy, px, py, cs_grid):
     iend = cs_grid.iend
     jend = cs_grid.jend
 
-    # Average panels 0-1,1-2,2-3,3-4
-    px.q_R[iend-1,j0:jend,0:3] = (px.q_R[iend-1,j0:jend,0:3] + px.q_L[i0,j0:jend,1:4])*0.5
-    px.q_L[i0,j0:jend,1:4] = px.q_R[iend-1,j0:jend,0:3]
-    px.q_R[iend-1,j0:jend,3] = (px.q_R[iend-1,j0:jend,3] + px.q_L[i0,j0:jend,0])*0.5
-    px.q_L[i0,j0:jend,0] = px.q_R[iend-1,j0:jend,3]
+    if cs_grid.projection != 'overlaped':
+        # Average panels 0-1,1-2,2-3,3-4
+        px.q_R[iend-1,j0:jend,0:3] = (px.q_R[iend-1,j0:jend,0:3] + px.q_L[i0,j0:jend,1:4])*0.5
+        px.q_L[i0,j0:jend,1:4] = px.q_R[iend-1,j0:jend,0:3]
+        px.q_R[iend-1,j0:jend,3] = (px.q_R[iend-1,j0:jend,3] + px.q_L[i0,j0:jend,0])*0.5
+        px.q_L[i0,j0:jend,0] = px.q_R[iend-1,j0:jend,3]
 
-    # Average panels 0-4
-    py.q_L[i0:iend,j0,4] = (py.q_L[i0:iend,j0,4] + py.q_R[i0:iend,jend-1,0])*0.5
-    py.q_R[i0:iend,jend-1,0] = py.q_L[i0:iend,j0,4]
+        # Average panels 0-4
+        py.q_L[i0:iend,j0,4] = (py.q_L[i0:iend,j0,4] + py.q_R[i0:iend,jend-1,0])*0.5
+        py.q_R[i0:iend,jend-1,0] = py.q_L[i0:iend,j0,4]
 
-    # Average panels 1-4
-    px.q_R[iend-1,j0:jend,4] = (px.q_R[iend-1,j0:jend,4] + py.q_R[i0:iend,jend-1,1])*0.5
-    py.q_R[i0:iend,jend-1,1] = px.q_R[iend-1,j0:jend,4]
+        # Average panels 1-4
+        px.q_R[iend-1,j0:jend,4] = (px.q_R[iend-1,j0:jend,4] + py.q_R[i0:iend,jend-1,1])*0.5
+        py.q_R[i0:iend,jend-1,1] = px.q_R[iend-1,j0:jend,4]
 
-    # Average panels 2-4
-    py.q_R[i0:iend,jend-1,4] = (py.q_R[i0:iend,jend-1,4] + np.flip(py.q_R[i0:iend,jend-1,2]))*0.5
-    py.q_R[i0:iend,jend-1,2] = np.flip(py.q_R[i0:iend,jend-1,4])
+        # Average panels 2-4
+        py.q_R[i0:iend,jend-1,4] = (py.q_R[i0:iend,jend-1,4] + np.flip(py.q_R[i0:iend,jend-1,2]))*0.5
+        py.q_R[i0:iend,jend-1,2] = np.flip(py.q_R[i0:iend,jend-1,4])
 
-    # Average panels 3-4
-    px.q_L[i0,j0:jend,4] = np.flip(py.q_R[i0:iend,jend-1,3])
-    py.q_R[i0:iend,jend-1,3] = np.flip(px.q_L[i0,j0:jend,4])
+        # Average panels 3-4
+        px.q_L[i0,j0:jend,4] = (np.flip(py.q_R[i0:iend,jend-1,3]) + px.q_L[i0,j0:jend,4])*0.5
+        py.q_R[i0:iend,jend-1,3] = np.flip(px.q_L[i0,j0:jend,4])
 
-    # Average panels 0-5
-    py.q_R[i0:iend,jend-1,5] = (py.q_R[i0:iend,jend-1,5] + py.q_L[i0:iend,j0,0])*0.5
-    py.q_L[i0:iend,j0,0] = py.q_R[i0:iend,jend-1,5]
+        # Average panels 0-5
+        py.q_R[i0:iend,jend-1,5] = (py.q_R[i0:iend,jend-1,5] + py.q_L[i0:iend,j0,0])*0.5
+        py.q_L[i0:iend,j0,0] = py.q_R[i0:iend,jend-1,5]
 
-    # Average panels 1-5
-    py.q_L[i0:iend,j0,1] = (py.q_L[i0:iend,j0,1] + np.flip(px.q_R[iend-1,j0:jend,5]))*0.5
-    px.q_R[iend-1,j0:jend,5] = np.flip(py.q_L[i0:iend,j0,1])
+        # Average panels 1-5
+        py.q_L[i0:iend,j0,1] = (py.q_L[i0:iend,j0,1] + np.flip(px.q_R[iend-1,j0:jend,5]))*0.5
+        px.q_R[iend-1,j0:jend,5] = np.flip(py.q_L[i0:iend,j0,1])
 
-    # Average panels 2-5
-    py.q_L[i0:iend,j0,2] = (py.q_L[i0:iend,j0,2] + np.flip(py.q_L[i0:iend,j0,5]))*0.5
-    py.q_L[i0:iend,j0,5] = np.flip(py.q_L[i0:iend,j0,2])
+        # Average panels 2-5
+        py.q_L[i0:iend,j0,2] = (py.q_L[i0:iend,j0,2] + np.flip(py.q_L[i0:iend,j0,5]))*0.5
+        py.q_L[i0:iend,j0,5] = np.flip(py.q_L[i0:iend,j0,2])
 
-    # Average panels 3-5
-    py.q_L[i0:iend,j0,3] = (px.q_L[i0,j0:jend,5] + py.q_L[i0:iend,j0,3])*0.5
-    px.q_L[i0,j0:jend,5] = py.q_L[i0:iend,j0,3]
+        # Average panels 3-5
+        py.q_L[i0:iend,j0,3] = (px.q_L[i0,j0:jend,5] + py.q_L[i0:iend,j0,3])*0.5
+        px.q_L[i0,j0:jend,5] = py.q_L[i0:iend,j0,3]
 
     # Update coeffs
     # x direction
@@ -95,97 +96,125 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
     iend = cs_grid.iend
     jend = cs_grid.jend
 
-    # Formula 47 from PL07
-    # x direction
-    px.q_L[i0,j0:jend,0:6] = 1.5*Qx[i0,j0:jend,0:6] - 0.5*Qx[i0+1,j0:jend,0:6]
-    px.q_R[iend-1,j0:jend,0:6] = 1.5*Qx[iend-1,j0:jend,0:6] - 0.5*Qx[iend-2,j0:jend,0:6]
+    if cs_grid.projection != 'overlaped':
+        # Formula 47 from PL07
+        # x direction 
+        px.q_L[i0,j0:jend,0:6] = 1.5*Qx[i0,j0:jend,0:6] - 0.5*Qx[i0+1,j0:jend,0:6]
+        px.q_R[iend-1,j0:jend,0:6] = 1.5*Qx[iend-1,j0:jend,0:6] - 0.5*Qx[iend-2,j0:jend,0:6]
+        # y direction
+        py.q_L[i0:iend,j0,0:6] = 1.5*Qy[i0:iend,j0,0:6] - 0.5*Qy[i0:iend,j0+1,0:6]
+        py.q_R[i0:iend,jend-1,0:6] = 1.5*Qy[i0:iend,jend-1,0:6] - 0.5*Qy[i0:iend,jend-2,0:6]
 
-    # y direction
-    py.q_L[i0:iend,j0,0:6] = 1.5*Qy[i0:iend,j0,0:6] - 0.5*Qy[i0:iend,j0+1,0:6]
-    py.q_R[i0:iend,jend-1,0:6] = 1.5*Qy[i0:iend,jend-1,0:6] - 0.5*Qy[i0:iend,jend-2,0:6]
+        # Formula 49 from PL07
+        # x direction
+        px.q_R[i0,j0:jend,0:6] = (3.0*Qx[i0,j0:jend,0:6] + 11.0*Qx[i0+1,j0:jend,0:6] - 2.0*(Qx[i0+2,j0:jend,0:6] - Qx[i0,j0:jend,0:6]))/14.0
+        px.q_L[i0+1,j0:jend,0:6] = px.q_R[i0,j0:jend,0:6]
+        px.q_L[iend-1,j0:jend,0:6] = (3.0*Qx[iend-1,j0:jend,0:6] + 11.0*Qx[iend-2,j0:jend,0:6] - 2.0*(Qx[iend-3,j0:jend,0:6] - Qx[iend-1,j0:jend,0:6]))/14.0
+        px.q_R[iend-2,j0:jend,0:6] = px.q_L[iend-1,j0:jend,0:6]
 
-   # Formula 49 from PL07
-    # x direction
-    px.q_R[i0,j0:jend,0:6] = (3.0*Qx[i0,j0:jend,0:6] + 11.0*Qx[i0+1,j0:jend,0:6] - 2.0*(Qx[i0+2,j0:jend,0:6] - Qx[i0,j0:jend,0:6]))/14.0
-    px.q_L[i0+1,j0:jend,0:6] = px.q_R[i0,j0:jend,0:6]
-    px.q_L[iend-1,j0:jend,0:6] = (3.0*Qx[iend-1,j0:jend,0:6] + 11.0*Qx[iend-2,j0:jend,0:6] - 2.0*(Qx[iend-3,j0:jend,0:6] - Qx[iend-1,j0:jend,0:6]))/14.0
-    px.q_R[iend-2,j0:jend,0:6] = px.q_L[iend-1,j0:jend,0:6]
+        # y direction
+        py.q_R[i0:iend,j0,0:6] = (3.0*Qy[i0:iend,j0,0:6] + 11.0*Qy[i0:iend,j0+1,0:6] - 2.0*(Qy[i0:iend,j0+2,0:6] - Qy[i0:iend,j0,0:6]))/14.0
+        py.q_L[i0:iend,j0+1,0:6] = py.q_R[i0:iend,j0,0:6]
+        py.q_L[i0:iend,jend-1,0:6] = (3.0*Qy[i0:iend,jend-1,0:6] + 11.0*Qy[i0:iend,jend-2,0:6] - 2.0*(Qy[i0:iend,jend-3,0:6] - Qy[i0:iend,jend-1,0:6]))/14.0
+        py.q_R[i0:iend,jend-2,0:6] = py.q_L[i0:iend,jend-1,0:6]
 
-    # y direction
-    py.q_R[i0:iend,j0,0:6] = (3.0*Qy[i0:iend,j0,0:6] + 11.0*Qy[i0:iend,j0+1,0:6] - 2.0*(Qy[i0:iend,j0+2,0:6] - Qy[i0:iend,j0,0:6]))/14.0
-    py.q_L[i0:iend,j0+1,0:6] = py.q_R[i0:iend,j0,0:6]
-    py.q_L[i0:iend,jend-1,0:6] = (3.0*Qy[i0:iend,jend-1,0:6] + 11.0*Qy[i0:iend,jend-2,0:6] - 2.0*(Qy[i0:iend,jend-3,0:6] - Qy[i0:iend,jend-1,0:6]))/14.0
-    py.q_R[i0:iend,jend-2,0:6] = py.q_L[i0:iend,jend-1,0:6]
+        if simulation.recon_name=='PPM-PL07':
+            px.q_R[i0+1,j0:jend,:] = px.q_L[i0+2,j0:jend,:]
+            px.q_L[iend-2,j0:jend,:] = px.q_R[iend-3,j0:jend,:]
+            py.q_R[i0:iend,j0+1,:] = py.q_L[i0:iend,j0+2,:]
+            py.q_L[i0:iend,jend-2,:] = py.q_R[i0:iend,jend-3,:]
 
-    if simulation.recon_name=='PPM-PL07':
-        px.q_R[i0+1,j0:jend,:] = px.q_L[i0+2,j0:jend,:]
-        px.q_L[iend-2,j0:jend,:] = px.q_R[iend-3,j0:jend,:]
-        py.q_R[i0:iend,j0+1,:] = py.q_L[i0:iend,j0+2,:]
-        py.q_L[i0:iend,jend-2,:] = py.q_R[i0:iend,jend-3,:]
+        # Ghost cell updates
+        # 0-1; 1-2; 2-3
+        px.q_L[iend,j0:jend,0:3] = px.q_L[i0,j0:jend,1:4]
+        px.q_R[iend,j0:jend,0:3] = px.q_R[i0,j0:jend,1:4]
+        px.q_L[i0-1,j0:jend,1:4] = px.q_L[iend-1,j0:jend,0:3]
+        px.q_R[i0-1,j0:jend,1:4] = px.q_R[iend-1,j0:jend,0:3]
+
+        # 3-0
+        px.q_L[iend,j0:jend,3] = px.q_L[i0,j0:jend,0]
+        px.q_R[iend,j0:jend,3] = px.q_R[i0,j0:jend,0]
+        px.q_L[i0-1,j0:jend,0] = px.q_L[iend-1,j0:jend,3]
+        px.q_R[i0-1,j0:jend,0] = px.q_R[iend-1,j0:jend,3]
+
+        # 0-4
+        py.q_L[i0:iend,jend,0] = py.q_L[i0:iend,j0,4]
+        py.q_R[i0:iend,jend,0] = py.q_R[i0:iend,j0,4]
+        py.q_L[i0:iend,j0-1,4] = py.q_L[i0:iend,jend-1,0]
+        py.q_R[i0:iend,j0-1,4] = py.q_R[i0:iend,jend-1,0]
+
+        # 1-4
+        py.q_L[i0:iend,jend,1] = px.q_R[iend-1,j0:jend,4]
+        py.q_R[i0:iend,jend,1] = px.q_L[iend-1,j0:jend,4]
+        px.q_R[iend,j0:jend,4] = py.q_L[i0:iend,jend-1,1]
+        px.q_L[iend,j0:jend,4] = py.q_R[i0:iend,jend-1,1]
+
+        # 2-4
+        py.q_L[i0:iend,jend,2] = np.flip(py.q_R[i0:iend,jend-1,4])
+        py.q_R[i0:iend,jend,2] = np.flip(py.q_L[i0:iend,jend-1,4])
+        py.q_R[i0:iend,jend,4] = np.flip(py.q_L[i0:iend,jend-1,2])
+        py.q_L[i0:iend,jend,4] = np.flip(py.q_R[i0:iend,jend-1,2])
+
+        # 3-4
+        py.q_L[i0:iend,jend,3] = np.flip(px.q_L[i0,j0:jend,4])
+        py.q_R[i0:iend,jend,3] = np.flip(px.q_R[i0,j0:jend,4])
+        px.q_L[i0-1,j0:jend,4] = np.flip(py.q_L[i0:iend,jend-1,3])
+        px.q_R[i0-1,j0:jend,4] = np.flip(py.q_R[i0:iend,jend-1,3])
+
+        # 0-5
+        py.q_L[i0:iend,jend,5] = py.q_L[i0:iend,j0,0]
+        py.q_R[i0:iend,jend,5] = py.q_R[i0:iend,j0,0]
+        py.q_L[i0:iend,j0-1,0] = py.q_L[i0:iend,jend-1,5]
+        py.q_R[i0:iend,j0-1,0] = py.q_R[i0:iend,jend-1,5]
+
+        # 1-5
+        px.q_L[iend,j0:jend,5] = np.flip(py.q_L[i0:iend,j0,1])
+        px.q_R[iend,j0:jend,5] = np.flip(py.q_R[i0:iend,j0,1])
+        py.q_L[i0:iend,j0-1,1] = np.flip(px.q_L[iend-1,j0:jend,5])
+        py.q_R[i0:iend,j0-1,1] = np.flip(px.q_R[iend-1,j0:jend,5])
+
+        # 2-5
+        py.q_L[i0:iend,j0-1,5] = np.flip(py.q_R[i0:iend,j0,2])
+        py.q_R[i0:iend,j0-1,5] = np.flip(py.q_L[i0:iend,j0,2])
+        py.q_L[i0:iend,j0-1,2] = np.flip(py.q_R[i0:iend,j0,5])
+        py.q_R[i0:iend,j0-1,2] = np.flip(py.q_L[i0:iend,j0,5])
+
+        # 3-5
+        px.q_L[i0-1,j0:jend,5] = py.q_R[i0:iend,j0,3]
+        px.q_R[i0-1,j0:jend,5] = py.q_L[i0:iend,j0,3]
+        py.q_R[i0:iend,j0-1,3] = px.q_L[i0,j0:jend,5]
+        py.q_L[i0:iend,j0-1,3] = px.q_R[i0,j0:jend,5]
+
+    elif cs_grid.projection == 'overlaped':
+        # Formula 47 from PL07
+        # x direction - only panels 4 and 5
+        px.q_L[i0,j0:jend,4:6] = 1.5*Qx[i0,j0:jend,4:6] - 0.5*Qx[i0+1,j0:jend,4:6]
+        px.q_R[iend-1,j0:jend,4:6] = 1.5*Qx[iend-1,j0:jend,4:6] - 0.5*Qx[iend-2,j0:jend,4:6]
+        # y direction - only panels 4 and 5
+        py.q_L[i0:iend,j0,0:6] = 1.5*Qy[i0:iend,j0,0:6] - 0.5*Qy[i0:iend,j0+1,0:6]
+        py.q_R[i0:iend,jend-1,0:6] = 1.5*Qy[i0:iend,jend-1,0:6] - 0.5*Qy[i0:iend,jend-2,0:6]
+
+        # Formula 49 from PL07
+        # x direction
+        px.q_R[i0,j0:jend,4:6] = (3.0*Qx[i0,j0:jend,4:6] + 11.0*Qx[i0+1,j0:jend,4:6] - 2.0*(Qx[i0+2,j0:jend,4:6] - Qx[i0,j0:jend,4:6]))/14.0
+        px.q_L[i0+1,j0:jend,4:6] = px.q_R[i0,j0:jend,4:6]
+        px.q_L[iend-1,j0:jend,4:6] = (3.0*Qx[iend-1,j0:jend,4:6] + 11.0*Qx[iend-2,j0:jend,4:6] - 2.0*(Qx[iend-3,j0:jend,4:6] - Qx[iend-1,j0:jend,4:6]))/14.0
+        px.q_R[iend-2,j0:jend,4:6] = px.q_L[iend-1,j0:jend,4:6]
+
+        # y direction
+        py.q_R[i0:iend,j0,0:6] = (3.0*Qy[i0:iend,j0,0:6] + 11.0*Qy[i0:iend,j0+1,0:6] - 2.0*(Qy[i0:iend,j0+2,0:6] - Qy[i0:iend,j0,0:6]))/14.0
+        py.q_L[i0:iend,j0+1,0:6] = py.q_R[i0:iend,j0,0:6]
+        py.q_L[i0:iend,jend-1,0:6] = (3.0*Qy[i0:iend,jend-1,0:6] + 11.0*Qy[i0:iend,jend-2,0:6] - 2.0*(Qy[i0:iend,jend-3,0:6] - Qy[i0:iend,jend-1,0:6]))/14.0
+        py.q_R[i0:iend,jend-2,0:6] = py.q_L[i0:iend,jend-1,0:6]
+
+        if simulation.recon_name=='PPM-PL07':
+            px.q_R[i0+1,j0:jend,4:6] = px.q_L[i0+2,j0:jend,4:6]
+            px.q_L[iend-2,j0:jend,4:6] = px.q_R[iend-3,j0:jend,4:6]
+            py.q_R[i0:iend,j0+1,:] = py.q_L[i0:iend,j0+2,:]
+            py.q_L[i0:iend,jend-2,:] = py.q_R[i0:iend,jend-3,:]
 
     average_parabola_cube_edges(Qx, Qy, px, py, cs_grid)
-
-    # Ghost cell updates
-    # 0-1; 1-2; 2-3
-    px.q_L[iend,j0:jend,0:3] = px.q_L[i0,j0:jend,1:4]
-    px.q_R[iend,j0:jend,0:3] = px.q_R[i0,j0:jend,1:4]
-    px.q_L[i0-1,j0:jend,1:4] = px.q_L[iend-1,j0:jend,0:3]
-    px.q_R[i0-1,j0:jend,1:4] = px.q_R[iend-1,j0:jend,0:3]
-
-    # 3-0
-    px.q_L[iend,j0:jend,3] = px.q_L[i0,j0:jend,0]
-    px.q_R[iend,j0:jend,3] = px.q_R[i0,j0:jend,0]
-    px.q_L[i0-1,j0:jend,0] = px.q_L[iend-1,j0:jend,3]
-    px.q_R[i0-1,j0:jend,0] = px.q_R[iend-1,j0:jend,3]
-
-    # 0-4
-    py.q_L[i0:iend,jend,0] = py.q_L[i0:iend,j0,4]
-    py.q_R[i0:iend,jend,0] = py.q_R[i0:iend,j0,4]
-    py.q_L[i0:iend,j0-1,4] = py.q_L[i0:iend,jend-1,0]
-    py.q_R[i0:iend,j0-1,4] = py.q_R[i0:iend,jend-1,0]
-
-    # 1-4
-    py.q_L[i0:iend,jend,1] = px.q_R[iend-1,j0:jend,4]
-    py.q_R[i0:iend,jend,1] = px.q_L[iend-1,j0:jend,4]
-    px.q_R[iend,j0:jend,4] = py.q_L[i0:iend,jend-1,1]
-    px.q_L[iend,j0:jend,4] = py.q_R[i0:iend,jend-1,1]
-
-    # 2-4
-    py.q_L[i0:iend,jend,2] = np.flip(py.q_R[i0:iend,jend-1,4])
-    py.q_R[i0:iend,jend,2] = np.flip(py.q_L[i0:iend,jend-1,4])
-    py.q_R[i0:iend,jend,4] = np.flip(py.q_L[i0:iend,jend-1,2])
-    py.q_L[i0:iend,jend,4] = np.flip(py.q_R[i0:iend,jend-1,2])
-
-    # 3-4
-    py.q_L[i0:iend,jend,3] = np.flip(px.q_L[i0,j0:jend,4])
-    py.q_R[i0:iend,jend,3] = np.flip(px.q_R[i0,j0:jend,4])
-    px.q_L[i0-1,j0:jend,4] = np.flip(py.q_L[i0:iend,jend-1,3])
-    px.q_R[i0-1,j0:jend,4] = np.flip(py.q_R[i0:iend,jend-1,3])
-
-    # 0-5
-    py.q_L[i0:iend,jend,5] = py.q_L[i0:iend,j0,0]
-    py.q_R[i0:iend,jend,5] = py.q_R[i0:iend,j0,0]
-    py.q_L[i0:iend,j0-1,0] = py.q_L[i0:iend,jend-1,5]
-    py.q_R[i0:iend,j0-1,0] = py.q_R[i0:iend,jend-1,5]
-
-    # 1-5
-    px.q_L[iend,j0:jend,5] = np.flip(py.q_L[i0:iend,j0,1])
-    px.q_R[iend,j0:jend,5] = np.flip(py.q_R[i0:iend,j0,1])
-    py.q_L[i0:iend,j0-1,1] = np.flip(px.q_L[iend-1,j0:jend,5])
-    py.q_R[i0:iend,j0-1,1] = np.flip(px.q_R[iend-1,j0:jend,5])
-
-    # 2-5
-    py.q_L[i0:iend,j0-1,5] = np.flip(py.q_R[i0:iend,j0,2])
-    py.q_R[i0:iend,j0-1,5] = np.flip(py.q_L[i0:iend,j0,2])
-    py.q_L[i0:iend,j0-1,2] = np.flip(py.q_R[i0:iend,j0,5])
-    py.q_R[i0:iend,j0-1,2] = np.flip(py.q_L[i0:iend,j0,5])
-
-    # 3-5
-    px.q_L[i0-1,j0:jend,5] = py.q_R[i0:iend,j0,3]
-    px.q_R[i0-1,j0:jend,5] = py.q_L[i0:iend,j0,3]
-    py.q_R[i0:iend,j0-1,3] = px.q_L[i0,j0:jend,5]
-    py.q_L[i0:iend,j0-1,3] = px.q_R[i0,j0:jend,5]
-
+    """
     # Update coeffs
     # x direction
     q_L =  px.q_L[i0-1:iend+1,:,:]
@@ -200,7 +229,7 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
     q = Qy[:,j0-1:jend+1,:]
     py.dq[:,j0-1:jend+1,:] = ne.evaluate('q_R-q_L')
     py.q6[:,j0-1:jend+1,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
-
+    """
 
 ####################################################################################
 #  Given the PPM parabolas px and py, this routine
@@ -280,7 +309,7 @@ def edges_ghost_cell_treatment_vector(u, v, cs_grid, simulation):
     if simulation.dp_name == 'RK2':
         i0, iend = cs_grid.i0, cs_grid.iend
         j0, jend = cs_grid.j0, cs_grid.jend
-        ngl = cs_grid.nghost_left
+        ngl = cs_grid.ngl
 
         if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
             # Panels 0-1,1-2,2-3,3-4

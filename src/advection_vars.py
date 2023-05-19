@@ -9,7 +9,7 @@ from advection_ic           import velocity_adv, q0_adv
 from cs_datastruct          import scalar_field, cubed_sphere, latlon_grid, ppm_parabola, velocity
 from sphgeo                 import latlon_to_contravariant, contravariant_to_latlon
 from cfl                    import cfl_x, cfl_y
-from lagrange               import lagrange_poly_ghostcell_pc
+from lagrange               import lagrange_poly_ghostcell_pc, wind_edges2center_lagrange_poly, wind_center2ghostedges_lagrange_poly_ghost
 from edges_treatment    import edges_ghost_cell_treatment_vector
 
 ####################################################################################
@@ -73,8 +73,15 @@ def init_vars_adv(cs_grid, simulation, transformation):
     # Numerical divergence
     div_numerical = np.zeros((N+ng, N+ng, nbfaces))
 
-    # Get Lagrange polynomials
-    lagrange_poly, stencil = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
+    # Compute the Lagrange polynomials
+    if cs_grid.projection=="gnomonic_equiangular":
+        lagrange_poly_edge, stencil_edge = wind_edges2center_lagrange_poly(cs_grid, simulation, transformation)
+        lagrange_poly_ghost_pc, stencil_ghost_pc = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
+        lagrange_poly_ghost_edge, stencil_ghost_edge = wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformation)
+    else:
+        lagrange_poly_edge, stencil_edge = None, None 
+        lagrange_poly_ghost_pc, stencil_ghost_pc =  None, None 
+        lagrange_poly_ghost_edge, stencil_ghost_edge = None, None 
 
     # Edge treatment may modify the metric tensor in ghost cells using adjacent panel values
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
@@ -87,4 +94,6 @@ def init_vars_adv(cs_grid, simulation, transformation):
         cs_grid.metric_tensor_pc[:,0:j0]      = cs_grid.metric_tensor_pc[:,N:N+ngl]
 
     return Q, gQ, div_numerical, px, py, cx, cy, \
-           U_pu, U_pv, lagrange_poly, stencil, CFL
+           U_pu, U_pv, lagrange_poly_ghost_pc, stencil_ghost_pc,\
+           lagrange_poly_edge, stencil_edge,\
+           lagrange_poly_ghost_edge, stencil_ghost_edge, CFL

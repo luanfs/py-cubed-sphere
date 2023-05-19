@@ -11,76 +11,80 @@ from constants import*
 import os.path
 
 def get_parameters():
-   # The standard grid file configuration.par must exist in par/ directory
-   file_path = pardir+"configuration.par"
+    # The standard grid file configuration.par must exist in par/ directory
+    file_path = pardir+"configuration.par"
 
-   if os.path.exists(file_path): # The file exists
-      # Open the grid file
-      confpar = open(file_path, "r")
+    if os.path.exists(file_path): # The file exists
+        # Open the grid file
+        confpar = open(file_path, "r")
 
-      # Read the grid file lines
-      confpar.readline()
-      confpar.readline()
-      N = confpar.readline()
-      confpar.readline()
-      tranformation = confpar.readline()
-      confpar.readline()
-      gridload = confpar.readline()
-      confpar.readline()
-      showonscreen = confpar.readline()
-      confpar.readline()
-      test_case = confpar.readline()
-      confpar.readline()
-      map_projection = confpar.readline()
-      confpar.readline()
+        # Read the grid file lines
+        confpar.readline()
+        confpar.readline()
+        N = confpar.readline()
+        confpar.readline()
+        transformation = confpar.readline()
+        confpar.readline()
+        gridload = confpar.readline()
+        confpar.readline()
+        showonscreen = confpar.readline()
+        confpar.readline()
+        test_case = confpar.readline()
+        confpar.readline()
+        map_projection = confpar.readline()
+        confpar.readline()
 
-      # Close the file
-      confpar.close()
+        # Close the file
+        confpar.close()
 
-      # Convert from str to int
-      N              = int(N)
-      showonscreen   = bool(int(showonscreen))  # Also converted to boolean
-      gridload       = bool(int(gridload))      # Also converted to boolean
-      tranformation  = int(tranformation)
-      test_case      = int(test_case)
-      map_projection = int(map_projection)
+        # Convert from str to int
+        N              = int(N)
+        showonscreen   = bool(int(showonscreen))  # Also converted to boolean
+        gridload       = bool(int(gridload))      # Also converted to boolean
+        transformation  = int(transformation)
+        test_case      = int(test_case)
+        map_projection = int(map_projection)
 
-      # Name the transformation
-      if tranformation == 1:
-         transf = "gnomonic_equidistant"
-      elif tranformation == 2:
-         transf = "gnomonic_equiangular"
-      elif tranformation == 3:
-         transf = "conformal"
-      else:
-         print("ERROR: invalid transformation")
-         exit()
+        # Name the map projection
+        if map_projection == 1:
+            map = "mercator"
+        elif map_projection == 2:
+            map = "sphere"
+        else:
+            print("ERROR: invalid map projection")
+            exit()
 
-      # Name the map projection
-      if map_projection == 1:
-         map = "mercator"
-      elif map_projection == 2:
-         map = "sphere"
-      else:
-         print("ERROR: invalid map projection")
-         exit()
+        # Name the transformation
+        if transformation == 1:
+            transf = "gnomonic_equidistant"
+        elif transformation == 2:
+            transf = "gnomonic_equiangular"
+        elif transformation == 3:
+            transf = "conformal"
+            gridload=True
+        elif transformation == 4:
+            transf = "overlaped"
+            gridload=True
+        else:
+            print("ERROR: invalid transformation")
+            exit()
 
-      # Print the parameters on the screen
-      print("\n--------------------------------------------------------")
-      print("Parameters from file", file_path,"\n")
-      print("Number of cells along a coordinate axis: ", N)
-      print("Show process on the screen: ", showonscreen)
-      print("Loadable grid: ", gridload)
-      print("Transformation:", transf)
-      print("Test case to be done: ", test_case)
-      print("Map projection: ", map)
-      print("--------------------------------------------------------\n")
+        # Print the parameters on the screen
+        print("\n--------------------------------------------------------")
+        print("Parameters from file", file_path,"\n")
+        print("Number of cells along a coordinate axis: ", N)
+        print("Show process on the screen: ", showonscreen)
+        print("Loadable grid: ", gridload)
+        print("Transformation:", transf)
+        print("Test case to be done: ", test_case)
+        print("Map projection: ", map)
+        print("--------------------------------------------------------\n")
 
-   else:   # The file does not exist
-      print("ERROR in get_grid_parameters: file mesh.par not found in /par.")
-      exit()
+        return N, transf, showonscreen, gridload, test_case, map 
 
-   return N, transf, showonscreen, gridload, test_case, map
+    else:   # The file does not exist
+        print("ERROR in get_grid_parameters: file mesh.par not found in /par.")
+        exit()
 
 
 ####################################################################################

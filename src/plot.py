@@ -62,8 +62,8 @@ def plot_grid(grid, map_projection):
 
     for p in range(0, nbfaces):
         # Vertices
-        lon = grid.vertices.lon[:,:,p]*rad2deg
-        lat = grid.vertices.lat[:,:,p]*rad2deg
+        lon = grid.po.lon[:,:,p]*rad2deg
+        lat = grid.po.lat[:,:,p]*rad2deg
 
         # Centers
         lonc = grid.pc.lon[:,:,p]*rad2deg
@@ -77,7 +77,7 @@ def plot_grid(grid, map_projection):
         lon_pv = grid.pv.lon[:,:,p]*rad2deg
         lat_pv = grid.pv.lat[:,:,p]*rad2deg
 
-        # Plot vertices geodesic
+        # Plot po geodesic
         A_lon, A_lat = lon[i0:iend, j0:jend], lat[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
@@ -244,7 +244,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     if cs_grid.N <= 10:
         cs_grid_aux = cs_grid
     else:
-        cs_grid_aux = cubed_sphere(1, cs_grid.projection, False, False)
+        cs_grid_aux = cubed_sphere(1, 'gnomonic_equiangular', False, False)
 
     # Interior cells index (we are ignoring ghost cells)
     i0   = cs_grid_aux.i0
@@ -254,10 +254,10 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
 
     # Plot CS grid
     for p in range(0, nbfaces):
-        lons = cs_grid_aux.vertices.lon[:,:,p]*rad2deg
-        lats = cs_grid_aux.vertices.lat[:,:,p]*rad2deg
+        lons = cs_grid_aux.po.lon[:,:,p]*rad2deg
+        lats = cs_grid_aux.po.lat[:,:,p]*rad2deg
 
-        # Plot vertices
+        # Plot po
         A_lon, A_lat = lons[i0:iend, j0:jend], lats[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
@@ -348,10 +348,10 @@ def plot_scalar_and_vector_field(field, ulon_pu, vlat_pu, ulon_pv, vlat_pv, \
 
     # Plot CS grid
     for p in range(0, nbfaces):
-        lons = cs_grid_aux.vertices.lon[:,:,p]*rad2deg
-        lats = cs_grid_aux.vertices.lat[:,:,p]*rad2deg
+        lons = cs_grid_aux.po.lon[:,:,p]*rad2deg
+        lats = cs_grid_aux.po.lat[:,:,p]*rad2deg
 
-        # Plot vertices
+        # Plot po
         A_lon, A_lat = lons[i0:iend, j0:jend], lats[i0:iend, j0:jend]
         A_lon, A_lat = np.ndarray.flatten(A_lon), np.ndarray.flatten(A_lat)
 
@@ -489,8 +489,10 @@ def save_grid_netcdf4(grid):
     # Grid spacing
     dx  = griddata.createVariable('dx','f8')
     dy  = griddata.createVariable('dy','f8')
+    a   = griddata.createVariable('a','f8')
     dx[:] = grid.dx
     dy[:] = grid.dy
+    a[:]  = grid.a
 
     # Some integers
     ng    = griddata.createVariable('ng'  ,'i4')
@@ -532,52 +534,25 @@ def save_grid_netcdf4(grid):
     ed = griddata.createDimension('ed', 4)
 
     # Create variables
-    vertices = griddata.createVariable('vertices', 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
-    pc  = griddata.createVariable('pc' , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
-    pu = griddata.createVariable('pu'     , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
-    pv = griddata.createVariable('pv'     , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
-    ex_pc = griddata.createVariable('ex_pc', 'f8', ('ix2' , 'jy2', 'panel', 'coorddim'))
-    ey_pc = griddata.createVariable('ey_pc', 'f8', ('ix2' , 'jy2', 'panel', 'coorddim'))
+    po    = griddata.createVariable('po'   , 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
+    pc    = griddata.createVariable('pc'   , 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
+    pu    = griddata.createVariable('pu'   , 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
+    pv    = griddata.createVariable('pv'   , 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
+    ex_po = griddata.createVariable('ex_po', 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
+    ey_po = griddata.createVariable('ey_po', 'f8', ('ix' , 'jy' , 'panel', 'coorddim'))
+    ex_pc = griddata.createVariable('ex_pc', 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
+    ey_pc = griddata.createVariable('ey_pc', 'f8', ('ix2', 'jy2', 'panel', 'coorddim'))
     ex_pu = griddata.createVariable('ex_pu', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     ey_pu = griddata.createVariable('ey_pu', 'f8', ('ix' , 'jy2', 'panel', 'coorddim'))
     ex_pv = griddata.createVariable('ex_pv', 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
     ey_pv = griddata.createVariable('ey_pv', 'f8', ('ix2', 'jy' , 'panel', 'coorddim'))
 
-    # Geometric properties
-    areas                   = griddata.createVariable('areas'                , 'f8', ('ix2', 'jy2', 'panel'))
-    length_pu               = griddata.createVariable('length_pu'           , 'f8', ('ix2', 'jy2', 'panel'))
-    length_pv               = griddata.createVariable('length_pv'           , 'f8', ('ix2', 'jy2', 'panel'))
-
-    prod_ex_elon_pc          = griddata.createVariable('prod_ex_elon_pc'    , 'f8', ('ix2', 'jy2' , 'panel'))
-    prod_ex_elat_pc          = griddata.createVariable('prod_ex_elat_pc'    , 'f8', ('ix2', 'jy2' , 'panel'))
-    prod_ey_elon_pc          = griddata.createVariable('prod_ey_elon_pc'    , 'f8', ('ix2', 'jy2' , 'panel'))
-    prod_ey_elat_pc          = griddata.createVariable('prod_ey_elat_pc'    , 'f8', ('ix2', 'jy2' , 'panel'))
-    determinant_ll2contra_pc = griddata.createVariable('determinant_ll2contra_pc', 'f8', ('ix2', 'jy2' , 'panel'))
-    metric_tensor_pc   = griddata.createVariable('metric_tensor_pc', 'f8', ('ix2', 'jy2', 'panel'))
-
-    prod_ex_elon_pu          = griddata.createVariable('prod_ex_elon_pu'    , 'f8', ('ix', 'jy2' , 'panel'))
-    prod_ex_elat_pu          = griddata.createVariable('prod_ex_elat_pu'    , 'f8', ('ix', 'jy2' , 'panel'))
-    prod_ey_elon_pu          = griddata.createVariable('prod_ey_elon_pu'    , 'f8', ('ix', 'jy2' , 'panel'))
-    prod_ey_elat_pu          = griddata.createVariable('prod_ey_elat_pu'    , 'f8', ('ix', 'jy2' , 'panel'))
-    determinant_ll2contra_pu = griddata.createVariable('determinant_ll2contra_pu', 'f8', ('ix', 'jy2' , 'panel'))
-    metric_tensor_pu = griddata.createVariable('metric_tensor_pu', 'f8', ('ix', 'jy2' , 'panel'))
-
-    prod_ex_elon_pv          = griddata.createVariable('prod_ex_elon_pv'    , 'f8', ('ix2', 'jy' , 'panel'))
-    prod_ex_elat_pv          = griddata.createVariable('prod_ex_elat_pv'    , 'f8', ('ix2', 'jy' , 'panel'))
-    prod_ey_elon_pv          = griddata.createVariable('prod_ey_elon_pv'    , 'f8', ('ix2', 'jy' , 'panel'))
-    prod_ey_elat_pv          = griddata.createVariable('prod_ey_elat_pv'    , 'f8', ('ix2', 'jy' , 'panel'))
-    determinant_ll2contra_pv = griddata.createVariable('determinant_ll2contra_pv', 'f8', ('ix2', 'jy' , 'panel'))
-    metric_tensor_pv = griddata.createVariable('metric_tensor_pv', 'f8', ('ix2', 'jy' , 'panel'))
-
-    Xu   = griddata.createVariable('Xu'    , 'f8', ('ix', 'jy2' , 'panel'))
-    Yv   = griddata.createVariable('Yv'    , 'f8', ('ix2', 'jy' , 'panel'))
-
     # Values attribution
-    vertices[:,:,:,0] = grid.vertices.X
-    vertices[:,:,:,1] = grid.vertices.Y
-    vertices[:,:,:,2] = grid.vertices.Z
-    vertices[:,:,:,3] = grid.vertices.lon
-    vertices[:,:,:,4] = grid.vertices.lat
+    po[:,:,:,0] = grid.po.X
+    po[:,:,:,1] = grid.po.Y
+    po[:,:,:,2] = grid.po.Z
+    po[:,:,:,3] = grid.po.lon
+    po[:,:,:,4] = grid.po.lat
 
     pc[:,:,:,0] = grid.pc.X
     pc[:,:,:,1] = grid.pc.Y
@@ -596,6 +571,18 @@ def save_grid_netcdf4(grid):
     pv[:,:,:,2] = grid.pv.Z
     pv[:,:,:,3] = grid.pv.lon
     pv[:,:,:,4] = grid.pv.lat
+
+    ex_po[:,:,:,0] = grid.ex_po.X
+    ex_po[:,:,:,1] = grid.ex_po.Y
+    ex_po[:,:,:,2] = grid.ex_po.Z
+    ex_po[:,:,:,3] = grid.ex_po.lon
+    ex_po[:,:,:,4] = grid.ex_po.lat
+
+    ey_po[:,:,:,0] = grid.ey_po.X
+    ey_po[:,:,:,1] = grid.ey_po.Y
+    ey_po[:,:,:,2] = grid.ey_po.Z
+    ey_po[:,:,:,3] = grid.ey_po.lon
+    ey_po[:,:,:,4] = grid.ey_po.lat
 
     ex_pc[:,:,:,0] = grid.ex_pc.X
     ex_pc[:,:,:,1] = grid.ex_pc.Y
@@ -632,35 +619,6 @@ def save_grid_netcdf4(grid):
     ey_pv[:,:,:,2] = grid.ey_pv.Z
     ey_pv[:,:,:,3] = grid.ey_pv.lon
     ey_pv[:,:,:,4] = grid.ey_pv.lat
-
-    areas[:,:,:]     = grid.areas[:,:,:]
-    length_pu[:,:,:] = grid.length_pu[:,:,:]
-    length_pv[:,:,:] = grid.length_pv[:,:,:]
-
-    metric_tensor_pc[:,:,:] = grid.metric_tensor_pc[:,:,:]
-    metric_tensor_pu[:,:,:] = grid.metric_tensor_pu[:,:,:]
-    metric_tensor_pv[:,:,:] = grid.metric_tensor_pv[:,:,:]
-
-    prod_ex_elon_pc[:,:,:] = grid.prod_ex_elon_pc[:,:,:]
-    prod_ex_elat_pc[:,:,:] = grid.prod_ex_elat_pc[:,:,:]
-    prod_ey_elon_pc[:,:,:] = grid.prod_ey_elon_pc[:,:,:]
-    prod_ey_elat_pc[:,:,:] = grid.prod_ey_elat_pc[:,:,:]
-    determinant_ll2contra_pc[:,:,:] = grid.determinant_ll2contra_pc[:,:,:]
-
-    prod_ex_elon_pu[:,:,:] = grid.prod_ex_elon_pu[:,:,:]
-    prod_ex_elat_pu[:,:,:] = grid.prod_ex_elat_pu[:,:,:]
-    prod_ey_elon_pu[:,:,:] = grid.prod_ey_elon_pu[:,:,:]
-    prod_ey_elat_pu[:,:,:] = grid.prod_ey_elat_pu[:,:,:]
-    determinant_ll2contra_pu[:,:,:] = grid.determinant_ll2contra_pu[:,:,:]
-
-    prod_ex_elon_pv[:,:,:] = grid.prod_ex_elon_pv[:,:,:]
-    prod_ex_elat_pv[:,:,:] = grid.prod_ex_elat_pv[:,:,:]
-    prod_ey_elon_pv[:,:,:] = grid.prod_ey_elon_pv[:,:,:]
-    prod_ey_elat_pv[:,:,:] = grid.prod_ey_elat_pv[:,:,:]
-    determinant_ll2contra_pv[:,:,:] = grid.determinant_ll2contra_pv[:,:,:]
-
-    Xu[:,:,:] = grid.Xu[:,:,:]
-    Yv[:,:,:] = grid.Yv[:,:,:]
 
     griddata.close()
     print("Done.")

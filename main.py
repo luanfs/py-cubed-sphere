@@ -51,7 +51,6 @@ def main():
         if test_case == 2 or test_case == 5:
             # Create the CS mesh
             cs_grid = cubed_sphere(N, transformation, showonscreen, gridload)
-
             # Save grid in netcdf format
             if not(os.path.isfile(cs_grid.netcdfdata_filename)) or (os.path.isfile(cs_grid.netcdfdata_filename) and gridload==False):
                 save_grid_netcdf4(cs_grid)
@@ -75,7 +74,8 @@ def main():
             dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
             simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
             plot = True
-            error_analysis_div(simulation, map_projection, plot, transformation, showonscreen, gridload)
+            error_analysis_div(simulation, map_projection, plot, transformation,\
+                               showonscreen, gridload)
 
         elif test_case == 5:
             # Call advection test case
@@ -89,7 +89,8 @@ def main():
 
             elif simulation.tc == 2: # Convergence analysis
                 plot = False
-                error_analysis_adv(simulation, map_projection, plot, transformation, showonscreen, gridload)
+                error_analysis_adv(simulation, map_projection, plot, transformation, \
+                            showonscreen, gridload, gridreadname)
 
             else:
                 print('Invalid advection testcase.\n')

@@ -391,10 +391,6 @@ def ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation):
     # Reconstruct the values at edged
     ppm_reconstruction_x(Qx, px, cs_grid, simulation)
     ppm_reconstruction_y(Qy, py, cs_grid, simulation)
-    i0 = cs_grid.i0
-    j0 = cs_grid.j0
-    iend = cs_grid.iend
-    jend = cs_grid.jend
 
     if simulation.edge_treatment==2:
         # Extrapolation at cells near the cube edges

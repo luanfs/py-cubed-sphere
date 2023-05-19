@@ -1,14 +1,15 @@
 #Interpolaion test case parameters 
 #Test case (1, 2 or 3)
-2
+4
 #Scalar field 
 2
 #Vector field 
 2
 #Possible test cases
-#  case(1) - Scalar field interpolation  testing (see interpolation.par)
-#  case(2) - Vector field interpolation  testing (see interpolation.par)
-#  case(3) - Reconstruction testing (see interpolation.par)
+#  case(1) - Scalar field interpolation at ghost cells testing
+#  case(2) - Vector field interpolation at centers testing
+#  case(3) - Vector field interpolation at ghost cells testing
+#  case(4) - Reconstruction testing
 #Possible scalar fields (only for tc1 or tc3)
 #  case(1) - gaussian hill
 #  case(2) - trigonometric field

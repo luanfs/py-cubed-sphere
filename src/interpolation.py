@@ -47,7 +47,7 @@ def ll2cs(cs_grid, latlon_grid):
     panel_list = np.zeros(np.shape(Xll), dtype=np.uint32)
 
     filename = griddir+cs_grid.name+'_ll2cs'+'.nc'
-    #print(filename)
+
     if (os.path.isfile(filename)):
         #print("--------------------------------------------------------")
         #print("Loading lat-lon grid points to cubed-sphere points (for plotting) ...")
@@ -59,12 +59,7 @@ def ll2cs(cs_grid, latlon_grid):
         #print("--------------------------------------------------------\n")
     else:
         # Define a grid for each transformation
-        if cs_grid.projection == 'gnomonic_equiangular':
-            a  = pio4
-        elif cs_grid.projection == 'gnomonic_equidistant':
-            a  = 1.0/np.sqrt(3.0) # Half length of the cube
-        elif cs_grid.projection == 'conformal':
-            a  = 1.0
+        a = cs_grid.a
 
         # Grid spacing
         dx = 2*a/cs_grid.N
@@ -131,9 +126,6 @@ def ll2cs(cs_grid, latlon_grid):
             elif cs_grid.projection == 'gnomonic_equidistant':
                 x, y = inverse_equidistant_gnomonic_map(Xll[mask], Yll[mask], Zll[mask], p)
                 i[mask], j[mask] = find_closest_index(x, y)
-            elif cs_grid.projection == 'conformal':
-                i[mask], j[mask] = inverse_conformal_map(Xll[mask], Yll[mask], Zll[mask], p, cs_grid)
-                #i[mask], j[mask] = find_closest_index(x, y)
 
         #exit()
         # Finish time counting
@@ -521,9 +513,11 @@ def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transfor
      cs_grid.prod_ex_elon_pc[i0:iend,j0:jend,:], cs_grid.prod_ex_elat_pc[i0:iend,j0:jend,:],\
      cs_grid.prod_ey_elon_pc[i0:iend,j0:jend,:], cs_grid.prod_ey_elat_pc[i0:iend,j0:jend,:])
 
-    # Now let us interpolate the latlon wind to the center of ghost cells
-    ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
-    ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+
+    if cs_grid.projection == 'gnomonic_equiangular':
+        # Now let us interpolate the latlon wind to the center of ghost cells
+        ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+        ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
 
 ####################################################################################
 # This routine interpolates the wind (latlon) from cell centers
@@ -547,7 +541,6 @@ def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, tran
     iend = cs_grid.iend
     j0   = cs_grid.j0
     jend = cs_grid.jend
-
 
     # Stencil indexes
     Kmin, Kmax = stencil_ghost_edge[0], stencil_ghost_edge[1]

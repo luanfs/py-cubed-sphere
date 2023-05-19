@@ -43,7 +43,6 @@ def arclen(p1, p2):
     r = p1+p2
     r = r[0,:]*r[0,:] + r[1,:]*r[1,:] + r[2,:]*r[2,:]
     d = 2.0*np.arctan(np.sqrt((4-r)/r))
-    #print(r)
     return d
 
 ####################################################################################
@@ -51,9 +50,11 @@ def arclen(p1, p2):
 # and c using L'Huilier's Theorem
 ####################################################################################
 def tri_area(a, b, c):
-    s = (a + b + c)/2  # Semiperimeter
-    tmp = np.tan(s/2)*np.tan((s-a)/2)*np.tan((s-b)/2)*np.tan((s-c)/2)
+    s = (a + b + c)/2.0  # Semiperimeter
+    tmp = np.tan(s/2.0)*np.tan((s-a)/2.0)*np.tan((s-b)/2.0)*np.tan((s-c)/2.0)
+    tmp[tmp<0]=0.0
     area = 4.0*np.arctan(np.sqrt(tmp))
+    #area = (tmp)
     return area
 
 ####################################################################################

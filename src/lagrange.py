@@ -180,9 +180,17 @@ def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
+    if cs_grid.projection == "gnomonic_equiangular":
+        x_min, x_max = [-pio4, pio4] # Angular coordinates
+    elif cs_grid.projection == "overlaped":
+        x_min, x_max = [-1.0,1.0] # Angular coordinates
+    else:
+        print('ERROR in lagrange_poly_ghostcells: grid is not valid, ',cs_grid.projection)
+        exit()
+
     # Positions
-    x_pu = np.linspace(-pio4-ngl*dx, pio4+ngr*dx, N+1+ng) # vertices
-    x_pc = np.linspace(-pio4+dx/2.0-ngl*dx, pio4-dx/2.0+ngr*dx, N+ng) # Centers
+    x_pu = np.linspace(x_min-ngl*dx, x_max+ngr*dx, N+1+ng) # vertices
+    x_pc = np.linspace(x_min+dx/2.0-ngl*dx, x_max-dx/2.0+ngr*dx, N+ng) # Centers
     dx = cs_grid.dx
 
     # Define the stencil

@@ -24,33 +24,9 @@ def grid_quality(cs_grid, ll_grid, map_projection):
     # Computation of some distance that shall be needed
     N = cs_grid.N
     ng = cs_grid.ng
-    # Compute the geodesic distance of cell edges in x direction
-    # Given points
-    p1 = [cs_grid.vertices.X[0:N+ng,:,:], cs_grid.vertices.Y[0:N+ng  ,:,:], cs_grid.vertices.Z[0:N+ng  ,:,:]]
-    p2 = [cs_grid.vertices.X[1:N+ng+1,:,:], cs_grid.vertices.Y[1:N+ng+1,:,:], cs_grid.vertices.Z[1:N+ng+1,:,:]]
 
-    # Reshape
-    p1 = np.reshape(p1,(3,(N+ng)*(N+ng+1)*nbfaces))
-    p2 = np.reshape(p2,(3,(N+ng)*(N+ng+1)*nbfaces))
-
-    # Compute arclen
-    d = arclen(p1, p2)
-    d = np.reshape(d,(N+ng,N+ng+1,nbfaces))
-    length_x = d
-
-    # Compute the geodesic distance of cell edges in y direction
-    # Given points
-    p1 = [cs_grid.vertices.X[:,0:N+ng  ,:], cs_grid.vertices.Y[:,0:N+ng  ,:], cs_grid.vertices.Z[:,0:N+ng  ,:]]
-    p2 = [cs_grid.vertices.X[:,1:N+ng+1,:], cs_grid.vertices.Y[:,1:N+ng+1,:], cs_grid.vertices.Z[:,1:N+ng+1,:]]
-
-    # Reshape
-    p1 = np.reshape(p1,(3,(N+ng)*(N+ng+1)*nbfaces))
-    p2 = np.reshape(p2,(3,(N+ng)*(N+ng+1)*nbfaces))
-
-    # Compute arclen
-    d = arclen(p1,p2)
-    d = np.reshape(d,(N+ng+1,N+ng,nbfaces))
-    length_y = d
+    length_x = cs_grid.R*cs_grid.metric_tensor_pv*cs_grid.dy
+    length_y = cs_grid.R*cs_grid.metric_tensor_pu*cs_grid.dx
 
     # Compute the quality measures
     area          = areas(cs_grid)
@@ -94,7 +70,8 @@ def areas(grid):
     j0   = grid.j0
     jend = grid.jend
     areas = scalar_field(grid, 'areas', 'center')
-    areas.f = grid.areas[i0:iend,j0:jend,:]*erad*erad/10**6
+    areas.f = grid.metric_tensor_pc[i0:iend,j0:jend,:]*grid.dx*grid.dy*erad*erad/10**6
+              
     #print(np.amin(areas.f), np.amax(areas.f))
     #areas.f = np.sqrt(areas.f)
     #print((np.sum(grid.areas)-4*np.pi)/4*np.pi)
