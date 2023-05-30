@@ -1,7 +1,7 @@
 #Parameters
 #Number of cells N along a coordinates axis (total number of cells is 6*N*N)
-1024
-#Kind of grid?  1-equidistant; 2-equiangular; 3-conformal; 4-overlaped
+16
+#Kind of grid?  1-equidistant; 2-equiangular; 3-overllaped
 2
 #Loadable grid? 0-No; 1-Yes
 0
