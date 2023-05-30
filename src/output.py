@@ -154,7 +154,7 @@ def output_adv(cs_grid, ll_grid, simulation, Q, div, U_pu, U_pv,\
                 +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name+', '+simulation.et_name+'\n'
 
                 plot_scalar_field(error_d, filename, cs_grid, ll_grid, map_projection, \
-                                             colormap, dmin, dmax, title)
+                colormap, dmin, dmax, title)
 
                 if simulation.vf >= 5: # Plot the divergence
                     colormap = 'jet'
