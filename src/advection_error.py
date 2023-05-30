@@ -18,7 +18,7 @@ from interpolation    import ll2cs
 # Routine to compute the advection error convergence in L_inf, L1 and L2 norms
 ####################################################################################
 def error_analysis_adv(simulation, map_projection, plot, transformation, \
-                      showonscreen, gridload, gridreadname):
+                      showonscreen, gridload):
     # Initial condition
     vf = simulation.vf
 
@@ -29,7 +29,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 3
+    Ntest  = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -56,10 +56,10 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,)
-    split = (3,3)
-    ets   = (5,4)
-    deps  = (1,1)
+    recons = (1,)
+    split = (1,)
+    ets   = (5,)
+    deps  = (1,)
 
     #recons = (simulation.recon,)
     #deps = (simulation.dp,)
@@ -93,7 +93,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
                 N = int(Nc[i])
 
                 # Create CS mesh
-                cs_grid = cubed_sphere(N, transformation, False, gridload, gridreadname)
+                cs_grid = cubed_sphere(N, transformation, False, gridload)
 
                 # Create the latlon mesh (for plotting)
                 ll_grid = latlon_grid(Nlat, Nlon)

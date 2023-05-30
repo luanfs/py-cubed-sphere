@@ -182,8 +182,8 @@ def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
 
     if cs_grid.projection == "gnomonic_equiangular":
         x_min, x_max = [-pio4, pio4] # Angular coordinates
-    elif cs_grid.projection == "overlaped":
-        x_min, x_max = [-1.0,1.0] # Angular coordinates
+    elif cs_grid.projection == "overllaped":
+        x_min, x_max = [-1.0,1.0]
     else:
         print('ERROR in lagrange_poly_ghostcells: grid is not valid, ',cs_grid.projection)
         exit()
