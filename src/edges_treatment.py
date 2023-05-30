@@ -236,49 +236,54 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
 #  average the values of the upwind flux at the
 #  cube edge points
 ####################################################################################
-def average_flux_cube_edges(px, py, cs_grid):
+def average_flux_cube_edges(px, py, cx, cy, Qx, Qy, cs_grid):
     i0 = cs_grid.i0
     j0 = cs_grid.j0
     iend = cs_grid.iend
     jend = cs_grid.jend
+    dx = cs_grid.dx
+
+    a = 0.5
+    b = 1.0-a
 
     # Average panels 0-1,1-2,2-3,3-4
-    px.f_upw[iend,j0:jend,0:3] = (px.f_upw[iend,j0:jend,0:3] + px.f_upw[i0,j0:jend,1:4])*0.5
-    px.f_upw[i0,j0:jend,1:4] = px.f_upw[iend,j0:jend,0:3]
-    px.f_upw[iend,j0:jend,3] = (px.f_upw[iend,j0:jend,3] + px.f_upw[i0,j0:jend,0])*0.5
-    px.f_upw[i0,j0:jend,0] = px.f_upw[iend,j0:jend,3]
+    px.f_upw[iend,j0:jend,0:3] = a*px.f_upw[iend,j0:jend,0:3] + b*px.f_upw[i0,j0:jend,1:4]
+    px.f_upw[i0,j0:jend,1:4]   = px.f_upw[iend,j0:jend,0:3]
 
+    px.f_upw[iend,j0:jend,3] = a*px.f_upw[iend,j0:jend,3] + b*px.f_upw[i0,j0:jend,0]
+    px.f_upw[i0,j0:jend,0]  = px.f_upw[iend,j0:jend,3]
+ 
     # Average panels 0-4
-    py.f_upw[i0:iend,j0,4] = (py.f_upw[i0:iend,j0,4] + py.f_upw[i0:iend,jend,0])*0.5
+    py.f_upw[i0:iend,j0,4]   = a*py.f_upw[i0:iend,j0,4] + b*py.f_upw[i0:iend,jend,0]
     py.f_upw[i0:iend,jend,0] = py.f_upw[i0:iend,j0,4]
 
     # Average panels 1-4
-    px.f_upw[iend,j0:jend,4] = (px.f_upw[iend,j0:jend,4] + py.f_upw[i0:iend,jend,1])*0.5
-    py.f_upw[i0:iend,jend,1] = px.f_upw[iend,j0:jend,4]
+    px.f_upw[iend,j0:jend,4] = a*px.f_upw[iend,j0:jend,4] - b*py.f_upw[i0:iend,jend,1]
+    py.f_upw[i0:iend,jend,1] = -px.f_upw[iend,j0:jend,4]
 
     # Average panels 2-4
-    py.f_upw[i0:iend,jend,4] = (py.f_upw[i0:iend,jend,4] + np.flip(py.f_upw[i0:iend,jend-1,2]))*0.5
-    py.f_upw[i0:iend,jend,2] = np.flip(py.f_upw[i0:iend,jend,4])
+    py.f_upw[i0:iend,jend,4] = a*py.f_upw[i0:iend,jend,4] - b*np.flip(py.f_upw[i0:iend,jend,2])
+    py.f_upw[i0:iend,jend,2] = -np.flip(py.f_upw[i0:iend,jend,4])
 
     # Average panels 3-4
-    px.f_upw[i0,j0:jend,4] = (px.f_upw[i0,j0:jend,4] + np.flip(py.f_upw[i0:iend,jend,3]))*0.5
+    px.f_upw[i0,j0:jend,4]   = a*px.f_upw[i0,j0:jend,4] + b*np.flip(py.f_upw[i0:iend,jend,3])
     py.f_upw[i0:iend,jend,3] = np.flip(px.f_upw[i0,j0:jend,4])
 
     # Average panels 0-5
-    py.f_upw[i0:iend,jend,5] = (py.f_upw[i0:iend,jend,5] + py.f_upw[i0:iend,j0,0])*0.5
-    py.f_upw[i0:iend,j0,0] = py.f_upw[i0:iend,jend,5]
+    py.f_upw[i0:iend,jend,5] = a*py.f_upw[i0:iend,jend,5] + b*py.f_upw[i0:iend,j0,0]
+    py.f_upw[i0:iend,j0,0]   = py.f_upw[i0:iend,jend,5]
 
     # Average panels 1-5
-    py.f_upw[i0:iend,j0,1] = (py.f_upw[i0:iend,j0,1] + np.flip(px.f_upw[iend,j0:jend,5]))*0.5
+    py.f_upw[i0:iend,j0,1]   = a*py.f_upw[i0:iend,j0,1] + b*np.flip(px.f_upw[iend,j0:jend,5])
     px.f_upw[iend,j0:jend,5] = np.flip(py.f_upw[i0:iend,j0,1])
 
     # Average panels 2-5
-    py.f_upw[i0:iend,j0,2] = (py.f_upw[i0:iend,j0,2] + np.flip(py.f_upw[i0:iend,j0,5]))*0.5
-    py.f_upw[i0:iend,j0,5] = np.flip(py.f_upw[i0:iend,j0,2])
+    py.f_upw[i0:iend,j0,2] = a*py.f_upw[i0:iend,j0,2] - b*np.flip(py.f_upw[i0:iend,j0,5])
+    py.f_upw[i0:iend,j0,5] = -np.flip(py.f_upw[i0:iend,j0,2])
 
     # Average panels 3-5
-    py.f_upw[i0:iend,j0,3] = (px.f_upw[i0,j0:jend,5] + py.f_upw[i0:iend,j0,3])*0.5
-    px.f_upw[i0,j0:jend,5] = py.f_upw[i0:iend,j0,3]
+    py.f_upw[i0:iend,j0,3] = -a*px.f_upw[i0,j0:jend,5] + b*py.f_upw[i0:iend,j0,3]
+    px.f_upw[i0,j0:jend,5] = -py.f_upw[i0:iend,j0,3]
 
 ####################################################################################
 # This routine fill the halo data using the scheme given in simulation
