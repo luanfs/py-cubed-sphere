@@ -90,7 +90,7 @@ def main():
             elif simulation.tc == 2: # Convergence analysis
                 plot = False
                 error_analysis_adv(simulation, map_projection, plot, transformation, \
-                            showonscreen, gridload, gridreadname)
+                            showonscreen, gridload)
 
             else:
                 print('Invalid advection testcase.\n')

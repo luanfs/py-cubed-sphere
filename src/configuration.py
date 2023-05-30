@@ -60,10 +60,7 @@ def get_parameters():
         elif transformation == 2:
             transf = "gnomonic_equiangular"
         elif transformation == 3:
-            transf = "conformal"
-            gridload=True
-        elif transformation == 4:
-            transf = "overlaped"
+            transf = "overllaped"
             gridload=True
         else:
             print("ERROR: invalid transformation")
