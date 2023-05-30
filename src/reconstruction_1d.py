@@ -38,10 +38,10 @@ def ppm_reconstruction_x(Q, px, cs_grid, simulation):
         Q3 = Q[i0:iend+3,:,:]
         Q4 = Q[i0-3:iend,:,:]
         px.Q_edges[i0-1:iend+2,:,:] = ne.evaluate("(7.0/12.0)*(Q1+Q2) - (Q3+Q4)/12.0")
+
         # Assign values of Q_R and Q_L
         px.q_R[i0-1:iend+1,:,:] = px.Q_edges[i0:iend+2,:,:]
         px.q_L[i0-1:iend+1,:,:] = px.Q_edges[i0-1:iend+1,:,:]
-
 
     elif px.recon_name == 'PPM-PL07': # Hybrid PPM from PL07
         # coeffs from equations 41 and 42 from PL07
@@ -195,11 +195,11 @@ def ppm_reconstruction_x(Q, px, cs_grid, simulation):
     # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]
     #px.dq[i0-1:iend+1,:] = px.q_R[i0-1:iend+1,:] - px.q_L[i0-1:iend+1,:]
     #px.q6[i0-1:iend+1,:] = 6*Q[i0-1:iend+1,:] - 3*(px.q_R[i0-1:iend+1,:] + px.q_L[i0-1:iend+1,:])
-    q_L =  px.q_L[i0-1:iend+1,:,:]
-    q_R =  px.q_R[i0-1:iend+1,:,:]
-    q = Q[i0-1:iend+1,:,:]
-    px.dq[i0-1:iend+1,:,:] = ne.evaluate('q_R-q_L')
-    px.q6[i0-1:iend+1,:,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
+    #q_L =  px.q_L[i0-1:iend+1,:,:]
+    #q_R =  px.q_R[i0-1:iend+1,:,:]
+    #q = Q[i0-1:iend+1,:,:]
+    #px.dq[i0-1:iend+1,:,:] = ne.evaluate('q_R-q_L')
+    #px.q6[i0-1:iend+1,:,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
 
 def ppm_reconstruction_y(Q, py, cs_grid, simulation):
     N = cs_grid.N
@@ -220,7 +220,6 @@ def ppm_reconstruction_y(Q, py, cs_grid, simulation):
         # Assign values of Q_R and Q_L
         py.q_R[:,j0-1:jend+1,:] = py.Q_edges[:,j0:jend+2,:]
         py.q_L[:,j0-1:jend+1,:] = py.Q_edges[:,j0-1:jend+1,:]
-
 
     elif py.recon_name == 'PPM-PL07': # Hybrid PPM from PL07
         # coeffs from equations 41 and 42 from PL07
@@ -374,13 +373,11 @@ def ppm_reconstruction_y(Q, py, cs_grid, simulation):
 
     # Compute the polynomial coefs
     # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]
-    #py.dq[:,j0-1:jend+1] = py.q_R[:,j0-1:jend+1] - py.q_L[:,j0-1:jend+1]
-    #py.q6[:,j0-1:jend+1] = 6*Q[:,j0-1:jend+1] - 3*(py.q_R[:,j0-1:jend+1] + py.q_L[:,j0-1:jend+1])
-    q_L =  py.q_L[:,j0-1:jend+1,:]
-    q_R =  py.q_R[:,j0-1:jend+1,:]
-    q = Q[:,j0-1:jend+1,:]
-    py.dq[:,j0-1:jend+1,:] = ne.evaluate('q_R-q_L')
-    py.q6[:,j0-1:jend+1,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
+    #q_L =  py.q_L[:,j0-1:jend+1,:]
+    #q_R =  py.q_R[:,j0-1:jend+1,:]
+    #q = Q[:,j0-1:jend+1,:]
+    #py.dq[:,j0-1:jend+1,:] = ne.evaluate('q_R-q_L')
+    #py.q6[:,j0-1:jend+1,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
 
 #########################################################################
 #
@@ -392,7 +389,7 @@ def ppm_reconstruction(Qx, Qy, px, py, cs_grid, simulation):
     ppm_reconstruction_x(Qx, px, cs_grid, simulation)
     ppm_reconstruction_y(Qy, py, cs_grid, simulation)
 
-    if simulation.edge_treatment==2:
+    if simulation.et_name ==  'ET-PL07':
         # Extrapolation at cells near the cube edges
         edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation)
 
