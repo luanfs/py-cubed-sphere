@@ -104,7 +104,7 @@ def interpolation_test(map_projection, transformation, showonscreen, gridload):
 def error_analysis_sf_interpolation(ic, map_projection, transformation, showonscreen, \
                                     gridload):
     # Number of tests
-    Ntest = 7
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -361,7 +361,7 @@ def error_analysis_vf_interpolation_centers(vf, map_projection, transformation, 
 def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformation, showonscreen,\
                                     gridload):
     # Number of tests
-    Ntest = 7
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -515,7 +515,7 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
 ####################################################################################
 def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 5
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -526,13 +526,14 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
         Nc[i]  = Nc[i-1]*2
 
     # Errors array
-    recons = (4,)
+    recons = (1,)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     et_names = ['ET-S72','ET-PL07','ET-R96','ET-Z21']
 
     if transformation == 'gnomonic_equiangular':
         ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
-    if transformation == 'overlaped':
+        ets = (3,) # Edge treatment 3 applies only to equiangular CS
+    elif transformation == 'overllaped':
         ets = (2,)
     else:
         ets = (1,2)
@@ -585,7 +586,7 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
                 print('\nParameters: N = '+str(int(Nc[i]))+', et = '+str(et)+' , recon = ', recon)
 
                 # get lagrange_poly
-                if cs_grid.projection == 'gnomonic_equiangular' :
+                if cs_grid.projection == 'gnomonic_equiangular':
                     lagrange_poly, stencil = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
                 else:
                     lagrange_poly, stencil = None, None
@@ -631,8 +632,8 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
                 ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
                 plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
             rec = rec+1
-        et = et + 1
-
+        ET = ET + 1
+    exit()
     # Outputs
     # plot errors for different all schemes in  different norms
     error_list = [error_linf, error_l1, error_l2]
