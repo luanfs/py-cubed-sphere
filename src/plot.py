@@ -42,7 +42,7 @@ def plot_grid(grid, map_projection):
 
     # Color of each cubed panel
     colors = ('blue','red','blue','red','green','green')
-    colors = ('black','black','black','black','black','black')
+    #colors = ('black','black','black','black','black','black')
 
     print("--------------------------------------------------------")
     print('Plotting '+grid.name+' cubed-sphere grid using '+map_projection+' projection...')
@@ -291,12 +291,12 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     if filename:
         plt.title(filename)
 
-    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap,  levels = np.linspace(qmin, qmax, 101))
-    ax.projection = ccrs.PlateCarree()
+    #plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap,  levels = np.linspace(qmin, qmax, 101))
+    #ax.projection = ccrs.PlateCarree()
     #plt.show()
     #exit()
     # Plot the scalar field
-    #plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
+    plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
     # Plot colorbar
     plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.1e')
