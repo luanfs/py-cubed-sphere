@@ -1,4 +1,4 @@
-####################################################################################
+###################################################################################
 #
 # Module for FV operators accuracy testing
 #
@@ -9,6 +9,7 @@
 ####################################################################################
 
 import numpy as np
+import os.path
 from constants import*
 from cs_datastruct          import cubed_sphere, latlon_grid, ppm_parabola, scalar_field
 from errors                 import print_errors_simul, plot_errors_loglog, plot_convergence_rate
@@ -20,7 +21,7 @@ from sphgeo                 import sph2cart, cart2sph
 from scipy.special          import sph_harm
 from interpolation          import ll2cs, nearest_neighbour 
 from lagrange               import lagrange_poly_ghostcell_pc
-from plot                   import plot_scalar_field
+from plot                   import plot_scalar_field, save_grid_netcdf4
 
 
 ###################################################################################
@@ -32,7 +33,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     vf = simulation.vf
 
     # Number of tests
-    Ntest = 5
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -60,9 +61,9 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (3,)
-    split = (3,1,1)
-    ets   = (5,4,4)
-    deps  = (1,1,2)
+    split = (1,)
+    ets   = (5,)
+    deps  = (2,)
     #recons = (1,)
     #split = (3,3)
     #ets   = (1,2)
@@ -99,6 +100,10 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
                 # Create CS mesh
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
+
+                # Save the grid
+                if not(os.path.isfile(cs_grid.netcdfdata_filename)):
+                    save_grid_netcdf4(cs_grid)
 
                 # Create the latlon mesh (for plotting)
                 ll_grid = latlon_grid(Nlat, Nlon)
