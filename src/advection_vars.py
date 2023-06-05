@@ -45,7 +45,7 @@ def init_vars_adv(cs_grid, simulation, transformation):
                                                        cs_grid.prod_ey_elon_pv, cs_grid.prod_ey_elat_pv, cs_grid.determinant_ll2contra_pv)
 
     # Fill ghost cell - velocity field
-    edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)
+    #edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)
 
     U_pu.ucontra_old[:,:,:] = U_pu.ucontra[:,:,:]
     U_pv.vcontra_old[:,:,:] = U_pv.vcontra[:,:,:]
