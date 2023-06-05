@@ -11,7 +11,7 @@ import numexpr as ne
 import numpy   as np
 from edges_treatment    import edges_ghost_cell_treatment_vector
 
-def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
+def time_averaged_velocity(U_pu, U_pv, cs_grid, simulation):
     i0, iend = cs_grid.i0, cs_grid.iend
     j0, jend = cs_grid.j0, cs_grid.jend
     N = cs_grid.N
@@ -24,6 +24,7 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
     if simulation.dp_name == 'RK1':
         U_pu.ucontra_averaged[:,:,:] = U_pu.ucontra[:,:,:]
         U_pv.vcontra_averaged[:,:,:] = U_pv.vcontra[:,:,:]
+
     elif simulation.dp_name == 'RK2':
         dt = simulation.dt
         dto2 = simulation.dto2
@@ -31,7 +32,7 @@ def time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation):
         #----------------------------------------------------
         # Velocity data at edges used for interpolation
         u_interp = 1.5*U_pu.ucontra[:,:,:] - 0.5*U_pu.ucontra_old[:,:,:] # extrapolation for time at n+1/2
-        # Liner interpolation
+        # Linear interpolation
         a = U_pu.ucontra[i0:iend+1,:,:]*dto2/cs_grid.dx
         upos = U_pu.ucontra[i0:iend+1,:,:]>=0
         uneg = ~upos
