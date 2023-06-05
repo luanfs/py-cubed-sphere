@@ -236,7 +236,7 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
 #  average the values of the upwind flux at the
 #  cube edge points
 ####################################################################################
-def average_flux_cube_edges(px, py, cx, cy, Qx, Qy, cs_grid):
+def average_flux_cube_edges(px, py, cs_grid):
     i0 = cs_grid.i0
     j0 = cs_grid.j0
     iend = cs_grid.iend
@@ -252,7 +252,7 @@ def average_flux_cube_edges(px, py, cx, cy, Qx, Qy, cs_grid):
 
     px.f_upw[iend,j0:jend,3] = a*px.f_upw[iend,j0:jend,3] + b*px.f_upw[i0,j0:jend,0]
     px.f_upw[i0,j0:jend,0]  = px.f_upw[iend,j0:jend,3]
- 
+
     # Average panels 0-4
     py.f_upw[i0:iend,j0,4]   = a*py.f_upw[i0:iend,j0,4] + b*py.f_upw[i0:iend,jend,0]
     py.f_upw[i0:iend,jend,0] = py.f_upw[i0:iend,j0,4]
