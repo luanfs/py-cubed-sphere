@@ -11,6 +11,7 @@ from sphgeo                 import latlon_to_contravariant, contravariant_to_lat
 from cfl                    import cfl_x, cfl_y
 from discrete_operators     import divergence
 from averaged_velocity      import time_averaged_velocity
+
 ####################################################################################
 # This routine computes one advection timestep
 ####################################################################################
@@ -24,15 +25,12 @@ def adv_time_step(cs_grid, simulation, Q, gQ, div, px, py, cx, cy, \
     jend = cs_grid.jend
 
     # Compute the velocity need for the departure point
-    time_averaged_velocity(U_pu, U_pv, k, t, cs_grid, simulation)
-
-    # CFL
-    cx[:,:,:] = cfl_x(U_pu.ucontra_averaged[:,:,:], cs_grid, simulation)
-    cy[:,:,:] = cfl_y(U_pv.vcontra_averaged[:,:,:], cs_grid, simulation)
+    time_averaged_velocity(U_pu, U_pv, cs_grid, simulation)
 
     # Compute the divergence
-    divergence(Q, gQ, div, px, py, cx, cy, cs_grid, simulation,\
+    divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
                transformation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+
     # Q update
     Q[i0:iend,j0:jend,:] = Q[i0:iend,j0:jend,:] - simulation.dt*div[i0:iend,j0:jend,:]
 
