@@ -295,13 +295,6 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformatio
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
-    elif simulation.et_name=='ET-R96':
-        # Interpolate to ghost cells - north and south neighbors
-        ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation, lagrange_poly_ghostcell_pc, stencil_ghost_pc)
-
-        # Interpolate to ghost cells - west and east neighbors
-        ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation, lagrange_poly_ghostcell_pc, stencil_ghost_pc)
-
     elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF': # Uses ghost cells interpolation - using corner ghost cells
         ghost_cell_pc_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
                                              lagrange_poly_ghostcell_pc, stencil_ghost_pc)
