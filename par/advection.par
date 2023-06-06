@@ -6,16 +6,16 @@
 #Initial condition
 2
 #Vector field 
-2
+3
 #Test case
-1
+2
 #Reconstruction (1, 2, 3, 4)
 1
 #Departure point scheme (1, 2)
 1
 #Operator splitting (1, 2, 3)
 3
-#Edge treatment (1, 2, 3, 4, 5)
+#Edge treatment (1, 2, 3, 4)
 1
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions

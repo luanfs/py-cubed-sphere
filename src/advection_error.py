@@ -56,20 +56,15 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (1,)
-    split = (1,)
-    ets   = (5,)
-    deps  = (1,)
-
-    #recons = (simulation.recon,)
-    #deps = (simulation.dp,)
-    #split = (simulation.opsplit,)
-    #ets = (5,)
+    recons = (3,)
+    split = (1,3)
+    ets   = (4,2)
+    deps  = (2,1)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    et_names = ['ET-S72', 'ET-PL07', 'ET-R96', 'ET-Z21', 'ET-Z21-AF']
+    et_names = ['ET-S72', 'ET-PL07', 'ET-Z21', 'ET-Z21-AF']
     error_linf = np.zeros((Ntest, len(recons), len(split)))
     error_l1   = np.zeros((Ntest, len(recons), len(split)))
     error_l2   = np.zeros((Ntest, len(recons), len(split)))
