@@ -23,12 +23,15 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
     dx = cs_grid.dx
     dt = simulation.dt
     i0, iend = cs_grid.i0, cs_grid.iend
-    j0, jend = cs_grid.j0, cs_grid.jend
 
     # multiply values at edges by metric tensors
-    px.q_L[i0-1:iend+1,:,:] = px.q_L[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0-1:iend+1,:,:]
-    px.q_R[i0-1:iend+1,:,:] = px.q_R[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0:iend+2,:,:]
-    q = Qx[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pc[i0-1:iend+1,:,:]
+    if simulation.opsplit_name == 'SP-AVLT':
+        px.q_L[i0-1:iend+1,:,:] = px.q_L[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0-1:iend+1,:,:]
+        px.q_R[i0-1:iend+1,:,:] = px.q_R[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0:iend+2,:,:]
+        q = Qx[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pc[i0-1:iend+1,:,:]
+
+    else: 
+        q = Qx[i0-1:iend+1,:,:]
 
     # Compute the polynomial coefs
     # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]
@@ -51,12 +54,16 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
     dq  = px.dq[i0:iend+1,:,:]
     q6  = px.q6[i0:iend+1,:,:]
     px.f_R[i0:iend+1,:,:] = ne.evaluate("q_L - c*0.5*(q6+dq) - q6*c*c/3.0")
-
+ 
     # F - Formula 1.13 from Collela and Woodward 1984)
     mask = ne.evaluate('cx >= 0')
     px.f_upw[mask]  = px.f_L[mask]
     px.f_upw[~mask] = px.f_R[~mask]
     px.f_upw[:,:,:] = px.f_upw[:,:,:]*U_pu.ucontra_averaged[:,:,:]
+
+    # multiply values at edges by metric tensors
+    if simulation.opsplit_name=='SP-L04'or simulation.opsplit_name=='SP-PL07':
+        px.f_upw[:,:,:] = px.f_upw[:,:,:]*cs_grid.metric_tensor_pu[:,:,:]
 
 ###############################################################################
 # PPM flux in y direction
@@ -71,9 +78,13 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
     dt = simulation.dt
 
     # multiply values at edges by metric tensors
-    py.q_L[:,j0-1:jend+1,:] = py.q_L[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0-1:jend+1,:]
-    py.q_R[:,j0-1:jend+1,:] = py.q_R[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0:jend+2,:]
-    q = Qy[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pc[:,j0-1:jend+1,:]
+    if simulation.opsplit_name == 'SP-AVLT':
+        py.q_L[:,j0-1:jend+1,:] = py.q_L[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0-1:jend+1,:]
+        py.q_R[:,j0-1:jend+1,:] = py.q_R[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0:jend+2,:]
+        q = Qy[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pc[:,j0-1:jend+1,:]
+
+    else:
+        q = Qy[:,j0-1:jend+1,:]
 
     # Compute the polynomial coefs
     # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]
@@ -102,4 +113,8 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
     py.f_upw[mask]  = py.f_L[mask]
     py.f_upw[~mask] = py.f_R[~mask]
     py.f_upw[:,:,:] = py.f_upw[:,:,:]*U_pv.vcontra_averaged[:,:,:]
+
+    # multiply values at edges by metric tensors
+    if simulation.opsplit_name=='SP-L04'or simulation.opsplit_name=='SP-PL07':
+        py.f_upw[:,:,:] = py.f_upw[:,:,:]*cs_grid.metric_tensor_pv[:,:,:]
 

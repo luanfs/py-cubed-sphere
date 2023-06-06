@@ -47,33 +47,32 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
     # Applies F and G operators in each panel
     F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
     G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
-
-    pxdF = px.dF
-    pydF = py.dF
+    pxdF, pydF = px.dF, py.dF
 
     # Splitting scheme
     if simulation.opsplit_name=='SP-AVLT':
-        gQx = ne.evaluate("gQ+0.5*pxdF")
-        gQy = ne.evaluate("gQ+0.5*pydF")
+        gQx = ne.evaluate("gQ + 0.5*pxdF")
+        gQy = ne.evaluate("gQ + 0.5*pydF")
         # divide by the metric tensor at centers
         Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
-        #Qx, Qy = gQx, gQy
 
     elif simulation.opsplit_name=='SP-L04':
-        # L04 equation 7 and 8
+        # L04 equations 7 and 8
         c1x, c2x = cs_grid.metric_tensor_pu[1:,:,:]*cx[1:,:,:], cs_grid.metric_tensor_pu[:N+ng,:,:]*cx[:N+ng,:,:]
         c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*cy[:,:N+ng,:]
-        gQx = ne.evaluate('(gQ + 0.5*(pxdF + (c1x-c2x)*Q))')
-        gQy = ne.evaluate('(gQ + 0.5*(pydF + (c1y-c2y)*Q))')
+        gQx = ne.evaluate('gQ + 0.5*pxdF + 0.5*(c1x-c2x)*Q')
+        gQy = ne.evaluate('gQ + 0.5*pydF + 0.5*(c1y-c2y)*Q')
         # divide by the metric tensor at centers
         Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
 
     elif simulation.opsplit_name=='SP-PL07':
-        # PL07 - equation 17 and 18
+        # PL07 - equations 17 and 18
         c1x, c2x = cs_grid.metric_tensor_pu[1:,:,:]*cx[1:,:,:], cs_grid.metric_tensor_pu[:N+ng,:,:]*cx[:N+ng,:,:]
         c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*cy[:,:N+ng,:]
         Qx = ne.evaluate('0.5*(Q + (Q + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(Q + (Q + pydF)/(1.0-(c1y-c2y)))')
+        # divide by the metric tensor at centers
+        #Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
 
     # applies edge treatment if needed
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07':
