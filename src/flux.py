@@ -25,7 +25,7 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
     i0, iend = cs_grid.i0, cs_grid.iend
 
     # multiply values at edges by metric tensors
-    if simulation.opsplit_name == 'SP-AVLT':
+    if simulation.et_name == 'ET-Z21' or simulation.et_name == 'ET-Z21-AF':
         px.q_L[i0-1:iend+1,:,:] = px.q_L[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0-1:iend+1,:,:]
         px.q_R[i0-1:iend+1,:,:] = px.q_R[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0:iend+2,:,:]
         q = Qx[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pc[i0-1:iend+1,:,:]
@@ -62,8 +62,8 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
     px.f_upw[:,:,:] = px.f_upw[:,:,:]*U_pu.ucontra_averaged[:,:,:]
 
     # multiply values at edges by metric tensors
-    if simulation.opsplit_name=='SP-L04'or simulation.opsplit_name=='SP-PL07':
-        px.f_upw[:,:,:] = px.f_upw[:,:,:]*cs_grid.metric_tensor_pu[:,:,:]
+    if simulation.et_name == 'ET-S72' or simulation.et_name == 'ET-PL07':
+        px.f_upw[i0:iend+1,:,:] = px.f_upw[i0:iend+1,:,:]*cs_grid.metric_tensor_pu[i0:iend+1,:,:]
 
 ###############################################################################
 # PPM flux in y direction
@@ -78,7 +78,7 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
     dt = simulation.dt
 
     # multiply values at edges by metric tensors
-    if simulation.opsplit_name == 'SP-AVLT':
+    if simulation.et_name == 'ET-Z21' or simulation.et_name == 'ET-Z21-AF':
         py.q_L[:,j0-1:jend+1,:] = py.q_L[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0-1:jend+1,:]
         py.q_R[:,j0-1:jend+1,:] = py.q_R[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0:jend+2,:]
         q = Qy[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pc[:,j0-1:jend+1,:]
@@ -115,6 +115,6 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
     py.f_upw[:,:,:] = py.f_upw[:,:,:]*U_pv.vcontra_averaged[:,:,:]
 
     # multiply values at edges by metric tensors
-    if simulation.opsplit_name=='SP-L04'or simulation.opsplit_name=='SP-PL07':
-        py.f_upw[:,:,:] = py.f_upw[:,:,:]*cs_grid.metric_tensor_pv[:,:,:]
+    if simulation.et_name == 'ET-S72' or simulation.et_name == 'ET-PL07':
+        py.f_upw[:,j0:jend+1,:] = py.f_upw[:,j0:jend+1,:]*cs_grid.metric_tensor_pv[:,j0:jend+1,:]
 

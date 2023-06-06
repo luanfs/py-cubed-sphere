@@ -29,7 +29,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 5
+    Ntest  = 3
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,9 +57,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
 
     # Errors array
     recons = (3,)
-    split = (1,3)
-    ets   = (4,2)
-    deps  = (2,1)
+    split = (3,1,1)
+    ets   = (2,3,4)
+    deps  = (1,2,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']

@@ -27,7 +27,7 @@ from interpolation import ghost_cells_adjacent_panels, ghost_cell_pc_lagrange_in
 #  average the values of the edge reconstruction at the
 #  cube edge points
 ####################################################################################
-def average_parabola_cube_edges(Qx, Qy, px, py, cs_grid):
+def average_parabola_cube_edges(px, py, cs_grid):
     i0 = cs_grid.i0
     j0 = cs_grid.j0
     iend = cs_grid.iend
@@ -36,7 +36,9 @@ def average_parabola_cube_edges(Qx, Qy, px, py, cs_grid):
     if cs_grid.projection != 'overlaped':
         # Average panels 0-1,1-2,2-3,3-4
         px.q_R[iend-1,j0:jend,0:3] = (px.q_R[iend-1,j0:jend,0:3] + px.q_L[i0,j0:jend,1:4])*0.5
+
         px.q_L[i0,j0:jend,1:4] = px.q_R[iend-1,j0:jend,0:3]
+
         px.q_R[iend-1,j0:jend,3] = (px.q_R[iend-1,j0:jend,3] + px.q_L[i0,j0:jend,0])*0.5
         px.q_L[i0,j0:jend,0] = px.q_R[iend-1,j0:jend,3]
 
@@ -71,20 +73,6 @@ def average_parabola_cube_edges(Qx, Qy, px, py, cs_grid):
         # Average panels 3-5
         py.q_L[i0:iend,j0,3] = (px.q_L[i0,j0:jend,5] + py.q_L[i0:iend,j0,3])*0.5
         px.q_L[i0,j0:jend,5] = py.q_L[i0:iend,j0,3]
-
-    # Update coeffs
-    # x direction
-    q_L =  px.q_L[i0-1:iend+1,:,:]
-    q_R =  px.q_R[i0-1:iend+1,:,:]
-    q = Qx[i0-1:iend+1,:,:]
-    px.dq[i0-1:iend+1,:,:] = ne.evaluate('q_R-q_L')
-    px.q6[i0-1:iend+1,:,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
-    # y direction
-    q_L =  py.q_L[:,j0-1:jend+1,:]
-    q_R =  py.q_R[:,j0-1:jend+1,:]
-    q = Qy[:,j0-1:jend+1,:]
-    py.dq[:,j0-1:jend+1,:] = ne.evaluate('q_R-q_L')
-    py.q6[:,j0-1:jend+1,:] = ne.evaluate('6*q- 3*(q_R + q_L)')
 
 ####################################################################################
 # Perform the extrapolation from Putman and Lin 07 paper (PL07)
@@ -123,6 +111,9 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
             px.q_L[iend-2,j0:jend,:] = px.q_R[iend-3,j0:jend,:]
             py.q_R[i0:iend,j0+1,:] = py.q_L[i0:iend,j0+2,:]
             py.q_L[i0:iend,jend-2,:] = py.q_R[i0:iend,jend-3,:]
+
+        # average the values
+        average_parabola_cube_edges(px, py, cs_grid)
 
         # Ghost cell updates
         # 0-1; 1-2; 2-3
@@ -213,7 +204,7 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
             py.q_R[i0:iend,j0+1,:] = py.q_L[i0:iend,j0+2,:]
             py.q_L[i0:iend,jend-2,:] = py.q_R[i0:iend,jend-3,:]
 
-    average_parabola_cube_edges(Qx, Qy, px, py, cs_grid)
+
     """
     # Update coeffs
     # x direction
@@ -304,12 +295,15 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformatio
 # u and v are components of the velocity fields at edges
 ####################################################################################
 def edges_ghost_cell_treatment_vector(u, v, cs_grid, simulation):
-    if simulation.dp_name == 'RK2':
-        i0, iend = cs_grid.i0, cs_grid.iend
-        j0, jend = cs_grid.j0, cs_grid.jend
-        ngl = cs_grid.ngl
 
-        if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
+    #if simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF':
+
+    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
+        if simulation.dp_name == 'RK2':
+            i0, iend = cs_grid.i0, cs_grid.iend
+            j0, jend = cs_grid.j0, cs_grid.jend
+            ngl = cs_grid.ngl
+
             # Panels 0-1,1-2,2-3,3-4
             u[iend+1,j0:jend,0:3] = u[i0+1,j0:jend,1:4]
             u[iend+1,j0:jend,3]   = u[i0+1,j0:jend,0]

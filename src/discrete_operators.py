@@ -80,11 +80,10 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
     # Compute the fluxes
     compute_fluxes(Qy, Qx, px, py, U_pu, U_pv, cx, cy, cs_grid, simulation)
 
-    ##############################################################################
     # Flux averaging
-    ##############################################################################
     if simulation.et_name=='ET-Z21-AF':
         average_flux_cube_edges(px, py, cs_grid)
+        exit()
 
     # Applies F and G operators in each panel again
     F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
@@ -94,7 +93,7 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
     pxdF = px.dF
     pydF = py.dF
     div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
-    print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*cs_grid.dx*cs_grid.dx))
+    #print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*cs_grid.dx*cs_grid.dx))
 
 ####################################################################################
 # Flux operator in x direction
