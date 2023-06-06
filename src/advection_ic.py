@@ -122,10 +122,8 @@ class adv_simulation_par:
         elif et==2:
             self.et_name='ET-PL07'
         elif et==3:
-            self.et_name='ET-R96'
-        elif et==4:
             self.et_name='ET-Z21'
-        elif et==5:
+        elif et==4:
             self.et_name='ET-Z21-AF'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
