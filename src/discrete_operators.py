@@ -71,8 +71,6 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
         c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*cy[:,:N+ng,:]
         Qx = ne.evaluate('0.5*(Q + (Q + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(Q + (Q + pydF)/(1.0-(c1y-c2y)))')
-        # divide by the metric tensor at centers
-        #Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
 
     # applies edge treatment if needed
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07':
