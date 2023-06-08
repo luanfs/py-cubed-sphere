@@ -468,15 +468,18 @@ def ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation):
 # to the cell pc (including ghost cell centers)
 # using Lagrange polynomials
 ####################################################################################
-def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, \
-                                        simulation, lagrange_poly_U, stencil_U,\
-                                        lagrange_poly_ghost_pc, stencil_ghost_pc):
+def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation):
     # Parameters of the grid
     N   = cs_grid.N
     ng  = cs_grid.ng
     ngl = cs_grid.ngl
     ngr = cs_grid.ngr
     dx  = cs_grid.dx
+
+    lagrange_poly_U = simulation.lagrange_poly_edge
+    stencil_U = simulation.stencil_edge
+    lagrange_poly_ghost_pc = simulation.stencil_ghost_pc
+    stencil_ghost_pc =  simulation.lagrange_poly_ghost_pc
 
     # Order
     degree = simulation.degree
@@ -517,21 +520,23 @@ def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, \
 
     if cs_grid.projection == 'gnomonic_equiangular':
         # Now let us interpolate the latlon wind to the center of ghost cells
-        ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
-        ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+        ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, simulation)
+        ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, simulation)
 
 ####################################################################################
 # This routine interpolates the wind (latlon) from cell centers
 # to ghost cell edges
 ####################################################################################
-def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation,\
-    lagrange_poly_ghost_edge, stencil_ghost_edge):
+def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation):
     # Parameters of the grid
     N   = cs_grid.N
     ng  = cs_grid.ng
     ngl = cs_grid.ngl
     ngr = cs_grid.ngr
     dx  = cs_grid.dx
+
+    lagrange_poly_ghost_edge = simulation.lagrange_poly_ghost_edge 
+    stencil_ghost_edge = simulation.stencil_ghost_edge 
 
     # Order
     degree = simulation.degree

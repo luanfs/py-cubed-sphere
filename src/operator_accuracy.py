@@ -58,9 +58,9 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
 
     # Errors array
     recons = (3,)
-    split = (1,1,1,1)
-    ets   = (4,4,5,5)
-    deps  = (1,2,1,2)
+    split = (3,1,1,1,1)
+    ets   = (2,4,5,4,5)
+    deps  = (1,1,1,2,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']

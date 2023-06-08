@@ -161,10 +161,10 @@ def error_analysis_sf_interpolation(ic, map_projection, transformation, showonsc
             #    plot_scalar_field(Q_ll, name, cs_grid, ll_grid, map_projection)
 
             # Get Lagrange polynomials
-            lagrange_poly, stencil = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
+            lagrange_poly_ghostcell_pc(cs_grid, simulation)
 
             # Interpolate to ghost cells
-            ghost_cell_pc_lagrange_interpolation(Q_numerical, cs_grid, transformation, simulation, lagrange_poly, stencil)
+            ghost_cell_pc_lagrange_interpolation(Q_numerical, cs_grid, simulation)
 
             # Compute the errors
             error_linf[i,d], _, _ = compute_errors(Q_numerical, Q_exact)
@@ -287,17 +287,13 @@ def error_analysis_vf_interpolation_centers(vf, map_projection, transformation, 
             U_pv.vcontra[i0:iend,j0:jend+1,:] = U_pv_exact.vcontra[i0:iend,j0:jend+1,:]
 
             # Compute the Lagrange polynomials
-            lagrange_poly_edge, stencil_edge = wind_edges2center_lagrange_poly(cs_grid, simulation, transformation)
+            wind_edges2center_lagrange_poly(cs_grid, simulation)
 
             if cs_grid.projection == 'gnomonic_equiangular':
-                lagrange_poly_ghost_pc, stencil_ghost_pc = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
-            else:
-                lagrange_poly_ghost_pc, stencil_ghost_pc = None, None
+                lagrange_poly_ghostcell_pc(cs_grid, simulation)
 
             # Interpolate the wind to cells pc
-            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
-            lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc)
-
+            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
  
             # Error at pc
             eu = abs(U_pc.ulon[i0:iend,j0:jend,:]-U_pc_exact.ulon[i0:iend,j0:jend,:])#np.amax(abs(U_pc_exact.ulon))
@@ -433,17 +429,15 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
             U_pv.vcontra[i0:iend,j0:jend+1,:] = U_pv_exact.vcontra[i0:iend,j0:jend+1,:]
 
             # Compute the Lagrange polynomials
-            lagrange_poly_edge, stencil_edge = wind_edges2center_lagrange_poly(cs_grid, simulation, transformation)
-            lagrange_poly_ghost_pc, stencil_ghost_pc = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
-            lagrange_poly_ghost_edge, stencil_ghost_edge = wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformation)
+            lagrange_poly_ghostcell_pc(cs_grid, simulation)
+            wind_edges2center_lagrange_poly(cs_grid, simulation)
+            wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation)
 
             # Interpolate the wind to cells pc
-            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
-            lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc)
+            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
             # Interpolate the wind from pc to ghost cells edges
-            wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
-            lagrange_poly_ghost_edge, stencil_ghost_edge)
+            wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
             # Error at pc
             eu = np.amax(abs(U_pc.ulon-U_pc_exact.ulon))#/np.amax(abs(U_pc_exact.ulon))
@@ -528,11 +522,11 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
     # Errors array
     recons = (1,)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
-    et_names = ['ET-S72','ET-PL07','ET-R96','ET-Z21']
+    et_names = ['ET-S72','ET-PL07','ET-Z21']
 
     if transformation == 'gnomonic_equiangular':
         ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
-        ets = (3,) # Edge treatment 3 applies only to equiangular CS
+        #ets = (3,) # Edge treatment 3 applies only to equiangular CS
     elif transformation == 'overllaped':
         ets = (2,)
     else:
@@ -587,12 +581,10 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
 
                 # get lagrange_poly
                 if cs_grid.projection == 'gnomonic_equiangular':
-                    lagrange_poly, stencil = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
-                else:
-                    lagrange_poly, stencil = None, None
+                    lagrange_poly_ghostcell_pc(cs_grid, simulation)
 
                 # Fill halo data
-                edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, lagrange_poly, stencil)
+                edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation)
 
                 # PPM parabolas
                 px = ppm_parabola(cs_grid,simulation,'x')
@@ -707,8 +699,6 @@ class recon_simulation_par:
         elif et==2:
             self.et_name='ET-PL07'
         elif et==3:
-            self.et_name='ET-R96'
-        elif et==4:
             self.et_name='ET-Z21'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
