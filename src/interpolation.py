@@ -151,12 +151,14 @@ def nearest_neighbour(Q, cs_grid, latlon_grid):
 ####################################################################################
 # Ghost cell center interpolation using Lagrange polynomials
 ####################################################################################
-def ghost_cell_pc_lagrange_interpolation(Q, cs_grid, transformation, simulation,\
-                                       lagrange_poly, stencil):
+def ghost_cell_pc_lagrange_interpolation(Q, cs_grid, simulation):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.ng
     ngl = cs_grid.ngl
     ngr = cs_grid.ngr
+
+    # Lagrange polynomials and its stencils
+    lagrange_poly, stencil = simulation.lagrange_poly_ghost_pc, simulation.stencil_ghost_pc
     Kmin, Kmax = stencil[0], stencil[1]
 
     # Order
@@ -316,7 +318,7 @@ def ghost_cell_pc_lagrange_interpolation(Q, cs_grid, transformation, simulation,
 # Ghost cells interpolation using Lagrange polynomials - consider only ghost
 # cells at south and north
 ####################################################################################
-def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simulation,\
+def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, simulation,\
                                        lagrange_poly, stencil):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.ng   # Number o ghost cells
@@ -377,7 +379,7 @@ def ghost_cells_lagrange_interpolation_NS(Qx, Qy, cs_grid, transformation, simul
 # Ghost cells interpolation using Lagrange polynomials - consider only ghost
 # cells at west and east adjacent panels
 ####################################################################################
-def ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, transformation, simulation,\
+def ghost_cells_lagrange_interpolation_WE(Qy, Qx, cs_grid, simulation,\
                                        lagrange_poly, stencil):
     N   = cs_grid.N   # Number of cells in x direction
     ng  = cs_grid.ng  # Number o ghost cells
@@ -466,7 +468,7 @@ def ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation):
 # to the cell pc (including ghost cell centers)
 # using Lagrange polynomials
 ####################################################################################
-def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, \
+def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, \
                                         simulation, lagrange_poly_U, stencil_U,\
                                         lagrange_poly_ghost_pc, stencil_ghost_pc):
     # Parameters of the grid
@@ -513,17 +515,16 @@ def wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transfor
      cs_grid.prod_ex_elon_pc[i0:iend,j0:jend,:], cs_grid.prod_ex_elat_pc[i0:iend,j0:jend,:],\
      cs_grid.prod_ey_elon_pc[i0:iend,j0:jend,:], cs_grid.prod_ey_elat_pc[i0:iend,j0:jend,:])
 
-
     if cs_grid.projection == 'gnomonic_equiangular':
         # Now let us interpolate the latlon wind to the center of ghost cells
-        ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
-        ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, transformation, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+        ghost_cell_pc_lagrange_interpolation(U_pc.ulon, cs_grid, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+        ghost_cell_pc_lagrange_interpolation(U_pc.vlat, cs_grid, simulation, lagrange_poly_ghost_pc, stencil_ghost_pc)
 
 ####################################################################################
 # This routine interpolates the wind (latlon) from cell centers
 # to ghost cell edges
 ####################################################################################
-def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, transformation, simulation,\
+def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation,\
     lagrange_poly_ghost_edge, stencil_ghost_edge):
     # Parameters of the grid
     N   = cs_grid.N

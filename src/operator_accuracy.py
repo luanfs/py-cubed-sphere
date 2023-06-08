@@ -27,11 +27,8 @@ from plot                   import plot_scalar_field, save_grid_netcdf4
 ###################################################################################
 # Routine to compute the divergence error convergence in L_inf, L1 and L2 norms
 ####################################################################################
-def error_analysis_div(simulation, map_projection, plot, transformation, showonscreen,\
+def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                        gridload):
-    # Initial condition
-    vf = simulation.vf
-
     # Number of tests
     Ntest = 6
 
@@ -40,15 +37,15 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
     dts = np.zeros(Ntest)
     Nc[0] = 16
 
-    if simulation.vf==1 or simulation.vf==2:
+    if vf==1 or vf==2:
         dts[0] = 0.025
-    elif simulation.vf==3:
+    elif vf==3:
         dts[0] = 0.025
-    elif simulation.vf==4:
+    elif vf==4:
         dts[0] = 0.0125
-    elif simulation.vf==5:
+    elif vf==5:
         dts[0] = 0.0125
-    elif simulation.vf==6:
+    elif vf==6:
         dts[0] = 0.0125
     else:
         print('ERROR: invalid vector field, ',simulation.vf)
@@ -61,14 +58,14 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
 
     # Errors array
     recons = (3,)
-    split = (1,1,3)
-    ets   = (4,4,2)
-    deps  = (1,2,1)
+    split = (1,1,1,1)
+    ets   = (4,4,5,5)
+    deps  = (1,2,1,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    et_names = ['ET-S72', 'ET-PL07', 'ET-Z21', 'ET-Z21-AF']
+    et_names = ['ET-S72', 'ET-PL07', 'ET-Z21', 'ET-Z21-AF', 'ET-Z21-PR']
     error_linf = np.zeros((Ntest, len(recons), len(split)))
     error_l1   = np.zeros((Ntest, len(recons), len(split)))
     error_l2   = np.zeros((Ntest, len(recons), len(split)))
@@ -88,11 +85,13 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
         for recon in recons:
             for i in range(0, Ntest):
                 dt = dts[i]
-                simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
                 N = int(Nc[i])
 
                 # Create CS mesh
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
+
+                # simulation class 
+                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
 
                 # Save the grid
                 if not(os.path.isfile(cs_grid.netcdfdata_filename)):
@@ -106,7 +105,7 @@ def error_analysis_div(simulation, map_projection, plot, transformation, showons
                 print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', simulation.recon_name,', split=', simulation.opsplit_name, ', dp=', simulation.dp_name, ', et=', simulation.et_name)
 
                 # Get divergence error
-                error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, True)
+                error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False, True)
 
                 # Print errors
                 print_errors_simul(error_linf[:,rec,d], error_l1[:,rec,d], error_l2[:,rec,d], i)

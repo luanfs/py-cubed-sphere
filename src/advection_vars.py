@@ -15,7 +15,7 @@ from edges_treatment        import edges_ghost_cell_treatment_vector
 ####################################################################################
 # This routine initializates the advection routine variables
 ####################################################################################
-def init_vars_adv(cs_grid, simulation, transformation):
+def init_vars_adv(cs_grid, simulation):
     # Interior cells index (ignoring ghost cells)
     i0   = cs_grid.i0
     iend = cs_grid.iend
@@ -29,84 +29,70 @@ def init_vars_adv(cs_grid, simulation, transformation):
     ngr = cs_grid.ngr
 
     # Velocity at edges
-    U_pu = velocity(cs_grid, 'pu')
-    U_pv = velocity(cs_grid, 'pv')
+    simulation.U_pu = velocity(cs_grid, 'pu')
+    simulation.U_pv = velocity(cs_grid, 'pv')
+    simulation.U_pc = velocity(cs_grid, 'pc')
         
-    '''
     # Get velocities
-    U_pu.ulon[i0:iend+1,j0:jend,:], U_pu.vlat[i0:iend+1,j0:jend,:] = velocity_adv\
+    simulation.U_pu.ulon[i0:iend+1,j0:jend,:], simulation.U_pu.vlat[i0:iend+1,j0:jend,:] = velocity_adv\
     (cs_grid.pu.lon[i0:iend+1,j0:jend,:], cs_grid.pu.lat[i0:iend+1,j0:jend,:], 0.0, simulation)
-    U_pv.ulon[i0:iend,j0:jend+1,:], U_pv.vlat[i0:iend,j0:jend+1,:] = velocity_adv\
+    simulation.U_pv.ulon[i0:iend,j0:jend+1,:], simulation.U_pv.vlat[i0:iend,j0:jend+1,:] = velocity_adv\
     (cs_grid.pv.lon[i0:iend,j0:jend+1,:], cs_grid.pv.lat[i0:iend,j0:jend+1,:], 0.0, simulation)
-    '''
-    # Get velocities
-    U_pu.ulon[:,:,:], U_pu.vlat[:,:,:] = velocity_adv(cs_grid.pu.lon, cs_grid.pu.lat, 0.0, simulation)
-    U_pv.ulon[:,:,:], U_pv.vlat[:,:,:] = velocity_adv(cs_grid.pv.lon, cs_grid.pv.lat, 0.0, simulation)
 
-    """
     # Convert latlon to contravariant at pu
-    U_pu.ucontra[i0:iend+1,j0:jend,:], U_pu.vcontra[i0:iend+1,j0:jend,:] = latlon_to_contravariant(\
-    U_pu.ulon[i0:iend+1,j0:jend,:], U_pu.vlat[i0:iend+1,j0:jend,:], \
+    simulation.U_pu.ucontra[i0:iend+1,j0:jend,:], simulation.U_pu.vcontra[i0:iend+1,j0:jend,:] = latlon_to_contravariant(\
+    simulation.U_pu.ulon[i0:iend+1,j0:jend,:], simulation.U_pu.vlat[i0:iend+1,j0:jend,:], \
     cs_grid.prod_ex_elon_pu[i0:iend+1,j0:jend,:], cs_grid.prod_ex_elat_pu[i0:iend+1,j0:jend,:],\
     cs_grid.prod_ey_elon_pu[i0:iend+1,j0:jend,:], cs_grid.prod_ey_elat_pu[i0:iend+1,j0:jend,:], cs_grid.determinant_ll2contra_pu[i0:iend+1,j0:jend,:])
-    """
-
-    """
+    
     # Convert latlon to contravariant at pv
-    U_pv.ucontra[i0:iend,j0:jend+1,:], U_pv.vcontra[i0:iend,j0:jend+1,:] = latlon_to_contravariant(\
-    U_pv.ulon[i0:iend,j0:jend+1,:], U_pv.vlat[i0:iend,j0:jend+1,:], 
+    simulation.U_pv.ucontra[i0:iend,j0:jend+1,:], simulation.U_pv.vcontra[i0:iend,j0:jend+1,:] = latlon_to_contravariant(\
+    simulation.U_pv.ulon[i0:iend,j0:jend+1,:], simulation.U_pv.vlat[i0:iend,j0:jend+1,:], 
     cs_grid.prod_ex_elon_pv[i0:iend,j0:jend+1,:], cs_grid.prod_ex_elat_pv[i0:iend,j0:jend+1,:],\
     cs_grid.prod_ey_elon_pv[i0:iend,j0:jend+1,:], cs_grid.prod_ey_elat_pv[i0:iend,j0:jend+1,:], cs_grid.determinant_ll2contra_pv[i0:iend,j0:jend+1,:])
-    """
+
+    # Get velocities
+    simulation.U_pu.ulon[:,:,:], simulation.U_pu.vlat[:,:,:] = velocity_adv(cs_grid.pu.lon, cs_grid.pu.lat, 0.0, simulation)
+    simulation.U_pv.ulon[:,:,:], simulation.U_pv.vlat[:,:,:] = velocity_adv(cs_grid.pv.lon, cs_grid.pv.lat, 0.0, simulation)
 
     # Convert latlon to contravariant at pu
-    U_pu.ucontra[:,:,:], U_pu.vcontra[:,:,:] = latlon_to_contravariant(U_pu.ulon, U_pu.vlat, cs_grid.prod_ex_elon_pu, cs_grid.prod_ex_elat_pu,\
+    simulation.U_pu.ucontra[:,:,:], simulation.U_pu.vcontra[:,:,:] = latlon_to_contravariant(simulation.U_pu.ulon, simulation.U_pu.vlat, cs_grid.prod_ex_elon_pu, cs_grid.prod_ex_elat_pu,\
                                                        cs_grid.prod_ey_elon_pu, cs_grid.prod_ey_elat_pu, cs_grid.determinant_ll2contra_pu)
 
     # Convert latlon to contravariant at pv
-    U_pv.ucontra[:,:,:], U_pv.vcontra[:,:,:] = latlon_to_contravariant(U_pv.ulon, U_pv.vlat, cs_grid.prod_ex_elon_pv, cs_grid.prod_ex_elat_pv,\
+    simulation.U_pv.ucontra[:,:,:], simulation.U_pv.vcontra[:,:,:] = latlon_to_contravariant(simulation.U_pv.ulon, simulation.U_pv.vlat, cs_grid.prod_ex_elon_pv, cs_grid.prod_ex_elat_pv,\
                                                        cs_grid.prod_ey_elon_pv, cs_grid.prod_ey_elat_pv, cs_grid.determinant_ll2contra_pv)
-
-    # Fill ghost cell - velocity field
-    edges_ghost_cell_treatment_vector(U_pu.ucontra, U_pv.vcontra, cs_grid, simulation)
-
-    U_pu.ucontra_old[:,:,:] = U_pu.ucontra[:,:,:]
-    U_pv.vcontra_old[:,:,:] = U_pv.vcontra[:,:,:]
-
-    # CFL at edges - x direction
-    cx = cfl_x(U_pu.ucontra, cs_grid, simulation)
-
-    # CFL at edges - y direction
-    cy = cfl_y(U_pv.vcontra, cs_grid, simulation)
-
-    # CFL number
-    CFL_x = np.amax(cx)
-    CFL_y = np.amax(cy)
-    CFL = max(abs(CFL_x),abs(CFL_y))
-
-    # PPM parabolas
-    px = ppm_parabola(cs_grid,simulation,'x')
-    py = ppm_parabola(cs_grid,simulation,'y')
-
-    # Compute average values of Q (initial condition) at cell pc
-    Q = np.zeros((N+ng, N+ng, nbfaces))
-    gQ = np.zeros((N+ng, N+ng, nbfaces))
-    Q[i0:iend,j0:jend,:] = q0_adv(cs_grid.pc.lon[i0:iend,j0:jend,:], cs_grid.pc.lat[i0:iend,j0:jend,:], simulation)
-
-    # Numerical divergence
-    div_numerical = np.zeros((N+ng, N+ng, nbfaces))
 
     # Compute the Lagrange polynomials
     if cs_grid.projection=="gnomonic_equiangular":
-        lagrange_poly_edge, stencil_edge = wind_edges2center_lagrange_poly(cs_grid, simulation, transformation)
-        lagrange_poly_ghost_pc, stencil_ghost_pc = lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation)
-        lagrange_poly_ghost_edge, stencil_ghost_edge = wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformation)
-    else:
-        lagrange_poly_edge, stencil_edge = None, None 
-        lagrange_poly_ghost_pc, stencil_ghost_pc =  None, None 
-        lagrange_poly_ghost_edge, stencil_ghost_edge = None, None 
+        wind_edges2center_lagrange_poly(cs_grid, simulation)
+        lagrange_poly_ghostcell_pc(cs_grid, simulation)
+        wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation)
 
-    return Q, gQ, div_numerical, px, py, cx, cy, \
-           U_pu, U_pv, lagrange_poly_ghost_pc, stencil_ghost_pc,\
-           lagrange_poly_edge, stencil_edge,\
-           lagrange_poly_ghost_edge, stencil_ghost_edge, CFL
+    # Fill ghost cell - velocity field
+    #edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation,\
+    #    lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc, \
+    #    lagrange_poly_ghost_edge, stencil_ghost_edge)
+
+    simulation.U_pu.ucontra_old[:,:,:] = simulation.U_pu.ucontra[:,:,:]
+    simulation.U_pv.vcontra_old[:,:,:] = simulation.U_pv.vcontra[:,:,:]
+
+    # CFL at edges - x direction
+    simulation.cx = cfl_x(simulation.U_pu.ucontra, cs_grid, simulation)
+
+    # CFL at edges - y direction
+    simulation.cy = cfl_y(simulation.U_pv.vcontra, cs_grid, simulation)
+
+    # CFL number
+    CFL_x = np.amax(simulation.cx)
+    CFL_y = np.amax(simulation.cy)
+    simulation.CFL = max(abs(CFL_x),abs(CFL_y))
+
+    # PPM parabolas
+    simulation.px = ppm_parabola(cs_grid,simulation,'x')
+    simulation.py = ppm_parabola(cs_grid,simulation,'y')
+
+    # Compute average values of Q (initial condition) at cell pc
+    simulation.Q[i0:iend,j0:jend,:] = q0_adv(cs_grid.pc.lon[i0:iend,j0:jend,:], cs_grid.pc.lat[i0:iend,j0:jend,:], simulation)
+    
+    return

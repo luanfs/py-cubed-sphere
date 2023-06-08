@@ -72,20 +72,18 @@ def main():
             # Call divergence test case
             print("Test case 4: Divergence test case.\n")
             dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
-            simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
             plot = True
-            error_analysis_div(simulation, map_projection, plot, transformation,\
-                               showonscreen, gridload)
+            error_analysis_div(vf, map_projection, plot, transformation, showonscreen, gridload)
 
         elif test_case == 5:
             # Call advection test case
             print("Test case 5: Advection test case.\n")
             dt, Tf, tc, ic, vf, recon, dp, opsplit, ret = get_advection_parameters()
-            simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
+            simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ret)
 
             if simulation.tc == 1: # Advection on the sphere simulation
                 plot = True
-                adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, plot, False)
+                adv_sphere(cs_grid, ll_grid, simulation, map_projection, plot, False)
 
             elif simulation.tc == 2: # Convergence analysis
                 plot = False

@@ -29,7 +29,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 3
+    Ntest  = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,14 +57,14 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
 
     # Errors array
     recons = (3,)
-    split = (3,1,1)
-    ets   = (2,3,4)
-    deps  = (1,2,2)
+    split = (3,1,1,1,1)
+    ets   = (2,4,5,2,2)
+    deps  = (1,1,1,2,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    et_names = ['ET-S72', 'ET-PL07', 'ET-Z21', 'ET-Z21-AF']
+    et_names = ['ET-S72', 'ET-PL07', 'ET-Z21', 'ET-Z21-AF', 'ET-Z21-PR']
     error_linf = np.zeros((Ntest, len(recons), len(split)))
     error_l1   = np.zeros((Ntest, len(recons), len(split)))
     error_l2   = np.zeros((Ntest, len(recons), len(split)))
@@ -84,11 +84,13 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
         for recon in recons:
             for i in range(0, Ntest):
                 dt = dts[i]
-                simulation = adv_simulation_par(dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
                 N = int(Nc[i])
 
                 # Create CS mesh
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
+
+
+                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
 
                 # Create the latlon mesh (for plotting)
                 ll_grid = latlon_grid(Nlat, Nlon)
@@ -98,7 +100,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
                 print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', simulation.recon_name,', split=', simulation.opsplit_name, ', dp=', simulation.dp_name, ', et=', simulation.et_name)
 
                 # Get advection error
-                error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, transformation, False, False)
+                error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False, False)
 
                 # Print errors
                 print_errors_simul(error_linf[:,rec,d], error_l1[:,rec,d], error_l2[:,rec,d], i)

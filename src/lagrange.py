@@ -25,7 +25,7 @@ def lagrange_basis(x, nodes, N, j):
 ####################################################################################
 #Compute the Lagrange polynomial basis at the ghost cells centers
 ####################################################################################
-def lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation):
+def lagrange_poly_ghostcell_pc(cs_grid, simulation):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.ng   # Number o ghost cells
     ngl = cs_grid.ngl
@@ -37,7 +37,7 @@ def lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation):
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
-    if transformation == "gnomonic_equiangular":
+    if cs_grid.projection == "gnomonic_equiangular":
         inverse = inverse_equiangular_gnomonic_map
         y_min, y_max = [-pio4, pio4] # Angular coordinates
     else:
@@ -157,13 +157,16 @@ def lagrange_poly_ghostcell_pc(cs_grid, simulation, transformation):
     stencil = [Kmin, Kmax]
     lagrange_poly = [lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south]
 
-    return lagrange_poly, stencil 
+    simulation.stencil_ghost_pc = stencil
+    simulation.lagrange_poly_ghost_pc = lagrange_poly
+
+    return
 
 ####################################################################################
 # Compute the Lagrange polynomial basis needed to interpolate a vector field given in
 # a C grid (contravariant) to the center
 ####################################################################################
-def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
+def wind_edges2center_lagrange_poly(cs_grid, simulation):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.ng
     ngl = cs_grid.ngl
@@ -240,13 +243,16 @@ def wind_edges2center_lagrange_poly(cs_grid, simulation, transformation):
     stencil = [Kmin, Kmax]
     lagrange_poly = [lagrange_poly_x, lagrange_poly_y]
 
-    return lagrange_poly, stencil
+    simulation.lagrange_poly_edge = lagrange_poly
+    simulation.stencil_edge  = stencil
+
+    return
 
 ####################################################################################
 # Compute the Lagrange polynomial basis needed to interpolate a latlon vector field 
 # given at the cell center (including ghost cells) to the ghost cell edges
 ####################################################################################
-def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformation):
+def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation):
     N   = cs_grid.N        # Number of cells in x direction
     ng  = cs_grid.ng
     ngl = cs_grid.ngl
@@ -324,4 +330,7 @@ def wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation, transformati
     stencil = [Kmin, Kmax]
     lagrange_poly = [lagrange_poly_east, lagrange_poly_west, lagrange_poly_north, lagrange_poly_south] 
 
-    return lagrange_poly, stencil
+    simulation.stencil_ghost_edge = stencil
+    simulation.lagrange_poly_ghost_edge = lagrange_poly
+
+    return

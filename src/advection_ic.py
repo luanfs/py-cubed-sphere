@@ -13,13 +13,13 @@ import numpy as np
 import numexpr as ne
 from constants import*
 from sphgeo import sph2cart, cart2sph
-from scipy.special import sph_harm
+from cs_datastruct import ppm_parabola, velocity
 
 ####################################################################################
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, dt, Tf, ic, vf, tc, recon, dp, opsplit, et):
+    def __init__(self, cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, et):
         # Initial condition
         self.ic = ic
 
@@ -125,6 +125,8 @@ class adv_simulation_par:
             self.et_name='ET-Z21'
         elif et==4:
             self.et_name='ET-Z21-AF'
+        elif et==5:
+            self.et_name='ET-Z21-PR'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
             exit()
@@ -147,6 +149,44 @@ class adv_simulation_par:
         else:
             print("Error in adv_simulation_par- invalid test case")
             exit()
+
+        # Variable of the advection model
+        N = cs_grid.N
+        ng = cs_grid.ng
+     
+        # PPM parabolas
+        self.px = None
+        self.py = None
+
+        # average values of Q (initial condition) at cell pc
+        self.Q = np.zeros((N+ng, N+ng, nbfaces))
+        self.gQ = np.zeros((N+ng, N+ng, nbfaces))
+
+        # Numerical divergence
+        self.div = np.zeros((N+ng, N+ng, nbfaces))
+
+        # Velocity at edges
+        self.U_pu = velocity(cs_grid, 'pu')
+        self.U_pv = velocity(cs_grid, 'pv')
+        self.U_pc = velocity(cs_grid, 'pc')
+     
+        # CFL
+        self.cx = np.zeros((N+ng+1, N+ng, nbfaces))
+        self.cy = np.zeros((N+ng, N+ng+1, nbfaces))
+        self.CFL = 0.0
+
+        # Mass
+        self.total_mass0 = 0.0
+        self.total_mass  = 0.0
+        self.mass_change = 0.0
+
+        # Errors
+        self.error_linf, self.error_l1, self.error_l2 = None, None, None
+
+        # Lagrange polynomials
+        self.lagrange_poly_edge, self.stencil_edge = None, None 
+        self.lagrange_poly_ghost_pc, self.stencil_ghost_pc =  None, None 
+        self.lagrange_poly_ghost_edge, self.stencil_ghost_edge = None, None 
 
 ####################################################################################
 # Initial condition

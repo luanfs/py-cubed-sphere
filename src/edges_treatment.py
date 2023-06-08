@@ -9,6 +9,7 @@
 import numpy as np
 import numexpr as ne
 from interpolation import ghost_cells_adjacent_panels, ghost_cell_pc_lagrange_interpolation, ghost_cells_lagrange_interpolation_NS, ghost_cells_lagrange_interpolation_WE
+from interpolation          import ghost_cell_pc_lagrange_interpolation, wind_edges2center_lagrange_interpolation, wind_center2ghostedge_lagrange_interpolation
 
 ####################################################################################
 #  The quadrilateral points are labeled as below
@@ -280,64 +281,98 @@ def average_flux_cube_edges(px, py, cs_grid):
 # This routine fill the halo data using the scheme given in simulation
 # Qx and Qy are scalar fields
 ####################################################################################
-def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, \
-                                      lagrange_poly_ghostcell_pc, stencil_ghost_pc):
+def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation):
 
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
-    elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF': # Uses ghost cells interpolation - using corner ghost cells
-        ghost_cell_pc_lagrange_interpolation(Qx, cs_grid, transformation, simulation,\
-                                             lagrange_poly_ghostcell_pc, stencil_ghost_pc)
+    elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF'\
+        or simulation.et_name=='ET-Z21-PR': # Uses ghost cells interpolation - using corner ghost cells
+        ghost_cell_pc_lagrange_interpolation(Qx, cs_grid, simulation)
 
 ####################################################################################
 # This routine fill the halo data with the scheme given in simulation
 # u and v are components of the velocity fields at edges
 ####################################################################################
-def edges_ghost_cell_treatment_vector(u, v, cs_grid, simulation):
+def edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation,\
+        lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc, \
+        lagrange_poly_ghost_edge, stencil_ghost_edge):
 
-    #if simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF':
+    if simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF'\
+        or simulation.et_name=='ET-Z21-PR':
+        return
+        # Interpolate the wind to cells pc
+        wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation,\
+        lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc)
 
-    if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
+        Ucontra, Vcontra = np.zeros(np.shape(U_pu.ucontra[:,:,:])), np.zeros(np.shape(U_pv.vcontra[:,:,:]))
+
+        Ucontra[:,:,:] = U_pu.ucontra[:,:,:]
+        Vcontra[:,:,:] = U_pv.vcontra[:,:,:]
+        i0, iend = cs_grid.i0, cs_grid.iend
+        j0, jend = i0,iend
+        N = cs_grid.N
+        ng = cs_grid.ng
+        upc = (U_pu.ucontra[1:,:,:]+U_pu.ucontra[:N+ng,:,:])*0.5
+        vpc = (U_pv.vcontra[:,1:,:]+U_pv.vcontra[:,:N+ng,:])*0.5
+        erroru = np.amax(abs(upc[i0:iend,j0:jend,:]-U_pc.ucontra[i0:iend,j0:jend,:]))
+        errorv = np.amax(abs(vpc[i0:iend,j0:jend,:]-U_pc.vcontra[i0:iend,j0:jend,:]))
+
+        # Interpolate the wind from pc to ghost cells edges
+        wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation,\
+        lagrange_poly_ghost_edge, stencil_ghost_edge)
+
+        #erroru0 = np.amax(abs(Ucontra[0:i0,:,:]-U_pu.ucontra[0:i0,:,:]))
+        #print(Vcontra[0:i0,j0:jend+1,:])
+        error0 = np.amax(abs(Vcontra[0:i0,j0:jend+1,:]-U_pv.vcontra[0:i0,j0:jend+1,:]))
+        error1 = np.amax(abs(Vcontra[iend:,j0:jend+1,:]-U_pv.vcontra[iend:,j0:jend+1,:]))
+        error2 = np.amax(abs(Ucontra[i0:iend+1,0:j0,:]-U_pu.ucontra[i0:iend+1,0:j0,:]))
+        error3 = np.amax(abs(Ucontra[i0:iend+1,jend:,:]-U_pu.ucontra[i0:iend+1,jend:,:]))
+ 
+        #print(erroru, errorv)
+        #print(error0, error1)
+        #print(error2, error3)
+
+    elif simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         if simulation.dp_name == 'RK2':
             i0, iend = cs_grid.i0, cs_grid.iend
             j0, jend = cs_grid.j0, cs_grid.jend
             ngl = cs_grid.ngl
 
             # Panels 0-1,1-2,2-3,3-4
-            u[iend+1,j0:jend,0:3] = u[i0+1,j0:jend,1:4]
-            u[iend+1,j0:jend,3]   = u[i0+1,j0:jend,0]
-            u[i0-1,j0:jend,1:4] = u[iend-1,j0:jend,0:3]
-            u[i0-1,j0:jend,0]   = u[iend-1,j0:jend,3]
+            U_pu.ucontra[iend+1,j0:jend,0:3] = U_pu.ucontra[i0+1,j0:jend,1:4]
+            U_pu.ucontra[iend+1,j0:jend,3]   = U_pu.ucontra[i0+1,j0:jend,0]
+            U_pu.ucontra[i0-1,j0:jend,1:4] = U_pu.ucontra[iend-1,j0:jend,0:3]
+            U_pu.ucontra[i0-1,j0:jend,0]   = U_pu.ucontra[iend-1,j0:jend,3]
 
             # Panels 0-4
-            v[i0:iend,jend+1,0] = v[i0:iend,j0+1,4]
-            v[i0:iend,j0-1,4]   = v[i0:iend,jend-1,0]
+            U_pv.vcontra[i0:iend,jend+1,0] = U_pv.vcontra[i0:iend,j0+1,4]
+            U_pv.vcontra[i0:iend,j0-1,4]   = U_pv.vcontra[i0:iend,jend-1,0]
 
             # Panels 1-4
-            u[iend+1,j0:jend,4] = -v[i0:iend,jend-1,1]
-            v[i0:iend,jend+1,1] = -u[iend-1,j0:jend,4]
+            U_pu.ucontra[iend+1,j0:jend,4] = -U_pv.vcontra[i0:iend,jend-1,1]
+            U_pv.vcontra[i0:iend,jend+1,1] = -U_pu.ucontra[iend-1,j0:jend,4]
 
             # Panels 2-4
-            v[i0:iend,jend+1,4] = -np.flip(v[i0:iend,jend-1,2])
-            v[i0:iend,jend+1,2] = -np.flip(v[i0:iend,jend-1,4])
+            U_pv.vcontra[i0:iend,jend+1,4] = -np.flip(U_pv.vcontra[i0:iend,jend-1,2])
+            U_pv.vcontra[i0:iend,jend+1,2] = -np.flip(U_pv.vcontra[i0:iend,jend-1,4])
 
             # Panels 3-4
-            u[i0-1,j0:jend,4]   = np.flip(v[i0:iend,jend-1,3])
-            v[i0:iend,jend+1,3] = np.flip(u[i0+1,j0:jend,4])
+            U_pu.ucontra[i0-1,j0:jend,4]   = np.flip(U_pv.vcontra[i0:iend,jend-1,3])
+            U_pv.vcontra[i0:iend,jend+1,3] = np.flip(U_pu.ucontra[i0+1,j0:jend,4])
 
             # Panels 0-5
-            v[i0:iend,jend+1,5] = v[i0:iend,j0+1,0]
-            v[i0:iend,j0-1,0]   = v[i0:iend,jend-1,5]
+            U_pv.vcontra[i0:iend,jend+1,5] = U_pv.vcontra[i0:iend,j0+1,0]
+            U_pv.vcontra[i0:iend,j0-1,0]   = U_pv.vcontra[i0:iend,jend-1,5]
 
             # Panels 1-5
-            v[i0:iend,j0-1,1]   = np.flip(u[iend-1,j0:jend,5])
-            u[iend+1,j0:jend,5] = np.flip(v[i0:iend,j0+1,1])
+            U_pv.vcontra[i0:iend,j0-1,1]   = np.flip(U_pu.ucontra[iend-1,j0:jend,5])
+            U_pu.ucontra[iend+1,j0:jend,5] = np.flip(U_pv.vcontra[i0:iend,j0+1,1])
 
             # Panels 2-5
-            v[i0:iend,j0-1,2] = -np.flip(v[i0:iend,j0+1,5])
-            v[i0:iend,j0-1,5] = -np.flip(v[i0:iend,j0+1,2])
+            U_pv.vcontra[i0:iend,j0-1,2] = -np.flip(U_pv.vcontra[i0:iend,j0+1,5])
+            U_pv.vcontra[i0:iend,j0-1,5] = -np.flip(U_pv.vcontra[i0:iend,j0+1,2])
 
             # Average panels 3-5
-            v[i0:iend,j0-1,3] = -u[i0+1,j0:jend,5]
-            u[i0-1,j0:jend,5] = -v[i0:iend,j0+1,3]
+            U_pv.vcontra[i0:iend,j0-1,3] = -U_pu.ucontra[i0+1,j0:jend,5]
+            U_pu.ucontra[i0-1,j0:jend,5] = -U_pv.vcontra[i0:iend,j0+1,3]

@@ -17,8 +17,7 @@ from averaged_velocity  import time_averaged_velocity
 # are the cfl numbers (must be already computed)
 # The divergence is given by px.dF + py.dF
 ####################################################################################
-def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
-               transformation, lagrange_poly_ghost_pc, stencil_ghost_pc):
+def divergence(cs_grid, simulation):
 
     # Interior of the grid
     i0, iend = cs_grid.i0, cs_grid.iend
@@ -31,23 +30,25 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
     metric_tensor = cs_grid.metric_tensor_pc
 
     # Fill ghost cell values - scalar field
-    edges_ghost_cell_treatment_scalar(Q, Q, cs_grid, simulation, transformation, \
-    lagrange_poly_ghost_pc, stencil_ghost_pc)
+    edges_ghost_cell_treatment_scalar(simulation.Q, simulation.Q, cs_grid, simulation)
 
     # Multiply the field Q by metric tensor
-    gQ[:,:,:] = Q[:,:,:]*cs_grid.metric_tensor_pc[:,:,:]
+    simulation.gQ[:,:,:] = simulation.Q[:,:,:]*cs_grid.metric_tensor_pc[:,:,:]
 
     # CFL
-    cx[:,:,:] = cfl_x(U_pu.ucontra_averaged[:,:,:], cs_grid, simulation)
-    cy[:,:,:] = cfl_y(U_pv.vcontra_averaged[:,:,:], cs_grid, simulation)
+    simulation.cx[:,:,:] = cfl_x(simulation.U_pu.ucontra_averaged[:,:,:], cs_grid, simulation)
+    simulation.cy[:,:,:] = cfl_y(simulation.U_pv.vcontra_averaged[:,:,:], cs_grid, simulation)
 
     # compute the fluxes
-    compute_fluxes(Q, Q, px, py, U_pu, U_pv, cx, cy, cs_grid, simulation)
+    compute_fluxes(simulation.Q, simulation.Q, simulation.px, simulation.py, \
+    simulation.U_pu, simulation.U_pv, simulation.cx, simulation.cy, cs_grid, simulation)
 
     # Applies F and G operators in each panel
-    F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
-    G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
-    pxdF, pydF = px.dF, py.dF
+    F_operator(cs_grid, simulation)
+    G_operator(cs_grid, simulation)
+    pxdF, pydF = simulation.px.dF, simulation.py.dF
+    gQ = simulation.gQ
+    Q = simulation.Q
 
     # Splitting scheme
     if simulation.opsplit_name=='SP-AVLT':
@@ -58,8 +59,8 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
 
     elif simulation.opsplit_name=='SP-L04':
         # L04 equations 7 and 8
-        c1x, c2x = cs_grid.metric_tensor_pu[1:,:,:]*cx[1:,:,:], cs_grid.metric_tensor_pu[:N+ng,:,:]*cx[:N+ng,:,:]
-        c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*cy[:,:N+ng,:]
+        c1x, c2x = cs_grid.metric_tensor_pu[1:,:,:]*simulation.cx[1:,:,:], cs_grid.metric_tensor_pu[:N+ng,:,:]*simulation.cx[:N+ng,:,:]
+        c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*simulation.cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*simulation.cy[:,:N+ng,:]
         gQx = ne.evaluate('gQ + 0.5*pxdF + 0.5*(c1x-c2x)*Q')
         gQy = ne.evaluate('gQ + 0.5*pydF + 0.5*(c1y-c2y)*Q')
         # divide by the metric tensor at centers
@@ -67,33 +68,39 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
 
     elif simulation.opsplit_name=='SP-PL07':
         # PL07 - equations 17 and 18
-        c1x, c2x = cs_grid.metric_tensor_pu[1:,:,:]*cx[1:,:,:], cs_grid.metric_tensor_pu[:N+ng,:,:]*cx[:N+ng,:,:]
-        c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*cy[:,:N+ng,:]
+        c1x, c2x = cs_grid.metric_tensor_pu[1:,:,:]*simulation.cx[1:,:,:], cs_grid.metric_tensor_pu[:N+ng,:,:]*simulation.cx[:N+ng,:,:]
+        c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*simulation.cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*simulation.cy[:,:N+ng,:]
         Qx = ne.evaluate('0.5*(Q + (Q + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(Q + (Q + pydF)/(1.0-(c1y-c2y)))')
 
     # applies edge treatment if needed
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07':
         # Fill ghost cell values
-        edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation, transformation, lagrange_poly_ghost_pc, stencil_ghost_pc)
+        edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation)
 
     # Compute the fluxes
-    compute_fluxes(Qy, Qx, px, py, U_pu, U_pv, cx, cy, cs_grid, simulation)
+    compute_fluxes(Qy, Qx, simulation.px, simulation.py,\
+    simulation.U_pu, simulation.U_pv, simulation.cx, simulation.cy, cs_grid, simulation)
 
     # Flux averaging
     if simulation.et_name=='ET-Z21-AF':
-        average_flux_cube_edges(px, py, cs_grid)
-        exit()
+        average_flux_cube_edges(simulation.px, simulation.py, cs_grid)
 
     # Applies F and G operators in each panel again
-    F_operator(px.dF, cx, px.f_upw, cs_grid, simulation)
-    G_operator(py.dF, cy, py.f_upw, cs_grid, simulation)
-
+    F_operator(cs_grid, simulation)
+    G_operator(cs_grid, simulation)
+ 
     # Compute the divergence
-    pxdF = px.dF
-    pydF = py.dF
-    div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
-    #print(np.sum(div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*cs_grid.dx*cs_grid.dx))
+    pxdF = simulation.px.dF
+    pydF = simulation.py.dF
+    simulation.div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
+
+    # Applies mass fixer (project divergence in nullspace)
+    if simulation.et_name=='ET-Z21-PR':
+        m0 = np.sum(simulation.div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:])
+        a2 = np.sum(metric_tensor[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:])
+        simulation.div[i0:iend,j0:jend,:] = simulation.div[i0:iend,j0:jend,:] - metric_tensor[i0:iend,j0:jend,:]*m0/a2
+    #print(np.sum(simulation.div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*cs_grid.dx*cs_grid.dx))
 
 ####################################################################################
 # Flux operator in x direction
@@ -101,7 +108,7 @@ def divergence(Q, gQ, div, U_pu, U_pv, px, py, cx, cy, cs_grid, simulation,\
 # u_edges (velocity in x direction at edges)
 # Formula 2.7 from Lin and Rood 1996
 ####################################################################################
-def F_operator(F, cx, flux_x, cs_grid, simulation):
+def F_operator(cs_grid, simulation):
     N = cs_grid.N
     i0 = cs_grid.i0
     iend = cs_grid.iend
@@ -109,10 +116,10 @@ def F_operator(F, cx, flux_x, cs_grid, simulation):
     dx = cs_grid.dx
     dt = simulation.dt
 
-    f1 = flux_x[i0+1:iend+1,:,:]
-    f2 = flux_x[i0:iend,:,:]
-    F[i0:iend,:,:] = ne.evaluate("-(f1-f2)")
-    F[i0:iend,:,:] = F[i0:iend,:,:]*dt/dx 
+    f1 = simulation.px.f_upw[i0+1:iend+1,:,:]
+    f2 = simulation.px.f_upw[i0:iend,:,:]
+    simulation.px.dF[i0:iend,:,:] = ne.evaluate("-(f1-f2)")
+    simulation.px.dF[i0:iend,:,:] = simulation.px.dF[i0:iend,:,:]*dt/dx 
 
 ####################################################################################
 # Flux operator in y direction
@@ -120,14 +127,14 @@ def F_operator(F, cx, flux_x, cs_grid, simulation):
 # v_edges (velocity in y direction at edges)
 # Formula 2.8 from Lin and Rood 1996
 ####################################################################################
-def G_operator(G, cy, flux_y, cs_grid, simulation):
+def G_operator(cs_grid, simulation):
     M = cs_grid.N
     j0 = cs_grid.j0
     jend = cs_grid.jend
     dy = cs_grid.dy
     dt = simulation.dt
 
-    g1 = flux_y[:,j0+1:jend+1,:]
-    g2 = flux_y[:,j0:jend,:]
-    G[:,j0:jend,:] = ne.evaluate("-(g1-g2)")
-    G[:,j0:jend,:] = G[:,j0:jend,:]*dt/dy
+    g1 = simulation.py.f_upw[:,j0+1:jend+1,:]
+    g2 = simulation.py.f_upw[:,j0:jend,:]
+    simulation.py.dF[:,j0:jend,:] = ne.evaluate("-(g1-g2)")
+    simulation.py.dF[:,j0:jend,:] = simulation.py.dF[:,j0:jend,:]*dt/dy
