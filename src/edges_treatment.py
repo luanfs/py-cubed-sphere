@@ -294,44 +294,15 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation):
 # This routine fill the halo data with the scheme given in simulation
 # u and v are components of the velocity fields at edges
 ####################################################################################
-def edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation,\
-        lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc, \
-        lagrange_poly_ghost_edge, stencil_ghost_edge):
+def edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation):
 
     if simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF'\
         or simulation.et_name=='ET-Z21-PR':
-        return
         # Interpolate the wind to cells pc
-        wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation,\
-        lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc)
-
-        Ucontra, Vcontra = np.zeros(np.shape(U_pu.ucontra[:,:,:])), np.zeros(np.shape(U_pv.vcontra[:,:,:]))
-
-        Ucontra[:,:,:] = U_pu.ucontra[:,:,:]
-        Vcontra[:,:,:] = U_pv.vcontra[:,:,:]
-        i0, iend = cs_grid.i0, cs_grid.iend
-        j0, jend = i0,iend
-        N = cs_grid.N
-        ng = cs_grid.ng
-        upc = (U_pu.ucontra[1:,:,:]+U_pu.ucontra[:N+ng,:,:])*0.5
-        vpc = (U_pv.vcontra[:,1:,:]+U_pv.vcontra[:,:N+ng,:])*0.5
-        erroru = np.amax(abs(upc[i0:iend,j0:jend,:]-U_pc.ucontra[i0:iend,j0:jend,:]))
-        errorv = np.amax(abs(vpc[i0:iend,j0:jend,:]-U_pc.vcontra[i0:iend,j0:jend,:]))
+        wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
         # Interpolate the wind from pc to ghost cells edges
-        wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation,\
-        lagrange_poly_ghost_edge, stencil_ghost_edge)
-
-        #erroru0 = np.amax(abs(Ucontra[0:i0,:,:]-U_pu.ucontra[0:i0,:,:]))
-        #print(Vcontra[0:i0,j0:jend+1,:])
-        error0 = np.amax(abs(Vcontra[0:i0,j0:jend+1,:]-U_pv.vcontra[0:i0,j0:jend+1,:]))
-        error1 = np.amax(abs(Vcontra[iend:,j0:jend+1,:]-U_pv.vcontra[iend:,j0:jend+1,:]))
-        error2 = np.amax(abs(Ucontra[i0:iend+1,0:j0,:]-U_pu.ucontra[i0:iend+1,0:j0,:]))
-        error3 = np.amax(abs(Ucontra[i0:iend+1,jend:,:]-U_pu.ucontra[i0:iend+1,jend:,:]))
- 
-        #print(erroru, errorv)
-        #print(error0, error1)
-        #print(error2, error3)
+        wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
     elif simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         if simulation.dp_name == 'RK2':

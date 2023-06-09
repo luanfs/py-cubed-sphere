@@ -11,6 +11,7 @@ from sphgeo                 import latlon_to_contravariant, contravariant_to_lat
 from cfl                    import cfl_x, cfl_y
 from discrete_operators     import divergence
 from averaged_velocity      import time_averaged_velocity
+from edges_treatment        import edges_ghost_cell_treatment_scalar, edges_ghost_cell_treatment_vector
 
 ####################################################################################
 # This routine computes one advection timestep
@@ -23,8 +24,17 @@ def adv_time_step(cs_grid, simulation, k, t):
     j0   = cs_grid.j0
     jend = cs_grid.jend
 
-    # Compute the velocity need for the departure point
-    time_averaged_velocity(cs_grid, simulation)
+    # Fill ghost cell values - scalar field
+    edges_ghost_cell_treatment_scalar(simulation.Q, simulation.Q, cs_grid, simulation)
+
+    # Updates in velocity - only for time dependent velocity
+    if simulation.vf >= 3:   
+        # Fill ghost cell values - velocity field
+        edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
+            imulation.U_pc, cs_grid, simulation)
+
+        #Compute the velocity need for the departure point
+        time_averaged_velocity(cs_grid, simulation)
 
     # Compute the divergence
     divergence(cs_grid, simulation)

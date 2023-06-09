@@ -11,6 +11,7 @@ from sphgeo                 import latlon_to_contravariant, contravariant_to_lat
 from cfl                    import cfl_x, cfl_y
 from lagrange               import lagrange_poly_ghostcell_pc, wind_edges2center_lagrange_poly, wind_center2ghostedges_lagrange_poly_ghost
 from edges_treatment        import edges_ghost_cell_treatment_vector
+from averaged_velocity      import time_averaged_velocity
 
 ####################################################################################
 # This routine initializates the advection routine variables
@@ -50,7 +51,7 @@ def init_vars_adv(cs_grid, simulation):
     simulation.U_pv.ulon[i0:iend,j0:jend+1,:], simulation.U_pv.vlat[i0:iend,j0:jend+1,:], 
     cs_grid.prod_ex_elon_pv[i0:iend,j0:jend+1,:], cs_grid.prod_ex_elat_pv[i0:iend,j0:jend+1,:],\
     cs_grid.prod_ey_elon_pv[i0:iend,j0:jend+1,:], cs_grid.prod_ey_elat_pv[i0:iend,j0:jend+1,:], cs_grid.determinant_ll2contra_pv[i0:iend,j0:jend+1,:])
-
+    '''
     # Get velocities
     simulation.U_pu.ulon[:,:,:], simulation.U_pu.vlat[:,:,:] = velocity_adv(cs_grid.pu.lon, cs_grid.pu.lat, 0.0, simulation)
     simulation.U_pv.ulon[:,:,:], simulation.U_pv.vlat[:,:,:] = velocity_adv(cs_grid.pv.lon, cs_grid.pv.lat, 0.0, simulation)
@@ -62,7 +63,7 @@ def init_vars_adv(cs_grid, simulation):
     # Convert latlon to contravariant at pv
     simulation.U_pv.ucontra[:,:,:], simulation.U_pv.vcontra[:,:,:] = latlon_to_contravariant(simulation.U_pv.ulon, simulation.U_pv.vlat, cs_grid.prod_ex_elon_pv, cs_grid.prod_ex_elat_pv,\
                                                        cs_grid.prod_ey_elon_pv, cs_grid.prod_ey_elat_pv, cs_grid.determinant_ll2contra_pv)
-
+    '''
     # Compute the Lagrange polynomials
     if cs_grid.projection=="gnomonic_equiangular":
         wind_edges2center_lagrange_poly(cs_grid, simulation)
@@ -70,12 +71,14 @@ def init_vars_adv(cs_grid, simulation):
         wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation)
 
     # Fill ghost cell - velocity field
-    #edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation,\
-    #    lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc, \
-    #    lagrange_poly_ghost_edge, stencil_ghost_edge)
+    edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
+        simulation.U_pc, cs_grid, simulation)
 
     simulation.U_pu.ucontra_old[:,:,:] = simulation.U_pu.ucontra[:,:,:]
     simulation.U_pv.vcontra_old[:,:,:] = simulation.U_pv.vcontra[:,:,:]
+
+    # Initial departure points
+    time_averaged_velocity(cs_grid, simulation)
 
     # CFL at edges - x direction
     simulation.cx = cfl_x(simulation.U_pu.ucontra, cs_grid, simulation)

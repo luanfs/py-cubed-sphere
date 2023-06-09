@@ -8,9 +8,7 @@ import numpy as np
 import numexpr as ne
 from flux               import compute_fluxes
 from cfl                import cfl_x, cfl_y
-from edges_treatment    import edges_ghost_cell_treatment_scalar,\
-average_flux_cube_edges, edges_ghost_cell_treatment_vector, average_parabola_cube_edges
-from averaged_velocity  import time_averaged_velocity
+from edges_treatment    import average_flux_cube_edges, edges_ghost_cell_treatment_scalar
 
 ####################################################################################
 # Given gQ (g = metric tensor), compute div(UgQ), where U = (u,v), and cx and cy
@@ -28,9 +26,6 @@ def divergence(cs_grid, simulation):
     dx = cs_grid.dx
     dy = cs_grid.dy
     metric_tensor = cs_grid.metric_tensor_pc
-
-    # Fill ghost cell values - scalar field
-    edges_ghost_cell_treatment_scalar(simulation.Q, simulation.Q, cs_grid, simulation)
 
     # Multiply the field Q by metric tensor
     simulation.gQ[:,:,:] = simulation.Q[:,:,:]*cs_grid.metric_tensor_pc[:,:,:]
