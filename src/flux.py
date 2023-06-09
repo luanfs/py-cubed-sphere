@@ -43,24 +43,25 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
 
     # Compute the fluxes (formula 1.12 from Collela and Woodward 1984)
     # Flux at left edges
-    c   = cx[i0:iend+1,:,:]
-    q_R = px.q_R[i0-1:iend,:,:]
-    dq  = px.dq[i0-1:iend,:,:]
-    q6  = px.q6[i0-1:iend,:,:]
-    px.f_L[i0:iend+1,:,:] = ne.evaluate("q_R + c*0.5*(q6-dq) - q6*c*c/3.0")
+    upos = U_pu.upos
+    c   = cx[i0:iend+1,:,:][upos]
+    q_R = px.q_R[i0-1:iend,:,:][upos]
+    dq  = px.dq[i0-1:iend,:,:][upos]
+    q6  = px.q6[i0-1:iend,:,:][upos]
+    px.f_L[i0:iend+1,:,:][upos] = ne.evaluate("q_R + c*0.5*(q6-dq) - q6*c*c/3.0")
 
     # Flux at right edges
-    c   = cx[i0:iend+1,:,:]
-    q_L = px.q_L[i0:iend+1,:,:]
-    dq  = px.dq[i0:iend+1,:,:]
-    q6  = px.q6[i0:iend+1,:,:]
-    px.f_R[i0:iend+1,:,:] = ne.evaluate("q_L - c*0.5*(q6+dq) - q6*c*c/3.0")
+    uneg = U_pu.uneg
+    c   = cx[i0:iend+1,:,:][uneg]
+    q_L = px.q_L[i0:iend+1,:,:][uneg]
+    dq  = px.dq[i0:iend+1,:,:][uneg]
+    q6  = px.q6[i0:iend+1,:,:][uneg]
+    px.f_R[i0:iend+1,:,:][uneg] = ne.evaluate("q_L - c*0.5*(q6+dq) - q6*c*c/3.0")
  
     # F - Formula 1.13 from Collela and Woodward 1984)
-    mask = ne.evaluate('cx >= 0')
-    px.f_upw[mask]  = px.f_L[mask]
-    px.f_upw[~mask] = px.f_R[~mask]
-    px.f_upw[:,:,:] = px.f_upw[:,:,:]*U_pu.ucontra_averaged[:,:,:]
+    px.f_upw[i0:iend+1,:,:][upos] = px.f_L[i0:iend+1,:,:][upos]
+    px.f_upw[i0:iend+1,:,:][uneg] = px.f_R[i0:iend+1,:,:][uneg]
+    px.f_upw[i0:iend+1,:,:] = px.f_upw[i0:iend+1,:,:]*U_pu.ucontra_averaged[i0:iend+1,:,:]
 
     # multiply values at edges by metric tensors
     if simulation.et_name == 'ET-S72' or simulation.et_name == 'ET-PL07':
@@ -97,24 +98,25 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
 
     # Compute the fluxes (formula 1.12 from Collela and Woodward 1984)
     # Flux at left edges
-    c   = cy[:,j0:jend+1,:]
-    q_R = py.q_R[:,j0-1:jend,:]
-    dq  = py.dq[:,j0-1:jend,:]
-    q6  = py.q6[:,j0-1:jend,:]
-    py.f_L[:,j0:jend+1,:] = ne.evaluate("q_R + c*0.5*(q6-dq) - q6*c*c/3.0")
+    vpos = U_pv.vpos
+    c   = cy[:,j0:jend+1,:][vpos]
+    q_R = py.q_R[:,j0-1:jend,:][vpos]
+    dq  = py.dq[:,j0-1:jend,:][vpos]
+    q6  = py.q6[:,j0-1:jend,:][vpos]
+    py.f_L[:,j0:jend+1,:][vpos] = ne.evaluate("q_R + c*0.5*(q6-dq) - q6*c*c/3.0")
 
     # Flux at right edges
-    c   = cy[:,j0:jend+1,:]
-    q_L = py.q_L[:,j0:jend+1,:]
-    dq  = py.dq[:,j0:jend+1,:]
-    q6  = py.q6[:,j0:jend+1,:]
-    py.f_R[:,j0:jend+1,:] = ne.evaluate("q_L - c*0.5*(q6+dq) - q6*c*c/3.0")
+    vneg = U_pv.vneg
+    c   = cy[:,j0:jend+1,:][vneg]
+    q_L = py.q_L[:,j0:jend+1,:][vneg]
+    dq  = py.dq[:,j0:jend+1,:][vneg]
+    q6  = py.q6[:,j0:jend+1,:][vneg]
+    py.f_R[:,j0:jend+1,:][vneg] = ne.evaluate("q_L - c*0.5*(q6+dq) - q6*c*c/3.0")
 
     # G - Formula 1.13 from Collela and Woodward 1984)
-    mask = ne.evaluate('cy >= 0')
-    py.f_upw[mask]  = py.f_L[mask]
-    py.f_upw[~mask] = py.f_R[~mask]
-    py.f_upw[:,:,:] = py.f_upw[:,:,:]*U_pv.vcontra_averaged[:,:,:]
+    py.f_upw[:,j0:jend+1,:][vpos] = py.f_L[:,j0:jend+1,:][vpos]
+    py.f_upw[:,j0:jend+1,:][vneg] = py.f_R[:,j0:jend+1,:][vneg]
+    py.f_upw[:,j0:jend+1,:] = py.f_upw[:,j0:jend+1,:]*U_pv.vcontra_averaged[:,j0:jend+1,:]
 
     # multiply values at edges by metric tensors
     if simulation.et_name == 'ET-S72' or simulation.et_name == 'ET-PL07':

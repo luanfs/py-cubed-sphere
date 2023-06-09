@@ -18,35 +18,46 @@ def time_averaged_velocity(cs_grid, simulation):
     N = cs_grid.N
     ng = cs_grid.ng
 
+    u = simulation.U_pu.ucontra[i0:iend+1,:,:]
+    simulation.U_pu.upos = ne.evaluate('u>=0')
+    simulation.U_pu.uneg = ~simulation.U_pu.upos
+
+    v = simulation.U_pv.vcontra[:,j0:jend+1,:]
+    simulation.U_pv.vpos = ne.evaluate('v>=0')
+    simulation.U_pv.vneg = ~simulation.U_pv.vpos
+
     # Compute the velocity needed for the departure point
     if simulation.dp_name == 'RK1':
         simulation.U_pu.ucontra_averaged[:,:,:] = simulation.U_pu.ucontra[:,:,:]
         simulation.U_pv.vcontra_averaged[:,:,:] = simulation.U_pv.vcontra[:,:,:]
 
     elif simulation.dp_name == 'RK2':
-        # Fill ghost cells - velocity field
-        #edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation,\
-        #lagrange_poly_edge, stencil_edge, lagrange_poly_ghost_pc, stencil_ghost_pc, \
-        #lagrange_poly_ghost_edge, stencil_ghost_edge)
         dt = simulation.dt
         dto2 = simulation.dto2
 
         #----------------------------------------------------
+        # x direction
         # Velocity data at edges used for interpolation
-        u_interp = 1.5*simulation.U_pu.ucontra[:,:,:] - 0.5*simulation.U_pu.ucontra_old[:,:,:] # extrapolation for time at n+1/2
+        upos, uneg = simulation.U_pu.upos, simulation.U_pu.uneg
+        u_interp = ne.evaluate('1.5*ucontra - 0.5*ucontra_old', local_dict=vars(simulation.U_pu)) # extrapolation for time at n+1/2
         # Linear interpolation
         a = simulation.U_pu.ucontra[i0:iend+1,:,:]*dto2/cs_grid.dx
-        upos = simulation.U_pu.ucontra[i0:iend+1,:,:]>=0
-        uneg = ~upos
-        simulation.U_pu.ucontra_averaged[i0:iend+1,:,:][upos] = (1.0-a[upos])*u_interp[i0:iend+1,:,:][upos] + a[upos]*u_interp[i0-1:iend,:,:][upos]
-        simulation.U_pu.ucontra_averaged[i0:iend+1,:,:][uneg] = -a[uneg]*u_interp[i0+1:iend+2,:,:][uneg] + (1.0+a[uneg])*u_interp[i0:iend+1,:,:][uneg]
+        ap, an = a[upos], a[uneg]
+        u1, u2 = u_interp[i0-1:iend,:,:][upos], u_interp[i0:iend+1,:,:][upos] 
+        u3, u4 = u_interp[i0:iend+1:,:,:][uneg], u_interp[i0+1:iend+2,:,:][uneg]
+        simulation.U_pu.ucontra_averaged[i0:iend+1,:,:][upos] = ne.evaluate('(1.0-ap)*u2 + ap*u1')
+        simulation.U_pu.ucontra_averaged[i0:iend+1,:,:][uneg] = ne.evaluate('-an*u4 + (1.0+an)*u3')
 
         #----------------------------------------------------
+        # y direction
         # Velocity data at edges used for interpolation
-        v_interp = 1.5*simulation.U_pv.vcontra[:,:,:] - 0.5*simulation.U_pv.vcontra_old[:,:,:] # extrapolation for time at n+1/2
+        vpos, vneg = simulation.U_pv.vpos, simulation.U_pv.vneg
+        v_interp = ne.evaluate('1.5*vcontra - 0.5*vcontra_old', local_dict=vars(simulation.U_pv)) # extrapolation for time at n+1/2
         # Linear interpolation
         a = simulation.U_pv.vcontra[:,j0:jend+1,:]*dto2/cs_grid.dy
-        vpos = simulation.U_pv.vcontra[:,j0:jend+1,:]>=0
-        vneg = ~vpos
-        simulation.U_pv.vcontra_averaged[:,j0:jend+1,:][vpos] = (1.0-a[vpos])*v_interp[:,j0:jend+1,:][vpos] + a[vpos]*v_interp[:,j0-1:jend,:][vpos]
-        simulation.U_pv.vcontra_averaged[:,j0:jend+1,:][vneg] = -a[vneg]*v_interp[:,j0+1:jend+2,:][vneg] + (1.0+a[vneg])*v_interp[:,j0:jend+1,:][vneg]
+        ap, an = a[vpos], a[vneg]
+        v1, v2 = v_interp[:,j0-1:jend,:][vpos], v_interp[:,j0:jend+1,:][vpos]
+        v3, v4 = v_interp[:,j0:jend+1,:][vneg], v_interp[:,j0+1:jend+2,:][vneg]
+        simulation.U_pv.vcontra_averaged[:,j0:jend+1,:][vpos] = ne.evaluate('(1.0-ap)*v2 + ap*v1')
+        simulation.U_pv.vcontra_averaged[:,j0:jend+1,:][vneg] = ne.evaluate('-an*v4 + (1.0+an)*v3')
+

@@ -51,7 +51,6 @@ def init_vars_adv(cs_grid, simulation):
     simulation.U_pv.ulon[i0:iend,j0:jend+1,:], simulation.U_pv.vlat[i0:iend,j0:jend+1,:], 
     cs_grid.prod_ex_elon_pv[i0:iend,j0:jend+1,:], cs_grid.prod_ex_elat_pv[i0:iend,j0:jend+1,:],\
     cs_grid.prod_ey_elon_pv[i0:iend,j0:jend+1,:], cs_grid.prod_ey_elat_pv[i0:iend,j0:jend+1,:], cs_grid.determinant_ll2contra_pv[i0:iend,j0:jend+1,:])
-    '''
     # Get velocities
     simulation.U_pu.ulon[:,:,:], simulation.U_pu.vlat[:,:,:] = velocity_adv(cs_grid.pu.lon, cs_grid.pu.lat, 0.0, simulation)
     simulation.U_pv.ulon[:,:,:], simulation.U_pv.vlat[:,:,:] = velocity_adv(cs_grid.pv.lon, cs_grid.pv.lat, 0.0, simulation)
@@ -63,7 +62,7 @@ def init_vars_adv(cs_grid, simulation):
     # Convert latlon to contravariant at pv
     simulation.U_pv.ucontra[:,:,:], simulation.U_pv.vcontra[:,:,:] = latlon_to_contravariant(simulation.U_pv.ulon, simulation.U_pv.vlat, cs_grid.prod_ex_elon_pv, cs_grid.prod_ex_elat_pv,\
                                                        cs_grid.prod_ey_elon_pv, cs_grid.prod_ey_elat_pv, cs_grid.determinant_ll2contra_pv)
-    '''
+
     # Compute the Lagrange polynomials
     if cs_grid.projection=="gnomonic_equiangular":
         wind_edges2center_lagrange_poly(cs_grid, simulation)

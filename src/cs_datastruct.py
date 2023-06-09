@@ -710,6 +710,9 @@ class velocity:
             self.vcontra = np.zeros((N+1+ng, N+ng, nbfaces))
             self.ucontra_averaged = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
             self.ucontra_old      = np.zeros((N+1+ng, N+ng, nbfaces)) # used for departure point
+
+            self.upos, self.uneg = None, None
+
         elif pos == 'pv':
             self.ulon = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vlat = np.zeros((N+ng, N+1+ng, nbfaces))
@@ -717,6 +720,8 @@ class velocity:
             self.vcontra = np.zeros((N+ng, N+1+ng, nbfaces))
             self.vcontra_averaged = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
             self.vcontra_old      = np.zeros((N+ng, N+1+ng, nbfaces)) # used for departure point
+            self.vpos, self.vneg = None, None
+
         elif pos == 'pc': # Velocity at pc
             self.ulon = np.zeros((N+ng, N+ng, nbfaces))
             self.vlat = np.zeros((N+ng, N+ng, nbfaces))
@@ -724,5 +729,7 @@ class velocity:
             self.vcontra = np.zeros((N+ng, N+ng, nbfaces))
             self.vcontra_averaged = np.zeros((N+ng, N+ng, nbfaces)) # used for departure point
             self.vcontra_old      = np.zeros((N+ng, N+ng, nbfaces)) # used for departure point
+            self.upos, self.uneg = None, None
+            self.vpos, self.vneg = None, None
         else:
             print('ERROR in  velocity class: invalid position, ', pos)

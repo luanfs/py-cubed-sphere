@@ -57,9 +57,9 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
 
     # Errors array
     recons = (3,)
-    split = (3,1,1,1,)
-    ets   = (2,3,4,5,)
-    deps  = (1,1,1,1,)
+    split = (1,1,1,)
+    ets   = (3,4,5,)
+    deps  = (2,2,2,)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
