@@ -368,7 +368,7 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
         Nc[i] = Nc[i-1]*2
 
     # Errors array
-    degrees = (0,1,2,3,4,)
+    degrees = (0,1,2,3,)
     error_linf = np.zeros((Ntest, len(degrees)))
     error_l1   = np.zeros((Ntest, len(degrees)))
     error_l2   = np.zeros((Ntest, len(degrees)))
@@ -446,27 +446,26 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
 
             # Error at ghost cell edges
             # East
-            eu_east = np.amax(abs(U_pv.ucontra[iend:,j0:jend+1,:] - U_pv_exact.ucontra[iend:,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.ucontra[iend:,j0:jend+1,:]))
-            ev_east = np.amax(abs(U_pv.vcontra[iend:,j0:jend+1,:] - U_pv_exact.vcontra[iend:,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.vcontra[iend:,j0:jend+1,:]))
+            eu_east = np.amax(abs(U_pv.ucontra[iend:,j0-1:jend+2,:] - U_pv_exact.ucontra[iend:,j0-1:jend+2,:]))/ np.amax(abs(U_pv_exact.ucontra[iend:,j0-1:jend+2,:]))
+            ev_east = np.amax(abs(U_pv.vcontra[iend:,j0-1:jend+2,:] - U_pv_exact.vcontra[iend:,j0-1:jend+2,:]))/ np.amax(abs(U_pv_exact.vcontra[iend:,j0-1:jend+2,:]))
 
             # West
-            eu_west = np.amax(abs(U_pv.ucontra[:i0,j0:jend+1,:] - U_pv_exact.ucontra[:i0,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.ucontra[:i0,j0:jend+1,:]))
-            ev_west = np.amax(abs(U_pv.vcontra[:i0,j0:jend+1,:] - U_pv_exact.vcontra[:i0,j0:jend+1,:]))/ np.amax(abs(U_pv_exact.vcontra[:i0,j0:jend+1,:]))
+            eu_west = np.amax(abs(U_pv.ucontra[:i0,j0-1:jend+2,:] - U_pv_exact.ucontra[:i0,j0-1:jend+2,:]))/ np.amax(abs(U_pv_exact.ucontra[:i0,j0-1:jend+2,:]))
+            ev_west = np.amax(abs(U_pv.vcontra[:i0,j0-1:jend+2,:] - U_pv_exact.vcontra[:i0,j0-1:jend+2,:]))/ np.amax(abs(U_pv_exact.vcontra[:i0,j0-1:jend+2,:]))
 
             # North
-            eu_north = np.amax(abs(U_pu.ucontra[i0:iend+1,jend:,:] - U_pu_exact.ucontra[i0:iend+1,jend:,:]))/ np.amax(abs(U_pu_exact.ucontra[i0:iend+1,jend:,:]))
-            ev_north = np.amax(abs(U_pu.vcontra[i0:iend+1,iend:,:] - U_pu_exact.vcontra[i0:iend+1,jend:,:]))/ np.amax(abs(U_pu_exact.vcontra[i0:iend+1,jend:,:]))
+            eu_north = np.amax(abs(U_pu.ucontra[i0-1:iend+2,jend:,:] - U_pu_exact.ucontra[i0-1:iend+2,jend:,:]))/ np.amax(abs(U_pu_exact.ucontra[i0-1:iend+2,jend:,:]))
+            ev_north = np.amax(abs(U_pu.vcontra[i0-1:iend+2,iend:,:] - U_pu_exact.vcontra[i0-1:iend+2,jend:,:]))/ np.amax(abs(U_pu_exact.vcontra[i0-1:iend+2,jend:,:]))
 
             # South
-            eu_south = np.amax(abs(U_pu.ucontra[i0:iend+1,:j0,:] - U_pu_exact.ucontra[i0:iend+1,:j0,:]))/ np.amax(abs(U_pu_exact.ucontra[i0:iend+1,:j0,:]))
-            ev_south = np.amax(abs(U_pu.vcontra[i0:iend+1,:j0,:] - U_pu_exact.vcontra[i0:iend+1,:j0,:]))/ np.amax(abs(U_pu_exact.vcontra[i0:iend+1,:j0,:]))
+            eu_south = np.amax(abs(U_pu.ucontra[i0-1:iend+2,:j0,:] - U_pu_exact.ucontra[i0-1:iend+2,:j0,:]))/ np.amax(abs(U_pu_exact.ucontra[i0-1:iend+2,:j0,:]))
+            ev_south = np.amax(abs(U_pu.vcontra[i0-1:iend+2,:j0,:] - U_pu_exact.vcontra[i0-1:iend+2,:j0,:]))/ np.amax(abs(U_pu_exact.vcontra[i0-1:iend+2,:j0,:]))
 
             e_east = max(eu_east, ev_east)
             e_west = max(eu_west, ev_west)
             e_north = max(eu_north, ev_north)
             e_south = max(eu_south, ev_south)
             e_edges = max(e_east, e_west, e_north, e_south)
-
             error_linf[i,d] = e_edges
             #error_linf[i,d] = e_pc
             # Print errors

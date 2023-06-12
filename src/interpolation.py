@@ -565,7 +565,7 @@ def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simu
     interpd_u_south = np.zeros((N+ng, ngl, nbfaces, order))
     interpd_v_south = np.zeros((N+ng, ngl, nbfaces, order))
 
-    for j in range(j0, jend+1):
+    for j in range(j0-1, jend+2):
         for i in range(0, ngl):
             for p in range(0, nbfaces):
                 interpd_u_east[i,j,p,:] = U_pc.ulon[iend+i,Kmin[j]:Kmax[j]+1,p]
@@ -618,4 +618,37 @@ def wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simu
                             cs_grid.prod_ey_elon_pu[i0:iend+1,:j0,:], cs_grid.prod_ey_elat_pu[i0:iend+1,:j0,:],\
                             cs_grid.determinant_ll2contra_pu[i0:iend+1,:j0,:])
 
+    # Interpolation needed for RK2 departure point scheme
+    a1, a2 = 9.0/16.0, -1.0/16.0
+    U_pu.ulon[i0-1,:,:] = a1*(U_pc.ulon[i0-2,:,:]+U_pc.ulon[i0-1,:,:]) + a2*(U_pc.ulon[i0,:,:]+U_pc.ulon[i0-3,:,:])
+    U_pu.vlat[i0-1,:,:] = a1*(U_pc.vlat[i0-2,:,:]+U_pc.vlat[i0-1,:,:]) + a2*(U_pc.vlat[i0,:,:]+U_pc.vlat[i0-3,:,:])
+    U_pu.ucontra[i0-1,:,:], U_pu.vcontra[i0-1,:,:] =\
+    latlon_to_contravariant(U_pu.ulon[i0-1,:,:], U_pu.vlat[i0-1,:,:],\
+    cs_grid.prod_ex_elon_pu[i0-1,:,:], cs_grid.prod_ex_elat_pu[i0-1,:,:],\
+    cs_grid.prod_ey_elon_pu[i0-1,:,:], cs_grid.prod_ey_elat_pu[i0-1,:,:],\
+    cs_grid.determinant_ll2contra_pu[i0-1,:,:])
+
+    U_pu.ulon[iend+1,:,:] = a1*(U_pc.ulon[iend,:,:]+U_pc.ulon[iend+1,:,:]) + a2*(U_pc.ulon[iend-1,:,:]+U_pc.ulon[iend+2,:,:])
+    U_pu.vlat[iend+1,:,:] = a1*(U_pc.vlat[iend,:,:]+U_pc.vlat[iend+1,:,:]) + a2*(U_pc.vlat[iend-1,:,:]+U_pc.vlat[iend+2,:,:])
+    U_pu.ucontra[iend+1,:,:], U_pu.vcontra[iend+1,:,:] =\
+    latlon_to_contravariant(U_pu.ulon[iend+1,:,:], U_pu.vlat[iend+1,:,:],\
+    cs_grid.prod_ex_elon_pu[iend+1,:,:], cs_grid.prod_ex_elat_pu[iend+1,:,:],\
+    cs_grid.prod_ey_elon_pu[iend+1,:,:], cs_grid.prod_ey_elat_pu[iend+1,:,:],\
+    cs_grid.determinant_ll2contra_pu[iend+1,:,:])
+
+    U_pv.ulon[:,j0-1,:] = a1*(U_pc.ulon[:,j0-2,:]+U_pc.ulon[:,j0-1,:]) + a2*(U_pc.ulon[:,j0,:]+U_pc.ulon[:,j0-3,:])
+    U_pv.vlat[:,j0-1,:] = a1*(U_pc.vlat[:,j0-2,:]+U_pc.vlat[:,j0-1,:]) + a2*(U_pc.vlat[:,j0,:]+U_pc.vlat[:,j0-3,:])
+    U_pv.ucontra[:,j0-1,:], U_pv.vcontra[:,j0-1,:] =\
+    latlon_to_contravariant(U_pv.ulon[:,j0-1,:], U_pv.vlat[:,j0-1,:],\
+    cs_grid.prod_ex_elon_pv[:,j0-1,:], cs_grid.prod_ex_elat_pv[:,j0-1,:],\
+    cs_grid.prod_ey_elon_pv[:,j0-1,:], cs_grid.prod_ey_elat_pv[:,j0-1,:],\
+    cs_grid.determinant_ll2contra_pv[:,j0-1,:])
+
+    U_pv.ulon[:,jend+1,:] = a1*(U_pc.ulon[:,jend,:]+U_pc.ulon[:,jend+1,:]) + a2*(U_pc.ulon[:,jend-1,:]+U_pc.ulon[:,jend+2,:])
+    U_pv.vlat[:,jend+1,:] = a1*(U_pc.vlat[:,jend,:]+U_pc.vlat[:,jend+1,:]) + a2*(U_pc.vlat[:,jend-1,:]+U_pc.vlat[:,iend+2,:])
+    U_pv.ucontra[:,jend+1,:], U_pv.vcontra[:,jend+1,:] =\
+    latlon_to_contravariant(U_pv.ulon[:,jend+1,:], U_pv.vlat[:,jend+1,:],\
+    cs_grid.prod_ex_elon_pv[:,jend+1,:], cs_grid.prod_ex_elat_pv[:,jend+1,:],\
+    cs_grid.prod_ey_elon_pv[:,jend+1,:], cs_grid.prod_ey_elat_pv[:,jend+1,:],\
+    cs_grid.determinant_ll2contra_pv[:,jend+1,:])
 

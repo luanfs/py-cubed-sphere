@@ -30,8 +30,8 @@ def adv_time_step(cs_grid, simulation, k, t):
     # Updates in velocity - only for time dependent velocity
     if simulation.vf >= 3:   
         # Fill ghost cell values - velocity field
-        edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
-            imulation.U_pc, cs_grid, simulation)
+        #edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
+        #    imulation.U_pc, cs_grid, simulation)
 
         #Compute the velocity need for the departure point
         time_averaged_velocity(cs_grid, simulation)
