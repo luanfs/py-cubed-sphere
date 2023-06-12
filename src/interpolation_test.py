@@ -17,8 +17,8 @@ from interpolation          import ll2cs, nearest_neighbour
 from cs_transform           import metric_tensor, inverse_equiangular_gnomonic_map
 from reconstruction_1d      import ppm_reconstruction
 from edges_treatment        import edges_ghost_cell_treatment_scalar
-from lagrange               import lagrange_poly_ghostcell_pc, wind_edges2center_lagrange_poly, wind_center2ghostedges_lagrange_poly_ghost
-from interpolation          import ghost_cell_pc_lagrange_interpolation, wind_edges2center_lagrange_interpolation, wind_center2ghostedge_lagrange_interpolation
+from lagrange               import lagrange_poly_ghostcell_pc
+from interpolation          import ghost_cell_pc_lagrange_interpolation, wind_edges2center_cubic_interpolation, wind_center2ghostedge_cubic_interpolation
 from advection_ic           import velocity_adv
 import os.path
 
@@ -221,7 +221,7 @@ def error_analysis_vf_interpolation_centers(vf, map_projection, transformation, 
         Nc[i] = Nc[i-1]*2
 
     # Errors array
-    degrees = (0,1,2,3,)
+    degrees = (0,1,2,3,4)
     error_linf = np.zeros((Ntest, len(degrees)))
     error_l1   = np.zeros((Ntest, len(degrees)))
     error_l2   = np.zeros((Ntest, len(degrees)))
@@ -357,7 +357,7 @@ def error_analysis_vf_interpolation_centers(vf, map_projection, transformation, 
 def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformation, showonscreen,\
                                     gridload):
     # Number of tests
-    Ntest = 6
+    Ntest = 5
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -430,15 +430,14 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
 
             # Compute the Lagrange polynomials
             lagrange_poly_ghostcell_pc(cs_grid, simulation)
-            wind_edges2center_lagrange_poly(cs_grid, simulation)
-            wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation)
+            #wind_edges2center_lagrange_poly(cs_grid, simulation)
+            #wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation)
 
             # Interpolate the wind to cells pc
-            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
+            wind_edges2center_cubic_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
             # Interpolate the wind from pc to ghost cells edges
-            wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
-
+            wind_center2ghostedge_cubic_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
             # Error at pc
             eu = np.amax(abs(U_pc.ulon-U_pc_exact.ulon))#/np.amax(abs(U_pc_exact.ulon))
             ev = np.amax(abs(U_pc.vlat-U_pc_exact.vlat))#/np.amax(abs(U_pc_exact.vlat))
@@ -466,6 +465,7 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
             e_north = max(eu_north, ev_north)
             e_south = max(eu_south, ev_south)
             e_edges = max(e_east, e_west, e_north, e_south)
+
             error_linf[i,d] = e_edges
             #error_linf[i,d] = e_pc
             # Print errors

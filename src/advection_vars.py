@@ -54,9 +54,7 @@ def init_vars_adv(cs_grid, simulation):
 
     # Compute the Lagrange polynomials
     if cs_grid.projection=="gnomonic_equiangular":
-        wind_edges2center_lagrange_poly(cs_grid, simulation)
         lagrange_poly_ghostcell_pc(cs_grid, simulation)
-        wind_center2ghostedges_lagrange_poly_ghost(cs_grid, simulation)
 
     # Fill ghost cell - velocity field
     edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \

@@ -8,8 +8,8 @@
 
 import numpy as np
 import numexpr as ne
-from interpolation import ghost_cells_adjacent_panels, ghost_cell_pc_lagrange_interpolation, ghost_cells_lagrange_interpolation_NS, ghost_cells_lagrange_interpolation_WE
-from interpolation          import ghost_cell_pc_lagrange_interpolation, wind_edges2center_lagrange_interpolation, wind_center2ghostedge_lagrange_interpolation
+from interpolation import ghost_cells_adjacent_panels, ghost_cell_pc_lagrange_interpolation
+from interpolation import wind_edges2center_cubic_interpolation, wind_center2ghostedge_cubic_interpolation
 
 ####################################################################################
 #  The quadrilateral points are labeled as below
@@ -299,10 +299,10 @@ def edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation):
     if simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF'\
         or simulation.et_name=='ET-Z21-PR':
         # Interpolate the wind to cells pc
-        wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
+        wind_edges2center_cubic_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
         # Interpolate the wind from pc to ghost cells edges
-        wind_center2ghostedge_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
+        wind_center2ghostedge_cubic_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 
     elif simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         if simulation.dp_name == 'RK2':

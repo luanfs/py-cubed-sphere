@@ -184,9 +184,7 @@ class adv_simulation_par:
         self.error_linf, self.error_l1, self.error_l2 = None, None, None
 
         # Lagrange polynomials
-        self.lagrange_poly_edge, self.stencil_edge = None, None 
         self.lagrange_poly_ghost_pc, self.stencil_ghost_pc =  None, None 
-        self.lagrange_poly_ghost_edge, self.stencil_ghost_edge = None, None 
 
 ####################################################################################
 # Initial condition
