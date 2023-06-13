@@ -56,6 +56,8 @@ class adv_simulation_par:
             name = 'Gaussian hill'
         elif ic == 3:
             name = 'Two gaussian hills'
+        elif ic == 4:
+            name = 'Steady flow' 
         else:
             print("Error in adv_simulation_par - invalid initial condition")
             exit()
@@ -111,7 +113,7 @@ class adv_simulation_par:
         elif opsplit == 2:
             opsplit_name = 'SP-L04'  # Splitting from L04 paper
         elif opsplit == 3:
-            opsplit_name = 'SP-PL07' #Splitting from Putman and Lin 07 paper
+            opsplit_name = 'SP-PL07' # Splitting from Putman and Lin 07 paper
         else:
            print("Error in adv_simulation_par - invalid operator splitting method")
            exit()
@@ -257,6 +259,17 @@ def qexact_adv(lon, lat, t, simulation):
         X2, Y2, Z2 = sph2cart(lon2, lat2)
         b0 = 5.0
         q = np.exp(-b0*((X-X1)**2+ (Y-Y1)**2 + (Z-Z1)**2)) + np.exp(-b0*((X-X2)**2+ (Y-Y2)**2 + (Z-Z2)**2))
+
+    # Steady flow from Williamson et al 92 paper
+    elif simulation.ic == 4:
+        if simulation.vf == 2:
+            alpha = -45.0*deg2rad # Rotation angle
+        else:
+            alpha = 0.0 # Rotation angle
+        u0 = 2.0*pi/5.0         # Wind speed
+        Omega = rotation_speed
+        f = (-np.cos(lon)*np.cos(lat)*np.sin(alpha) + np.sin(lat)*np.cos(alpha))
+        q = 1.0 - f*f
     else:
         print('Invalid initial condition.\n')
         exit()

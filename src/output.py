@@ -84,9 +84,9 @@ def output_adv(cs_grid, ll_grid, simulation,\
                 else:
                     qmin = -0.2
                     qmax =  3.5
-                #if simulation.ic == 1:
-                #    qmin = 0.99
-                #    qmax = 1.01
+                if simulation.ic == 4:
+                    qmin = np.amin(q.f)
+                    qmax = np.amax(q.f)
 
                 colormap = 'jet'
                 q_min = str("{:.2e}".format(np.amin(q.f)))
