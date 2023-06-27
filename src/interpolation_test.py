@@ -508,7 +508,7 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
 ####################################################################################
 def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridload):
     # Number of tests
-    Ntest = 6
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -519,9 +519,9 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
         Nc[i]  = Nc[i-1]*2
 
     # Errors array
-    recons = (1,)
+    recons = (3,4)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
-    et_names = ['ET-S72','ET-PL07','ET-Z21']
+    et_names = ['ET-S72','ET-PL07','ET-ZA22']
 
     if transformation == 'gnomonic_equiangular':
         ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
@@ -618,13 +618,13 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
                 #print(emax_abs)
                 #emin, emax = np.amin(e_ll), np.amax(e_ll)
                 name = 'recon_q_ic_'+str(simulation.ic)+'_recon'+simulation.recon_name\
-                +'_et'+str(simulation.edge_treatment)
+                +'_et'+str(simulation.et_name)
                 filename = 'reconstruction error, ic='+ str(simulation.ic)+\
                 ', recon='+simulation.recon_name+', '+str(simulation.et_name)+', N='+str(cs_grid.N)
                 plot_scalar_field(e_ll, name, cs_grid, ll_grid, map_projection, colormap, emin, emax, filename)
             rec = rec+1
         ET = ET + 1
-    exit()
+
     # Outputs
     # plot errors for different all schemes in  different norms
     error_list = [error_linf, error_l1, error_l2]
@@ -698,7 +698,7 @@ class recon_simulation_par:
         elif et==2:
             self.et_name='ET-PL07'
         elif et==3:
-            self.et_name='ET-Z21'
+            self.et_name='ET-ZA22'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
             exit()

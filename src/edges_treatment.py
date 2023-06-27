@@ -286,8 +286,8 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation):
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07': # Uses adjacent cells values
         ghost_cells_adjacent_panels(Qx, Qy, cs_grid, simulation)
 
-    elif simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF'\
-        or simulation.et_name=='ET-Z21-PR': # Uses ghost cells interpolation - using corner ghost cells
+    elif simulation.et_name=='ET-ZA22' or simulation.et_name=='ET-ZA22-AF'\
+        or simulation.et_name=='ET-ZA22-PR': # Uses ghost cells interpolation - using corner ghost cells
         ghost_cell_pc_lagrange_interpolation(Qx, cs_grid, simulation)
 
 ####################################################################################
@@ -296,8 +296,8 @@ def edges_ghost_cell_treatment_scalar(Qx, Qy, cs_grid, simulation):
 ####################################################################################
 def edges_ghost_cell_treatment_vector(U_pu, U_pv, U_pc, cs_grid, simulation):
 
-    if simulation.et_name=='ET-Z21' or simulation.et_name=='ET-Z21-AF'\
-        or simulation.et_name=='ET-Z21-PR':
+    if simulation.et_name=='ET-ZA22' or simulation.et_name=='ET-ZA22-AF'\
+        or simulation.et_name=='ET-ZA22-PR':
         # Interpolate the wind to cells pc
         wind_edges2center_cubic_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
 

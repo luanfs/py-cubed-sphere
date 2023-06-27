@@ -18,7 +18,7 @@ from sphgeo import*
 # This routine plots the cubed-sphere grid.
 ####################################################################################
 # Figure format
-#fig_format = 'eps'
+#fig_format = 'pdf'
 fig_format = 'png'
 def plot_grid(grid, map_projection):
     # Figure resolution
@@ -35,14 +35,14 @@ def plot_grid(grid, map_projection):
     plot_gc = False
 
     # Plot C grid points?
-    plot_cgrid = False
+    plot_cgrid = True
 
     # Plot tangent vectors?
     plot_tg = False
 
     # Color of each cubed panel
-    colors = ('blue','red','blue','red','green','green')
-    #colors = ('black','black','black','black','black','black')
+    #colors = ('blue','red','blue','red','green','green')
+    colors = ('black','black','black','black','black','black')
 
     print("--------------------------------------------------------")
     print('Plotting '+grid.name+' cubed-sphere grid using '+map_projection+' projection...')
@@ -90,10 +90,18 @@ def plot_grid(grid, map_projection):
         D_lon, D_lat = lon[i0:iend, j0+1:jend+1], lat[i0:iend, j0+1:jend+1]
         D_lon, D_lat = np.ndarray.flatten(D_lon),np.ndarray.flatten(D_lat)
 
-        plt.plot([A_lon, B_lon], [A_lat, B_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
-        plt.plot([B_lon, C_lon], [B_lat, C_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
-        plt.plot([C_lon, D_lon], [C_lat, D_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
-        plt.plot([D_lon, A_lon], [D_lat, A_lat], '-', linewidth=0.75, color=colors[p], transform=ccrs.Geodetic())
+        if plot_cgrid:
+            if p==0:
+                lw = 0.75
+            else:
+                lw = 0.10
+        else:
+            lw = 0.75
+
+        plt.plot([A_lon, B_lon], [A_lat, B_lat], '-', linewidth=lw, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([B_lon, C_lon], [B_lat, C_lat], '-', linewidth=lw, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([C_lon, D_lon], [C_lat, D_lat], '-', linewidth=lw, color=colors[p], transform=ccrs.Geodetic())
+        plt.plot([D_lon, A_lon], [D_lat, A_lat], '-', linewidth=lw, color=colors[p], transform=ccrs.Geodetic())
 
         if plot_gc:
             if p==0:
@@ -162,23 +170,54 @@ def plot_grid(grid, map_projection):
         elif plot_cgrid:
             if p==0:
                 A_lon, A_lat = lonc[:,:], latc[:,:]
-                for i in range(i0, iend):
-                    for j in range(j0, jend):
-                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'black', transform=ccrs.Geodetic())
+                for i in range(1, Nt-1):
+                    for j in range(1, Nt-1):
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='.',color = 'black', transform=ccrs.Geodetic())
 
-                A_lon, A_lat = lon_pu[:,:], lat_pu[:,:]
-                for i in range(i0, iend+1):
-                    for j in range(j0, jend):
-                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'blue', transform=ccrs.Geodetic())
+                #A_lon, A_lat = lon_pu[:,:], lat_pu[:,:]
+                #for i in range(i0, iend+1):
+                #    for j in range(j0, jend):
+                #            plt.plot(A_lon[i,j], A_lat[i,j], marker='.',color = 'blue', transform=ccrs.Geodetic())
+
+                #for i in range(i0, iend+1):
+                #    for j in range(0,3):
+                #            plt.plot(A_lon[i,j0-j-1], A_lat[i,j0-j-1], marker='v',color = 'blue', transform=ccrs.Geodetic())
+                #            plt.plot(A_lon[i,jend+j], A_lat[i,jend+j], marker='v',color = 'blue', transform=ccrs.Geodetic())
+
+                #for j in range(j0-3, jend+3):
+                #    plt.plot(A_lon[i0-1,j], A_lat[i0-1,j], marker='s',color = 'blue', transform=ccrs.Geodetic())
+                #    plt.plot(A_lon[iend+1,j], A_lat[iend+1,j], marker='s',color = 'blue', transform=ccrs.Geodetic())
 
                 A_lon, A_lat = lon_pv[:,:], lat_pv[:,:]
                 for i in range(i0, iend):
                     for j in range(j0, jend+1):
-                            plt.plot(A_lon[i,j], A_lat[i,j], marker='o',color = 'red', transform=ccrs.Geodetic())
+                            plt.plot(A_lon[i,j], A_lat[i,j], marker='.',color = 'red', transform=ccrs.Geodetic())
+
+                for j in range(j0, jend+1):
+                    for i in range(0,3):
+                            plt.plot(A_lon[i0-i-1,j], A_lat[i0-i-1,j], marker='v',color = 'red', transform=ccrs.Geodetic())
+                            plt.plot(A_lon[iend+i,j], A_lat[iend+i,j], marker='v',color = 'red', transform=ccrs.Geodetic())
+
+                for i in range(j0-3, jend+3):
+                    plt.plot(A_lon[i,j0-1], A_lat[i,j0-1], marker='s',color = 'red', transform=ccrs.Geodetic())
+                    plt.plot(A_lon[i,jend+1], A_lat[i,jend+1], marker='s',color = 'red', transform=ccrs.Geodetic())
 
 
-                plt.xlim(-50,50)
-                plt.ylim(-50,50)
+                A_lon, A_lat = lon[:,:], lat[:,:]
+                for i in range(1, Nt):
+                    for j in range(1, Nt):
+                        if (i<i0 or i>iend) or (j<j0 or j>jend):
+                            if i<iend:
+                                plt.plot([A_lon[i,j], A_lon[i+1,j]], [A_lat[i,j], A_lat[i+1,j]], '-', linewidth=0.75, color='cyan', transform=ccrs.Geodetic())
+                            if j<jend:
+                                plt.plot([A_lon[i,j], A_lon[i,j+1]], [A_lat[i,j], A_lat[i,j+1]], '-', linewidth=0.75, color='cyan', transform=ccrs.Geodetic())
+                            if i>i0:
+                                plt.plot([A_lon[i-1,j], A_lon[i,j]], [A_lat[i-1,j], A_lat[i,j]], '-', linewidth=0.75, color='cyan', transform=ccrs.Geodetic())
+                            if j>j0:
+                                plt.plot([A_lon[i,j], A_lon[i,j-1]], [A_lat[i,j], A_lat[i,j-1]], '-', linewidth=0.75, color='cyan', transform=ccrs.Geodetic())
+ 
+                plt.xlim(-73,73)
+                plt.ylim(-73,73)
 
         elif plot_tg:
             # Edges in x direction
@@ -287,6 +326,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         qmin = np.amin(field)
         qmax = np.amax(field)
 
+
     # add title
     if filename:
         plt.title(filename)
@@ -297,6 +337,8 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     #exit()
     # Plot the scalar field
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
+
+    ax.coastlines()
 
     # Plot colorbar
     plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.1e')
