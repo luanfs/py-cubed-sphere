@@ -34,7 +34,7 @@ def average_parabola_cube_edges(px, py, cs_grid):
     iend = cs_grid.iend
     jend = cs_grid.jend
 
-    if cs_grid.projection != 'overlaped':
+    if cs_grid.projection != 'overlapped':
         # Average panels 0-1,1-2,2-3,3-4
         px.q_R[iend-1,j0:jend,0:3] = (px.q_R[iend-1,j0:jend,0:3] + px.q_L[i0,j0:jend,1:4])*0.5
 
@@ -85,7 +85,7 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
     iend = cs_grid.iend
     jend = cs_grid.jend
 
-    if cs_grid.projection != 'overlaped':
+    if cs_grid.projection != 'overlapped':
         # Formula 47 from PL07
         # x direction 
         px.q_L[i0,j0:jend,0:6] = 1.5*Qx[i0,j0:jend,0:6] - 0.5*Qx[i0+1,j0:jend,0:6]
@@ -177,7 +177,7 @@ def edges_extrapolation(Qx, Qy, px, py, cs_grid, simulation):
         py.q_R[i0:iend,j0-1,3] = px.q_L[i0,j0:jend,5]
         py.q_L[i0:iend,j0-1,3] = px.q_R[i0,j0:jend,5]
 
-    elif cs_grid.projection == 'overlaped':
+    elif cs_grid.projection == 'overlapped':
         # Formula 47 from PL07
         # x direction - only panels 4 and 5
         px.q_L[i0,j0:jend,4:6] = 1.5*Qx[i0,j0:jend,4:6] - 0.5*Qx[i0+1,j0:jend,4:6]

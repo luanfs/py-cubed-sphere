@@ -1,14 +1,14 @@
 #Parameters
 #Number of cells N along a coordinates axis (total number of cells is 6*N*N)
 16
-#Kind of grid?  1-equidistant; 2-equiangular; 3-overllaped
+#Kind of grid?  1-equidistant; 2-equiangular; 3-overlapped
 2
 #Loadable grid? 0-No; 1-Yes
 0
 #Show ongoing process details on screen? 0-No; 1-Yes
 1
 #Test case to be done
-4
+1
 #Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------

@@ -35,7 +35,7 @@ def plot_grid(grid, map_projection):
     plot_gc = False
 
     # Plot C grid points?
-    plot_cgrid = True
+    plot_cgrid = False
 
     # Plot tangent vectors?
     plot_tg = False

@@ -45,7 +45,7 @@ class cubed_sphere:
         if gridload:
             # Check if grid file exists
             if not os.path.isfile(self.netcdfdata_filename):
-                if self.projection=='overllaped':
+                if self.projection=='overlapped':
                     print('ERROR in cubed_sphere: couldnt find the grid file to be read: ', self.netcdfdata_filename)
                     exit()
                 elif self.projection=='gnomonic_equidistant' or self.projection=='gnomonic_equiangular':

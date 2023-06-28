@@ -357,7 +357,7 @@ def error_analysis_vf_interpolation_centers(vf, map_projection, transformation, 
 def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformation, showonscreen,\
                                     gridload):
     # Number of tests
-    Ntest = 5
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -368,7 +368,7 @@ def error_analysis_vf_interpolation_ghost_cells(vf, map_projection, transformati
         Nc[i] = Nc[i-1]*2
 
     # Errors array
-    degrees = (0,1,2,3,)
+    degrees = (0,1,2,3,4,)
     error_linf = np.zeros((Ntest, len(degrees)))
     error_l1   = np.zeros((Ntest, len(degrees)))
     error_l2   = np.zeros((Ntest, len(degrees)))
@@ -526,7 +526,7 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
     if transformation == 'gnomonic_equiangular':
         ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
         #ets = (3,) # Edge treatment 3 applies only to equiangular CS
-    elif transformation == 'overllaped':
+    elif transformation == 'overlapped':
         ets = (2,)
     else:
         ets = (1,2)
