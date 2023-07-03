@@ -29,7 +29,7 @@ from plot                   import plot_scalar_field, save_grid_netcdf4
 def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                        gridload):
     # Number of tests
-    Ntest = 6
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,20 +57,22 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
 
     # Errors array
     recons = (3,)
-    split = (1,1,1,1)
-    ets   = (4,4,5,5)
-    deps  = (1,2,1,2)
+    split = (3,3,1,1)
+    ets   = (2,5,5,5)
+    mts   = (2,1,1,1)
+    deps  = (1,1,1,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
     et_names = ['ET-S72', 'ET-PL07', 'ET-ZA22', 'ET-ZA22-AF', 'ET-ZA22-PR']
+    mt_names = ['MT-0', 'MT-PL07']
     error_linf = np.zeros((Ntest, len(recons), len(split)))
     error_l1   = np.zeros((Ntest, len(recons), len(split)))
     error_l2   = np.zeros((Ntest, len(recons), len(split)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, dp, opsplit, et = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, dp, opsplit, et, mt = get_advection_parameters()
 
     # For divergence testing, we consider a constant field
     ic = 1
@@ -80,6 +82,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         dp = deps[d]
         opsplit = split[d]
         ET = ets[d]
+        MT = mts[d]
         rec = 0
         for recon in recons:
             for i in range(0, Ntest):
@@ -90,7 +93,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
 
                 # simulation class 
-                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
+                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET, MT)
 
                 # Save the grid
                 if not(os.path.isfile(cs_grid.netcdfdata_filename)):
@@ -129,7 +132,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         for r in range(0, len(recons)):
             for d in range(0, len(deps)):
                 errors.append(error[:,r,d])
-                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1]+'/'+str(dp_names[deps[d]-1]))
+                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'+str(dp_names[deps[d]-1]))
 
         title = 'Divergence error, vf='+ str(simulation.vf)+', norm='+norm_title[e]
         filename = graphdir+'cs_div_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'

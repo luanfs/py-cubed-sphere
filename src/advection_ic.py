@@ -19,7 +19,7 @@ from cs_datastruct import ppm_parabola, velocity
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, et):
+    def __init__(self, cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, et, mt):
         # Initial condition
         self.ic = ic
 
@@ -76,7 +76,7 @@ class adv_simulation_par:
         elif vf == 6:
             name = 'Trigonometric vector field'
         else:
-            print("Error in div_simulation_par - invalid vector field")
+            print("Error in adv_simulation_par - invalid vector field")
             exit()
 
         # IC name
@@ -104,7 +104,7 @@ class adv_simulation_par:
         elif dp == 2:
             dp_name = 'RK2'
         else:
-           print("Error in simulation_adv_par_1d - invalid departure point scheme", dp)
+           print("Error in simulation_adv_par - invalid departure point scheme", dp)
            exit()
 
         # Operator splitting scheme
@@ -130,9 +130,19 @@ class adv_simulation_par:
         elif et==5:
             self.et_name='ET-ZA22-PR'
         else:
-            print('ERROR in recon_simulation_par: invalid ET')
+            print('ERROR in adv_simulation_par: invalid ET')
             exit()
         self.edge_treatment = et
+
+        # Metric tensor treatment
+        if mt==1:
+            self.mt_name='MT-0'
+        elif mt==2:
+            self.mt_name='MT-PL07'
+        else:
+            print('ERROR in adv_simulation_par: invalid MT')
+            exit()
+        self.metric_tensor = mt
 
         # Splitting name
         self.opsplit_name = opsplit_name

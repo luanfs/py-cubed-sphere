@@ -2,7 +2,7 @@
 #Total period definition (seconds)
 5
 #Time step (seconds)
-0.0025
+0.002
 #Initial condition
 2
 #Vector field 
@@ -15,8 +15,10 @@
 2
 #Operator splitting (1, 2, 3)
 1
-#Edge treatment (1, 2, 3, 4)
+#Edge treatment (1, 2, 3, 4, 5)
 5
+#Metric tensor treatment (1, 2)
+1
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
 #  case(1) - constant flow

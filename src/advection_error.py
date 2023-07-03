@@ -57,24 +57,22 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
 
     # Errors array
     recons = (3,)
-    split = (3,3,3,1,1)
-    ets   = (2,4,5,4,5,)
-    deps  = (1,1,1,2,2,)
-    #split = (1,)
-    #ets   = (5,)
-    #deps  = (2,)
-
+    split = (3,3,1,1)
+    ets   = (2,5,5,5)
+    mts   = (2,1,1,1)
+    deps  = (1,1,1,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
     et_names = ['ET-S72', 'ET-PL07', 'ET-ZA22', 'ET-ZA22-AF', 'ET-ZA22-PR']
+    mt_names = ['MT-0', 'MT-PL07']
     error_linf = np.zeros((Ntest, len(recons), len(split)))
     error_l1   = np.zeros((Ntest, len(recons), len(split)))
     error_l2   = np.zeros((Ntest, len(recons), len(split)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, dp, opsplit, et = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, dp, opsplit, et, mt = get_advection_parameters()
 
     # Period for all tests
     Tf = 5
@@ -84,6 +82,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
         dp = deps[d]
         opsplit = split[d]
         ET = ets[d]
+        MT = mts[d]
         rec = 0
         for recon in recons:
             for i in range(0, Ntest):
@@ -94,7 +93,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
 
 
-                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET)
+                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET, MT)
 
                 # Create the latlon mesh (for plotting)
                 ll_grid = latlon_grid(Nlat, Nlon)

@@ -95,7 +95,6 @@ def divergence(cs_grid, simulation):
         m0 = np.sum(simulation.div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:])
         a2 = np.sum(metric_tensor[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:])
         simulation.div[i0:iend,j0:jend,:] = simulation.div[i0:iend,j0:jend,:] - metric_tensor[i0:iend,j0:jend,:]*m0/a2
-    #print(np.sum(simulation.div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:]*cs_grid.dx*cs_grid.dx))
 
 ####################################################################################
 # Flux operator in x direction

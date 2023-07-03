@@ -25,13 +25,16 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
     i0, iend = cs_grid.i0, cs_grid.iend
 
     # multiply values at edges by metric tensors
-    if simulation.et_name == 'ET-ZA22' or simulation.et_name == 'ET-ZA22-AF'\
-        or simulation.et_name=='ET-ZA22-PR':
+    if simulation.mt_name == 'MT-0':
         px.q_L[i0-1:iend+1,:,:] = px.q_L[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0-1:iend+1,:,:]
         px.q_R[i0-1:iend+1,:,:] = px.q_R[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pu[i0:iend+2,:,:]
         q = Qx[i0-1:iend+1,:,:]*cs_grid.metric_tensor_pc[i0-1:iend+1,:,:]
-    else: 
+
+    elif simulation.mt_name == 'MT-PL07':
         q = Qx[i0-1:iend+1,:,:]
+
+    else:
+        print("ERROR in numerical_flux_ppm_x: invalyd mt: ", simulation.mt_name)
 
     # Compute the polynomial coefs
     # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]
@@ -79,14 +82,16 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
     dt = simulation.dt
 
     # multiply values at edges by metric tensors
-    if simulation.et_name == 'ET-ZA22' or simulation.et_name == 'ET-ZA22-AF'\
-        or simulation.et_name=='ET-ZA22-PR':
+    if simulation.mt_name == 'MT-0':
         py.q_L[:,j0-1:jend+1,:] = py.q_L[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0-1:jend+1,:]
         py.q_R[:,j0-1:jend+1,:] = py.q_R[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pv[:,j0:jend+2,:]
         q = Qy[:,j0-1:jend+1,:]*cs_grid.metric_tensor_pc[:,j0-1:jend+1,:]
 
-    else:
+    elif simulation.mt_name == 'MT-PL07':
         q = Qy[:,j0-1:jend+1,:]
+
+    else:
+        print("ERROR in numerical_flux_ppm_y: invalyd mt: ", simulation.mt_name)
 
     # Compute the polynomial coefs
     # q(x) = q_L + z*(dq + q6*(1-z)) z in [0,1]

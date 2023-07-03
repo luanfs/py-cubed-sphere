@@ -338,7 +338,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     # Plot the scalar field
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
-    ax.coastlines()
+    #ax.coastlines()
 
     # Plot colorbar
     plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.1e')
