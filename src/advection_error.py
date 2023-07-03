@@ -29,7 +29,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 4
+    Ntest  = 3
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -57,10 +57,10 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
 
     # Errors array
     recons = (3,)
-    split = (3,3,1,1)
-    ets   = (2,5,5,5)
-    mts   = (2,1,1,1)
-    deps  = (1,1,1,2)
+    split = (3,3,1,1,1,1)
+    ets   = (2,5,5,5,4,4)
+    mts   = (2,1,1,1,1,1)
+    deps  = (1,1,1,2,1,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
@@ -128,7 +128,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
         for r in range(0, len(recons)):
             for d in range(0, len(deps)):
                 errors.append(error[:,r,d])
-                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1]+'/'+str(dp_names[deps[d]-1]))
+                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'+str(dp_names[deps[d]-1]))
 
         title = simulation.title + '- ic=' + str(simulation.ic)+', vf='+ str(simulation.vf)+', norm='+norm_title[e]
         filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'

@@ -73,8 +73,8 @@ def init_vars_adv(cs_grid, simulation):
     simulation.cy = cfl_y(simulation.U_pv.vcontra, cs_grid, simulation)
 
     # CFL number
-    CFL_x = np.amax(simulation.cx)
-    CFL_y = np.amax(simulation.cy)
+    CFL_x = np.amax(simulation.cx[i0:iend+1,:,:])
+    CFL_y = np.amax(simulation.cy[:,j0:jend+1,:])
     simulation.CFL = max(abs(CFL_x),abs(CFL_y))
 
     # PPM parabolas

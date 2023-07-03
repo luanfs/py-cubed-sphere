@@ -270,6 +270,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
         plt.figure(figsize=(1832/dpi, 977/dpi), dpi=dpi)
     elif map_projection == "sphere":
         plateCr = ccrs.Orthographic(central_longitude=0.0, central_latitude=0.0)
+        #plateCr = ccrs.Orthographic(central_longitude=0.25*pi*rad2deg, central_latitude=pi*rad2deg/6.0)
         plt.figure(figsize=(800/dpi, 800/dpi), dpi=dpi)
     else:
         print('ERROR: Invalid projection.')
@@ -338,7 +339,7 @@ def plot_scalar_field(field, name, cs_grid, latlon_grid, map_projection, \
     # Plot the scalar field
     plt.contourf(latlon_grid.lon*rad2deg, latlon_grid.lat*rad2deg, field, cmap=colormap, levels = np.linspace(qmin, qmax, 101), transform=ccrs.PlateCarree())
 
-    #ax.coastlines()
+    ax.coastlines()
 
     # Plot colorbar
     plt.colorbar(orientation='vertical',fraction=0.046, pad=0.04,  format='%.1e')
