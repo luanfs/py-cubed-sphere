@@ -66,7 +66,7 @@ def numerical_flux_ppm_x(Qx, px, U_pu, cx, cs_grid, simulation):
     px.f_upw[i0:iend+1,:,:] = px.f_upw[i0:iend+1,:,:]*U_pu.ucontra_averaged[i0:iend+1,:,:]
 
     # multiply values at edges by metric tensors
-    if simulation.et_name == 'ET-S72' or simulation.et_name == 'ET-PL07':
+    if simulation.mt_name == 'MT-PL07':
         px.f_upw[i0:iend+1,:,:] = px.f_upw[i0:iend+1,:,:]*cs_grid.metric_tensor_pu[i0:iend+1,:,:]
 
 ###############################################################################
@@ -123,6 +123,7 @@ def numerical_flux_ppm_y(Qy, py, U_pv, cy, cs_grid, simulation):
     py.f_upw[:,j0:jend+1,:] = py.f_upw[:,j0:jend+1,:]*U_pv.vcontra_averaged[:,j0:jend+1,:]
 
     # multiply values at edges by metric tensors
-    if simulation.et_name == 'ET-S72' or simulation.et_name == 'ET-PL07':
+    # multiply values at edges by metric tensors
+    if simulation.mt_name == 'MT-PL07':
         py.f_upw[:,j0:jend+1,:] = py.f_upw[:,j0:jend+1,:]*cs_grid.metric_tensor_pv[:,j0:jend+1,:]
 

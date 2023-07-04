@@ -96,14 +96,12 @@ def output_adv(cs_grid, ll_grid, simulation,\
 
                 # filename
                 filename = 'adv_Q_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
-                            "_"+simulation.opsplit_name+"_"+simulation.recon_name+"_"+simulation.dp_name+'_'+simulation.et_name+\
-                            "_interp"+str(simulation.degree)+"_t"+str(k)
+                "_"+simulation.opsplit_name+"_"+simulation.recon_name+"_"+simulation.dp_name+'_'+simulation.et_name+'_'+simulation.mt_name+"_interp"+str(simulation.degree)+"_t"+str(k)
 
                 # Title
                 title = "Min="+q_min+", Max="+q_max+", Time="+time+', N='+str(cs_grid.N)+\
                 ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
-                +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+', '+simulation.et_name+\
-                ', Interpolation degree='+str(simulation.degree)+'\n' 
+                +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+'\n' 
 
                 plot_scalar_field(Q_ll, filename, cs_grid, ll_grid, map_projection, \
                                   colormap, qmin, qmax, title)
@@ -122,8 +120,7 @@ def output_adv(cs_grid, ll_grid, simulation,\
                     time = str("{:.2e}".format(t))
                     # filename
                     filename = 'adv_Q_error_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
-                    "_"+simulation.opsplit_name+"_"+simulation.recon_name+"_"+simulation.dp_name+'_'+simulation.et_name+'_'+simulation.mt_name+\
-                    "_interp"+str(simulation.degree)+"_t"+str(k)
+                    "_"+simulation.opsplit_name+"_"+simulation.recon_name+"_"+simulation.dp_name+'_'+simulation.et_name+'_'+simulation.mt_name+"_interp"+str(simulation.degree)+"_t"+str(k)
                     title = "Error - Time="+time+', N='+str(cs_grid.N)+\
                     ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
                     +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name
@@ -168,5 +165,4 @@ def output_adv(cs_grid, ll_grid, simulation,\
                     +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+'\n'
                     plot_scalar_field(d_ll, filename, cs_grid, ll_grid, map_projection, \
                                       colormap, dmin, dmax, title)
-
 
