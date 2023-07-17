@@ -101,7 +101,8 @@ def output_adv(cs_grid, ll_grid, simulation,\
                 # Title
                 title = "Min="+q_min+", Max="+q_max+", Time="+time+', N='+str(cs_grid.N)+\
                 ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
-                +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+'\n' 
+                +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+\
+                ', '+simulation.et_name+', '+simulation.mt_name+', '+simulation.mf_name+'\n \n' 
 
                 plot_scalar_field(Q_ll, filename, cs_grid, ll_grid, map_projection, \
                                   colormap, qmin, qmax, title)
@@ -120,10 +121,11 @@ def output_adv(cs_grid, ll_grid, simulation,\
                     time = str("{:.2e}".format(t))
                     # filename
                     filename = 'adv_Q_error_ic'+str(simulation.ic)+'_vf'+str(simulation.vf)+\
-                    "_"+simulation.opsplit_name+"_"+simulation.recon_name+"_"+simulation.dp_name+'_'+simulation.et_name+'_'+simulation.mt_name+"_interp"+str(simulation.degree)+"_t"+str(k)
+                    "_"+simulation.opsplit_name+"_"+simulation.recon_name+"_"+simulation.dp_name+'_'+simulation.et_name+'_'+\
+                    simulation.mt_name+"_"+simulation.mf_name+"_interp"+str(simulation.degree)+"_t"+str(k)
                     title = "Error - Time="+time+', N='+str(cs_grid.N)+\
                     ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
-                    +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name
+                    +simulation.opsplit_name+', '+simulation.recon_name +', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+', '+simulation.mf_name
                     plot_scalar_field(Q_error_ll, filename, cs_grid, ll_grid, map_projection, \
                                       colormap, qmin, qmax, title)
                     #plot_scalar_and_vector_field(Q_error_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
@@ -149,20 +151,23 @@ def output_adv(cs_grid, ll_grid, simulation,\
                 # Relative errors in different metrics
                 simulation.error_linf[k], simulation.error_l1[k], simulation.error_l2[k] = compute_errors(d.f, dex.f)
 
-                filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name+'_'+simulation.dp_name+'_'+simulation.et_name+'_'+simulation.mt_name
+                filename = 'div_error'+'_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name+'_'+\
+                simulation.dp_name+'_'+simulation.et_name+'_'+simulation.mt_name+'_'+simulation.mf_name
  
                 title = "Divergence error"+', N='+str(cs_grid.N)+", vf="+str(simulation.vf)+", CFL="+cfl+', '\
-                +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+'\n'
+                +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+', '+simulation.mf_name+'\n \n'
 
                 plot_scalar_field(error_d, filename, cs_grid, ll_grid, map_projection, \
                 colormap, dmin, dmax, title)
 
-                if simulation.vf >= 5: # Plot the divergence
+                if simulation.vf >= 4: # Plot the divergence
                     colormap = 'jet'
                     dmin, dmax = np.amin(d_ll), np.amax(d_ll)
-                    filename = 'div_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name+'_'+simulation.dp_name+'_'+simulation.et_name+', '+simulation.mt_name
+                    filename = 'div_vf'+str(simulation.vf)+'_'+simulation.opsplit_name+'_'+simulation.recon_name+\
+                    '_'+simulation.dp_name+'_'+simulation.et_name+', '+simulation.mt_name+', '+simulation.mf_name
                     title = "Divergence"+', N='+str(cs_grid.N)+", vf = "+str(simulation.vf)+", CFL = "+cfl+', '\
-                    +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+'\n'
+                    +simulation.opsplit_name+', '+simulation.recon_name+', '+simulation.dp_name+', '+simulation.et_name+\
+                    ', '+simulation.mt_name+', '+simulation.mf_name+'\n \n'
                     plot_scalar_field(d_ll, filename, cs_grid, ll_grid, map_projection, \
                                       colormap, dmin, dmax, title)
 

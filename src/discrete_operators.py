@@ -78,7 +78,7 @@ def divergence(cs_grid, simulation):
     simulation.U_pu, simulation.U_pv, simulation.cx, simulation.cy, cs_grid, simulation)
 
     # Flux averaging
-    if simulation.et_name=='ET-ZA22-AF':
+    if simulation.mf_name=='MF-AF':
         average_flux_cube_edges(simulation.px, simulation.py, cs_grid)
 
     # Applies F and G operators in each panel again
@@ -91,7 +91,7 @@ def divergence(cs_grid, simulation):
     simulation.div[:,:,:] = ne.evaluate("-(pxdF + pydF)/(dt*metric_tensor)")
 
     # Applies mass fixer (project divergence in nullspace)
-    if simulation.et_name=='ET-ZA22-PR':
+    if simulation.mf_name=='MF-PR':
         m0 = np.sum(simulation.div[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:])
         a2 = np.sum(metric_tensor[i0:iend,j0:jend,:]*metric_tensor[i0:iend,j0:jend,:])
         simulation.div[i0:iend,j0:jend,:] = simulation.div[i0:iend,j0:jend,:] - metric_tensor[i0:iend,j0:jend,:]*m0/a2

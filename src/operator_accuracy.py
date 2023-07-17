@@ -29,7 +29,7 @@ from plot                   import plot_scalar_field, save_grid_netcdf4
 def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                        gridload):
     # Number of tests
-    Ntest = 3
+    Ntest = 7
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -56,7 +56,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
     # Errors array
     recons = (3,3,3,3)
     split  = (3,3,1,1)
-    ets    = (2,4,5,4)
+    ets    = (2,3,3,3)
     mts    = (2,2,1,1)
     deps   = (1,1,2,2)
     mfs    = (1,3,2,3)
@@ -64,7 +64,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
-    et_names = ['ET-S72', 'ET-PL07', 'ET-ZA22', 'ET-ZA22-AF', 'ET-ZA22-PR']
+    et_names = ['ET-S72', 'ET-PL07', 'ET-DG']
     mt_names = ['MT-0', 'MT-PL07']
     mf_names = ['MF-0', 'MT-AF', 'MT-PR']
     error_linf = np.zeros((Ntest, len(recons)))
@@ -130,7 +130,8 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         fname = []
         for d in range(0, len(recons)):
             errors.append(error[:,d])
-            fname.append(sp_names[split[d]-1]+'/'+recon_names[recons[d]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'+dp_names[deps[d]-1]+'/'+mf_names[mfs[d]-1])
+            #fname.append(sp_names[split[d]-1]+'/'+recon_names[recons[d]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'+dp_names[deps[d]-1]+'/'+mf_names[mfs[d]-1])
+            fname.append("Scheme " + str(d+1))
         filename = graphdir+'cs_div_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
 
         title = 'Divergence error, vf=' + str(simulation.vf)+', norm='+norm_title[e]
