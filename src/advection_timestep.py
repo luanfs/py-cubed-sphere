@@ -28,7 +28,7 @@ def adv_time_step(cs_grid, simulation, k, t):
     edges_ghost_cell_treatment_scalar(simulation.Q, simulation.Q, cs_grid, simulation)
 
     # Updates in velocity - only for time dependent velocity
-    if simulation.vf >= 3:   
+    if simulation.vf >= 2:   
         # Fill ghost cell values - velocity field
         edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
         simulation.U_pc, cs_grid, simulation)
@@ -47,15 +47,15 @@ def adv_time_step(cs_grid, simulation, k, t):
 ####################################################################################
 def update_adv(cs_grid, simulation, t):
     # Updates for next time step - only for time dependent velocity
-    if simulation.vf >= 3:
+    if simulation.vf >= 2:
         i0, iend = cs_grid.i0, cs_grid.iend
         j0, jend = cs_grid.j0, cs_grid.jend
 
         # Velocity
-        simulation.U_pu.ulon[i0:iend+1,:,:], simulation.U_pu.vlat[i0:iend+1,:,:] = \
-        velocity_adv(cs_grid.pu.lon[i0:iend+1,:,:],cs_grid.pu.lat[i0:iend+1,:,:], t, simulation)
-        simulation.U_pv.ulon[:,j0:jend+1,:], simulation.U_pv.vlat[:,j0:jend+1,:] = \
-        velocity_adv(cs_grid.pv.lon[:,j0:jend+1,:],cs_grid.pv.lat[:,j0:jend+1,:], t, simulation)
+        simulation.U_pu.ulon[i0:iend+1,j0:jend,:], simulation.U_pu.vlat[i0:iend+1,j0:jend,:] = \
+        velocity_adv(cs_grid.pu.lon[i0:iend+1,j0:jend,:],cs_grid.pu.lat[i0:iend+1,j0:jend,:], t, simulation)
+        simulation.U_pv.ulon[i0:iend,j0:jend+1,:], simulation.U_pv.vlat[i0:iend,j0:jend+1,:] = \
+        velocity_adv(cs_grid.pv.lon[i0:iend,j0:jend+1,:],cs_grid.pv.lat[i0:iend,j0:jend+1,:], t, simulation)
 
         # Store old velocity
         simulation.U_pu.ucontra_old[:,:,:] = simulation.U_pu.ucontra[:,:,:]
