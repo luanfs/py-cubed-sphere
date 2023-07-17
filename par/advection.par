@@ -15,9 +15,11 @@
 1
 #Operator splitting (1, 2, 3)
 1
-#Edge treatment (1, 2, 3, 4, 5)
-5
+#Edge treatment (1, 2, 3)
+3
 #Metric tensor treatment (1, 2)
+1
+#Mass fixer (1, 2, 3)
 1
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
@@ -26,11 +28,9 @@
 #  case(3) - two gaussian hills
 #  case(4) - steady flow from Williamson et al 1992 paper
 #Possible vector fields
-#  case(1) - zonal wind (divergence free)
-#  case(2) - rotated zonal wind (divergence free)
-#  case(3) - Non divergent field 2 from Nair and Lauritzen 2010
-#  case(4) - Non divergent field 4 from Nair and Lauritzen 2010
-#  case(5) - Divergent field 3 from Nair and Lauritzen 2010
+#  case(1) - rotated zonal wind (divergence free)
+#  case(2) - Non divergent field 4 from Nair and Lauritzen 2010
+#  case(3) - Divergent field 3 from Nair and Lauritzen 2010
 #Possible test cases
 #  case(1) - Advection simulation
 #  case(2) - Convergence of error for advection equation
@@ -46,3 +46,7 @@
 #  case(1) - Average Lie-Trotter (AVLT)
 #  case(2) - Splitting from Lin 2004 (L04)
 #  case(3) - Splitting from Putman and Lin 2007(PL07)
+#Possible mass fixer
+#  case(1) - none
+#  case(2) - average flux at cube edges
+#  case(3) - divergence projection
