@@ -30,8 +30,8 @@ def adv_time_step(cs_grid, simulation, k, t):
     # Updates in velocity - only for time dependent velocity
     if simulation.vf >= 3:   
         # Fill ghost cell values - velocity field
-        #edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
-        #    imulation.U_pc, cs_grid, simulation)
+        edges_ghost_cell_treatment_vector(simulation.U_pu, simulation.U_pv, \
+        simulation.U_pc, cs_grid, simulation)
 
         #Compute the velocity need for the departure point
         time_averaged_velocity(cs_grid, simulation)
@@ -48,9 +48,14 @@ def adv_time_step(cs_grid, simulation, k, t):
 def update_adv(cs_grid, simulation, t):
     # Updates for next time step - only for time dependent velocity
     if simulation.vf >= 3:
+        i0, iend = cs_grid.i0, cs_grid.iend
+        j0, jend = cs_grid.j0, cs_grid.jend
+
         # Velocity
-        simulation.U_pu.ulon[:,:,:], simulation.U_pu.vlat[:,:,:] = velocity_adv(cs_grid.pu.lon,cs_grid.pu.lat, t, simulation)
-        simulation.U_pv.ulon[:,:,:], simulation.U_pv.vlat[:,:,:] = velocity_adv(cs_grid.pv.lon,cs_grid.pv.lat, t, simulation)
+        simulation.U_pu.ulon[i0:iend+1,:,:], simulation.U_pu.vlat[i0:iend+1,:,:] = \
+        velocity_adv(cs_grid.pu.lon[i0:iend+1,:,:],cs_grid.pu.lat[i0:iend+1,:,:], t, simulation)
+        simulation.U_pv.ulon[:,j0:jend+1,:], simulation.U_pv.vlat[:,j0:jend+1,:] = \
+        velocity_adv(cs_grid.pv.lon[:,j0:jend+1,:],cs_grid.pv.lat[:,j0:jend+1,:], t, simulation)
 
         # Store old velocity
         simulation.U_pu.ucontra_old[:,:,:] = simulation.U_pu.ucontra[:,:,:]
@@ -58,11 +63,14 @@ def update_adv(cs_grid, simulation, t):
 
         # Latlon to contravariant
         simulation.U_pu.ucontra[:,:,:], simulation.U_pu.vcontra[:,:,:] = \
-        latlon_to_contravariant(simulation.U_pu.ulon, simulation.U_pu.vlat,\
-        cs_grid.prod_ex_elon_pu, cs_grid.prod_ex_elat_pu, \
-        cs_grid.prod_ey_elon_pu, cs_grid.prod_ey_elat_pu, cs_grid.determinant_ll2contra_pu)
+        latlon_to_contravariant(simulation.U_pu.ulon[:,:,:], simulation.U_pu.vlat[:,:,:],\
+        cs_grid.prod_ex_elon_pu[:,:,:], cs_grid.prod_ex_elat_pu[:,:,:], \
+        cs_grid.prod_ey_elon_pu[:,:,:], cs_grid.prod_ey_elat_pu[:,:,:], \
+        cs_grid.determinant_ll2contra_pu[:,:,:])
+
         simulation.U_pv.ucontra[:,:,:], simulation.U_pv.vcontra[:,:,:] = \
-        latlon_to_contravariant(simulation.U_pv.ulon, simulation.U_pv.vlat,\
-        cs_grid.prod_ex_elon_pv, cs_grid.prod_ex_elat_pv, \
-        cs_grid.prod_ey_elon_pv, cs_grid.prod_ey_elat_pv, cs_grid.determinant_ll2contra_pv)
+        latlon_to_contravariant(simulation.U_pv.ulon[:,:,:], simulation.U_pv.vlat[:,:,:],\
+        cs_grid.prod_ex_elon_pv[:,:,:], cs_grid.prod_ex_elat_pv[:,:,:], \
+        cs_grid.prod_ey_elon_pv[:,:,:], cs_grid.prod_ey_elat_pv[:,:,:], \
+        cs_grid.determinant_ll2contra_pv[:,:,:])
 

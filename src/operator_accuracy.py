@@ -29,7 +29,7 @@ from plot                   import plot_scalar_field, save_grid_netcdf4
 def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                        gridload):
     # Number of tests
-    Ntest = 7
+    Ntest = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -43,7 +43,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
     elif vf==4:
         dts[0] = 0.0125
     elif vf==5:
-        dts[0] = 0.0125
+        dts[0] = 0.00625
     elif vf==6:
         dts[0] = 0.0125
     else:
@@ -56,11 +56,11 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,)
-    split = (3,3,1,1,1,1)
-    ets   = (2,5,5,5,4,4)
-    mts   = (2,1,1,1,1,1)
-    deps  = (1,1,1,2,1,2)
+    recons = (1,)
+    split = (3,1)
+    ets   = (3,3)
+    mts   = (2,1)
+    deps  = (1,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']

@@ -29,7 +29,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 3
+    Ntest  = 6
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -43,7 +43,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     elif simulation.vf==4:
         dts[0] = 0.0125
     elif simulation.vf==5:
-        dts[0] = 0.0125
+        dts[0] = 0.00625
     elif simulation.vf==6:
         dts[0] = 0.0125
     else:

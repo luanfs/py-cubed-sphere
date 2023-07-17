@@ -8,7 +8,7 @@
 #Show ongoing process details on screen? 0-No; 1-Yes
 1
 #Test case to be done
-5
+4
 #Map projection (for plotting): 1-mercator; 2-sphere 
 1
 #-----------Description of parameters -------------------------------------

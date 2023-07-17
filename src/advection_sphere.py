@@ -19,7 +19,7 @@ def adv_sphere(cs_grid, ll_grid, simulation, map_projection, plot, divtest_flag)
     Nsteps = int(Tf/dt)
 
     # Plot step
-    plotstep = int(Nsteps/2)
+    plotstep = int(Nsteps/5)
 
     if (divtest_flag):
         Nsteps = 1
