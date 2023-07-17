@@ -19,7 +19,7 @@ from cs_datastruct import ppm_parabola, velocity
 # Advection simulation class
 ####################################################################################
 class adv_simulation_par:
-    def __init__(self, cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, et, mt):
+    def __init__(self, cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, et, mt, mf):
         # Initial condition
         self.ic = ic
 
@@ -144,6 +144,18 @@ class adv_simulation_par:
             exit()
         self.metric_tensor = mt
 
+        # Mass fixer
+        if mf==1:
+            self.mf_name='MF-0'
+        elif mf==2:
+            self.mf_name='MF-AF'
+        elif mf==3:
+            self.mf_name='MF-PR'
+        else:
+            print('ERROR in adv_simulation_par: invalid MF')
+            exit()
+        self.mass_fixer = mf
+
         # Splitting name
         self.opsplit_name = opsplit_name
 
@@ -215,11 +227,8 @@ def qexact_adv(lon, lat, t, simulation):
 
     # Gaussian hill
     elif simulation.ic == 2:
-        if simulation.vf == 1 or simulation.vf == 2:
-            if simulation.vf == 1:
-                alpha =   0.0*deg2rad # Rotation angle
-            if simulation.vf == 2:
-                alpha = -45.0*deg2rad # Rotation angle
+        if simulation.vf == 1:
+            alpha = -45.0*deg2rad # Rotation angle
             # Wind speed
             u0 =  2.0*pi/5.0 # Wind speed
             ws = -u0
@@ -239,10 +248,7 @@ def qexact_adv(lon, lat, t, simulation):
             rotY =  sinwt*cosa*X + coswt*Y + sina*sinwt*Z
             rotZ = (coswt*sina*cosa-sina*cosa)*X -sinwt*sina*Y + (coswt*sin2a+cos2a)*Z
 
-            if simulation.vf == 1:
-                lon0, lat0 = 0.0, 0.0
-            elif simulation.vf == 2:
-                lon0, lat0 = np.pi/4.0, np.pi/6.0
+            lon0, lat0 = np.pi/4.0, np.pi/6.0
             X0, Y0, Z0 = sph2cart(lon0, lat0)
             b0 = 10.0
             q = np.exp(-b0*((rotX-X0)**2+ (rotY-Y0)**2 + (rotZ-Z0)**2))
@@ -257,11 +263,11 @@ def qexact_adv(lon, lat, t, simulation):
     # Two Gaussian hills
     elif simulation.ic == 3:
         X, Y, Z = sph2cart(lon, lat)
-        if simulation.vf == 1 or simulation.vf == 2:
+        if simulation.vf == 1:
             # Gaussian hill centers
             lon1, lat1 = 0,  pi/3.0
             lon2, lat2 = 0, -pi/3.0
-        elif simulation.vf >= 3:
+        elif simulation.vf >= 2:
             # Gaussian hill centers
             lon1, lat1 = -pi/6.0, 0
             lon2, lat2 =  pi/6.0, 0
@@ -272,10 +278,7 @@ def qexact_adv(lon, lat, t, simulation):
 
     # Steady flow from Williamson et al 92 paper
     elif simulation.ic == 4:
-        if simulation.vf == 2:
-            alpha = -45.0*deg2rad # Rotation angle
-        else:
-            alpha = 0.0 # Rotation angle
+        alpha = -45.0*deg2rad # Rotation angle
         u0 = 2.0*pi/5.0         # Wind speed
         Omega = rotation_speed
         f = (-np.cos(lon)*np.cos(lat)*np.sin(alpha) + np.sin(lat)*np.cos(alpha))
@@ -290,35 +293,26 @@ def qexact_adv(lon, lat, t, simulation):
 # Return the wind components in geographical coordinates tangent vectors.
 ####################################################################################
 def velocity_adv(lon, lat, t, simulation):
-    if simulation.vf == 1 or simulation.vf == 2:
-        if simulation.vf == 1:
-            alpha = 0.0*deg2rad # Rotation angle
-        else:
-            alpha = -45.0*deg2rad # Rotation angle
+    if simulation.vf == 1:
+        alpha = -45.0*deg2rad # Rotation angle
         u0 = 2.0*pi/5.0 # Wind speed
         ulon  = ne.evaluate("u0*(cos(lat)*cos(alpha) + sin(lat)*cos(lon)*sin(alpha))")
         vlat  = ne.evaluate("-u0*sin(lon)*sin(alpha)")
 
-    elif simulation.vf == 3: # Non divergent field 2 from Nair and Lauritzen 2010
-        T = 5.0 # Period
-        k = 2.0
-        ulon = ne.evaluate("k*sin(lon+pi)**2 * sin(2.0*lat) * cos(pi*t/T)")
-        vlat = ne.evaluate("k*sin(2*(lon+pi)) * cos(lat) * cos(pi*t/T)")
-
-    elif simulation.vf == 4: # Non divergent field 4 from Nair and Lauritzen 2010
+    elif simulation.vf == 2: # Non divergent field 4 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 2.0
         lonp = ne.evaluate("lon-2*pi*t/T")
         ulon = ne.evaluate("k*(sin((lonp+pi))**2)*(sin(2.*lat))*(cos(pi*t/T))+2.*pi*cos(lat)/T")
         vlat = ne.evaluate("k*(sin(2*(lonp+pi)))*(cos(lat))*(cos(pi*t/T))")
 
-    elif simulation.vf == 5: # Divergent field 3 from Nair and Lauritzen 2010
+    elif simulation.vf == 3: # Divergent field 3 from Nair and Lauritzen 2010
         T = 5.0 # Period
         k = 1.0
         ulon = ne.evaluate("-k*(sin((lon+pi)/2.0)**2)*(sin(2.0*lat))*(cos(lat)**2)*(cos(pi*t/T))")
         vlat = ne.evaluate("(k/2.0)*(sin((lon+pi)))*(cos(lat)**3)*(cos(pi*t/T))")
 
-    elif simulation.vf == 6: # Trigonometric field
+    elif simulation.vf == 4: # Trigonometric field
         m = 1
         n = 1
         ulon = ne.evaluate("-m*(sin(lon)*sin(m*lon)*cos(n*lat)**3)")#/np.cos(lat)
@@ -330,7 +324,7 @@ def velocity_adv(lon, lat, t, simulation):
 # Return the divergence of the velocity fields
 ####################################################################################
 def div_exact(lon, lat, simulation):
-    if simulation.vf <= 5:
+    if simulation.vf <= 2:
         div = np.zeros(np.shape(lon))
     else: # Trigonometric field
         m = 1
