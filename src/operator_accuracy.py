@@ -29,7 +29,7 @@ from plot                   import plot_scalar_field, save_grid_netcdf4
 def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                        gridload):
     # Number of tests
-    Ntest = 6
+    Ntest = 3
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -54,12 +54,12 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (3,)
-    split = (3,3,1,1)
-    ets   = (2,4,5,4)
-    mts   = (2,2,1,1)
-    deps  = (1,1,2,2)
-    mfs   = (1,1,2,2)
+    recons = (3,3,3,3)
+    split  = (3,3,1,1)
+    ets    = (2,4,5,4)
+    mts    = (2,2,1,1)
+    deps   = (1,1,2,2)
+    mfs    = (1,3,2,3)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
@@ -67,9 +67,9 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
     et_names = ['ET-S72', 'ET-PL07', 'ET-ZA22', 'ET-ZA22-AF', 'ET-ZA22-PR']
     mt_names = ['MT-0', 'MT-PL07']
     mf_names = ['MF-0', 'MT-AF', 'MT-PR']
-    error_linf = np.zeros((Ntest, len(recons), len(split)))
-    error_l1   = np.zeros((Ntest, len(recons), len(split)))
-    error_l2   = np.zeros((Ntest, len(recons), len(split)))
+    error_linf = np.zeros((Ntest, len(recons)))
+    error_l1   = np.zeros((Ntest, len(recons)))
+    error_l2   = np.zeros((Ntest, len(recons)))
 
     # Let us test and compute the error!
     dt, Tf, tc, ic, vf, recon, dp, opsplit, et, mt, mf = get_advection_parameters()
@@ -80,39 +80,37 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
     # Let us test and compute the error
     for d in range(0,len(deps)):
         dp = deps[d]
+        recon = recons[d]
         opsplit = split[d]
         ET = ets[d]
         MT = mts[d]
         MF = mfs[d]
-        rec = 0
-        for recon in recons:
-            for i in range(0, Ntest):
-                dt = dts[i]
-                N = int(Nc[i])
+        for i in range(0, Ntest):
+            dt = dts[i]
+            N = int(Nc[i])
 
-                # Create CS mesh
-                cs_grid = cubed_sphere(N, transformation, False, gridload)
+            # Create CS mesh
+            cs_grid = cubed_sphere(N, transformation, False, gridload)
 
-                # simulation class 
-                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET, MT, MF)
+            # simulation class 
+            simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET, MT, MF)
 
-                # Save the grid
-                if not(os.path.isfile(cs_grid.netcdfdata_filename)):
-                    save_grid_netcdf4(cs_grid)
+            # Save the grid
+            if not(os.path.isfile(cs_grid.netcdfdata_filename)):
+                save_grid_netcdf4(cs_grid)
 
-                # Create the latlon mesh (for plotting)
-                ll_grid = latlon_grid(Nlat, Nlon)
-                ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
+            # Create the latlon mesh (for plotting)
+            ll_grid = latlon_grid(Nlat, Nlon)
+            ll_grid.ix, ll_grid.jy, ll_grid.mask = ll2cs(cs_grid, ll_grid)
 
-                # Print parameters
-                print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', simulation.recon_name,', split=', simulation.opsplit_name, ', dp=', simulation.dp_name, ', et=', simulation.et_name)
+            # Print parameters
+            print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', simulation.recon_name,', split=', simulation.opsplit_name, ', dp=', simulation.dp_name, ', et=', simulation.et_name)
 
-                # Get divergence error
-                error_linf[i,rec,d], error_l1[i,rec,d], error_l2[i,rec,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False, True)
+            # Get divergence error
+            error_linf[i,d], error_l1[i,d], error_l2[i,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False, True)
 
-                # Print errors
-                print_errors_simul(error_linf[:,rec,d], error_l1[:,rec,d], error_l2[:,rec,d], i)
-            rec= rec+1
+            # Print errors
+            print_errors_simul(error_linf[:,d], error_l1[:,d], error_l2[:,d], i)
 
     # Outputs
     # plot errors for different all schemes in  different norms
@@ -129,18 +127,17 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         CR = np.abs(np.log(error[1:n])-np.log(error[0:n-1]))/np.log(2.0)
         CRmin, CRmax = np.amin(CR), np.amax(CR)
         errors = []
-        dep_name = []
-        for r in range(0, len(recons)):
-            for d in range(0, len(deps)):
-                errors.append(error[:,r,d])
-                dep_name.append(sp_names[split[d]-1]+'/'+recon_names[recons[r]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'+str(dp_names[deps[d]-1]))
-
-        title = 'Divergence error, vf='+ str(simulation.vf)+', norm='+norm_title[e]
+        fname = []
+        for d in range(0, len(recons)):
+            errors.append(error[:,d])
+            fname.append(sp_names[split[d]-1]+'/'+recon_names[recons[d]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'+dp_names[deps[d]-1]+'/'+mf_names[mfs[d]-1])
         filename = graphdir+'cs_div_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
-        plot_errors_loglog(Nc, errors, dep_name, filename, title, emin, emax)
+
+        title = 'Divergence error, vf=' + str(simulation.vf)+', norm='+norm_title[e]
+        plot_errors_loglog(Nc, errors, fname, filename, title, emin, emax)
 
         # Plot the convergence rate
         title = 'Divergence convergence rate, vf=' + str(simulation.vf)+', norm='+norm_title[e]
         filename = graphdir+'cs_div_vf'+str(vf)+'_norm'+norm_list[e]+'_convergence_rate.pdf'
-        plot_convergence_rate(Nc, errors, dep_name, filename, title, CRmin, CRmax)
+        plot_convergence_rate(Nc, errors, fname, filename, title, CRmin, CRmax)
         e = e+1
