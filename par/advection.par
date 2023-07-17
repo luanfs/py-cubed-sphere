@@ -4,9 +4,9 @@
 #Time step (seconds)
 0.0025
 #Initial condition
-3
-#Vector field 
 2
+#Vector field 
+1
 #Test case
 2
 #Reconstruction (1, 2, 3, 4)
@@ -20,7 +20,7 @@
 #Metric tensor treatment (1, 2)
 1
 #Mass fixer (1, 2, 3)
-1
+3
 #-----------Description of parameters -------------------------------------
 #Possible initial conditions
 #  case(1) - constant flow
