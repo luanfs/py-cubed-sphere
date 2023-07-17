@@ -286,14 +286,11 @@ def error_analysis_vf_interpolation_centers(vf, map_projection, transformation, 
             U_pu.ucontra[i0:iend+1,j0:jend,:] = U_pu_exact.ucontra[i0:iend+1,j0:jend,:]
             U_pv.vcontra[i0:iend,j0:jend+1,:] = U_pv_exact.vcontra[i0:iend,j0:jend+1,:]
 
-            # Compute the Lagrange polynomials
-            wind_edges2center_lagrange_poly(cs_grid, simulation)
-
             if cs_grid.projection == 'gnomonic_equiangular':
                 lagrange_poly_ghostcell_pc(cs_grid, simulation)
 
             # Interpolate the wind to cells pc
-            wind_edges2center_lagrange_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
+            wind_edges2center_cubic_interpolation(U_pc, U_pu, U_pv, cs_grid, simulation)
  
             # Error at pc
             eu = abs(U_pc.ulon[i0:iend,j0:jend,:]-U_pc_exact.ulon[i0:iend,j0:jend,:])#np.amax(abs(U_pc_exact.ulon))
@@ -521,7 +518,7 @@ def error_analysis_recon(ic, map_projection, transformation, showonscreen, gridl
     # Errors array
     recons = (3,4)
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
-    et_names = ['ET-S72','ET-PL07','ET-ZA22']
+    et_names = ['ET-S72','ET-PL07','ET-DG']
 
     if transformation == 'gnomonic_equiangular':
         ets = (1,2,3) # Edge treatment 3 applies only to equiangular CS
@@ -698,7 +695,7 @@ class recon_simulation_par:
         elif et==2:
             self.et_name='ET-PL07'
         elif et==3:
-            self.et_name='ET-ZA22'
+            self.et_name='ET-DG'
         else:
             print('ERROR in recon_simulation_par: invalid ET')
             exit()
