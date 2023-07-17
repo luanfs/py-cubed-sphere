@@ -64,16 +64,12 @@ class adv_simulation_par:
 
         # Define the vector field name
         if vf == 1:
-            name = 'Divergence free zonal wind'
-        elif vf == 2:
             name = 'Divergence free rotated zonal wind'
-        elif vf == 3:
-            name = 'Non divergent field 2 from Nair and Lauritzen 2010'
-        elif vf == 4:
+        elif vf == 2:
             name = 'Non divergent field 4 from Nair and Lauritzen 2010'
-        elif vf == 5:
+        elif vf == 3:
             name = 'Divergent field from Nair and Lauritzen 2010'
-        elif vf == 6:
+        elif vf == 4:
             name = 'Trigonometric vector field'
         else:
             print("Error in adv_simulation_par - invalid vector field")
@@ -124,11 +120,7 @@ class adv_simulation_par:
         elif et==2:
             self.et_name='ET-PL07'
         elif et==3:
-            self.et_name='ET-ZA22'
-        elif et==4:
-            self.et_name='ET-ZA22-AF'
-        elif et==5:
-            self.et_name='ET-ZA22-PR'
+            self.et_name='ET-DG'
         else:
             print('ERROR in adv_simulation_par: invalid ET')
             exit()
