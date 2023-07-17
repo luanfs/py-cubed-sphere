@@ -36,15 +36,13 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
     dts = np.zeros(Ntest)
     Nc[0] = 16
 
-    if vf==1 or vf==2:
+    if vf==1:
         dts[0] = 0.025
-    elif vf==3:
-        dts[0] = 0.025
-    elif vf==4:
+    elif vf==2:
         dts[0] = 0.0125
-    elif vf==5:
+    elif vf==3:
         dts[0] = 0.00625
-    elif vf==6:
+    elif vf==4:
         dts[0] = 0.0125
     else:
         print('ERROR: invalid vector field, ',simulation.vf)
@@ -56,23 +54,25 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         dts[i] = dts[i-1]*0.5
 
     # Errors array
-    recons = (1,)
-    split = (3,1)
-    ets   = (3,3)
-    mts   = (2,1)
-    deps  = (1,2)
+    recons = (3,)
+    split = (3,3,1,1)
+    ets   = (2,4,5,4)
+    mts   = (2,2,1,1)
+    deps  = (1,1,2,2)
+    mfs   = (1,1,2,2)
 
     recon_names = ['PPM-0', 'PPM-CW84','PPM-PL07','PPM-L04']
     dp_names = ['RK1', 'RK2']
     sp_names = ['SP-AVLT', 'SP-L04', 'SP-PL07']
     et_names = ['ET-S72', 'ET-PL07', 'ET-ZA22', 'ET-ZA22-AF', 'ET-ZA22-PR']
     mt_names = ['MT-0', 'MT-PL07']
+    mf_names = ['MF-0', 'MT-AF', 'MT-PR']
     error_linf = np.zeros((Ntest, len(recons), len(split)))
     error_l1   = np.zeros((Ntest, len(recons), len(split)))
     error_l2   = np.zeros((Ntest, len(recons), len(split)))
 
     # Let us test and compute the error!
-    dt, Tf, tc, ic, vf, recon, dp, opsplit, et, mt = get_advection_parameters()
+    dt, Tf, tc, ic, vf, recon, dp, opsplit, et, mt, mf = get_advection_parameters()
 
     # For divergence testing, we consider a constant field
     ic = 1
@@ -83,6 +83,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
         opsplit = split[d]
         ET = ets[d]
         MT = mts[d]
+        MF = mfs[d]
         rec = 0
         for recon in recons:
             for i in range(0, Ntest):
@@ -93,7 +94,7 @@ def error_analysis_div(vf, map_projection, plot, transformation, showonscreen,\
                 cs_grid = cubed_sphere(N, transformation, False, gridload)
 
                 # simulation class 
-                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET, MT)
+                simulation = adv_simulation_par(cs_grid, dt, Tf, ic, vf, tc, recon, dp, opsplit, ET, MT, MF)
 
                 # Save the grid
                 if not(os.path.isfile(cs_grid.netcdfdata_filename)):
