@@ -6,6 +6,7 @@ from plot          import plot_scalar_field, plot_scalar_and_vector_field
 from sphgeo        import contravariant_to_latlon
 from diagnostics   import mass_computation
 from cs_datastruct import scalar_field
+from constants     import datadir
 
 ###################################################################################
 # Print the advectioc diagnostics variables on the screen
@@ -110,7 +111,6 @@ def output_adv(cs_grid, ll_grid, simulation,\
                 #plot_scalar_and_vector_field(Q_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat,\
                 #                             filename, title, cs_grid, ll_grid, map_projection, \
                 #                             colormap, qmin, qmax)
-
                 # Q error - only for t>0
                 if t>0:
                     Q_error_ll =  Q_exact_ll - Q_ll
@@ -131,6 +131,23 @@ def output_adv(cs_grid, ll_grid, simulation,\
                     #plot_scalar_and_vector_field(Q_error_ll, U_pu.ulon, U_pu.vlat, U_pv.ulon, U_pv.vlat, \
                     #                             filename, title, cs_grid, ll_grid, map_projection, \
                     #                             colormap, qmin, qmax)
+
+                    # Save the data 
+                    if k== Nsteps:
+                        filename = 'adv_Q_error_ic'+str(simulation.ic)+'_vf'+\
+                        str(simulation.vf)+'_'+simulation.opsplit_name+'_'+\
+                        simulation.recon_name+"_"+simulation.dp_name+'_'\
+                        +simulation.et_name+'_'+simulation.mt_name+'_'+simulation.mf_name+'_interp'+str(simulation.degree)
+                        np.save(datadir+cs_grid.name+'_'+filename, Q_error_ll, allow_pickle=False)
+                        datatxt = np.zeros(7)
+                        datatxt[0] = simulation.error_linf[k]
+                        datatxt[1] = simulation.error_l1[k]
+                        datatxt[2] = simulation.error_l2[k]
+                        datatxt[3] = simulation.CFL
+                        datatxt[4] = simulation.mass_change
+                        datatxt[5] = simulation.dt
+                        datatxt[6] = simulation.Tf
+                        np.savetxt(datadir+cs_grid.name+'_'+filename, datatxt)
 
             else:
                 # Divergence plotting

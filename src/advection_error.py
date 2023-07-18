@@ -13,6 +13,7 @@ from errors           import compute_errors, print_errors_simul, plot_convergenc
 from configuration    import get_advection_parameters
 from cs_datastruct    import cubed_sphere, latlon_grid
 from interpolation    import ll2cs
+from plot             import plot_scalar_field
 
 ###################################################################################
 # Routine to compute the advection error convergence in L_inf, L1 and L2 norms
@@ -29,7 +30,10 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 3
+    Ntest  = 4
+
+    # run simulation? if false, load the error file from data (must already exist)
+    run = True
 
     # Number of cells along a coordinate axis
     Nc = np.zeros(Ntest)
@@ -103,8 +107,47 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
             print('\nParameters: N='+str(int(Nc[i]))+', dt='+str(dts[i]),', recon=', simulation.recon_name,', split=', \
             simulation.opsplit_name, ', dp=', simulation.dp_name, ', et=', simulation.et_name)
 
-            # Get advection error
-            error_linf[i,d], error_l1[i,d], error_l2[i,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False, False)
+            if run:
+                # Get advection error
+                error_linf[i,d], error_l1[i,d], error_l2[i,d] = adv_sphere(cs_grid, ll_grid, simulation, map_projection, False, False)
+
+            else:
+                # Open data
+                # Filename
+                filename = 'adv_Q_error_ic'+str(simulation.ic)+'_vf'+\
+                str(simulation.vf)+'_'+simulation.opsplit_name+'_'+\
+                simulation.recon_name+"_"+simulation.dp_name+'_'\
+                +simulation.et_name+'_'+simulation.mt_name+'_'+simulation.mf_name+'_interp'+str(simulation.degree)
+                # open txt files and get errors, CFL, mass change
+                datatxt = np.loadtxt(datadir+cs_grid.name+'_'+filename)
+                error_linf[i,d] = datatxt[0]
+                error_l1[i,d]   = datatxt[1]
+                error_l2[i,d]   = datatxt[2]
+                simulation.CFL  = datatxt[3]
+                simulation.mass_change = datatxt[4]
+                simulation.dt  = datatxt[5]
+                simulation.Tf  = datatxt[6]
+
+                # plot the data
+                print(datadir+cs_grid.name+'_'+filename)
+
+                Q_error_ll = np.load(datadir+cs_grid.name+'_'+filename+'.npy',allow_pickle=True)
+
+                colormap = 'seismic'
+                qmax_abs = np.amax(abs(Q_error_ll))
+                qmin = -qmax_abs
+                qmax = qmax_abs
+                cfl = str("{:.2e}".format(simulation.CFL))
+                time = str("{:.2e}".format(simulation.Tf))
+                title = "Error - Time="+time+', N='+str(cs_grid.N)+\
+                ", ic="+str(simulation.ic)+", vf="+str(simulation.vf)+", CFL="+cfl+'\n '\
+                +simulation.opsplit_name+', '+simulation.recon_name +', '+\
+                simulation.dp_name+', '+simulation.et_name+', '+simulation.mt_name+', '+simulation.mf_name
+ 
+                plot_scalar_field(Q_error_ll, filename, cs_grid, ll_grid, map_projection, \
+                                      colormap, qmin, qmax, title)
+ 
+
 
             # Print errors
             print_errors_simul(error_linf[:,d], error_l1[:,d], error_l2[:,d], i)
