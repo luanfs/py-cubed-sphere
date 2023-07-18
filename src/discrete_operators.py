@@ -50,7 +50,7 @@ def divergence(cs_grid, simulation):
         gQx = ne.evaluate("gQ + 0.5*pxdF")
         gQy = ne.evaluate("gQ + 0.5*pydF")
         # divide by the metric tensor at centers
-        Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
+        #Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
 
     elif simulation.opsplit_name=='SP-L04':
         # L04 equations 7 and 8
@@ -59,7 +59,7 @@ def divergence(cs_grid, simulation):
         gQx = ne.evaluate('gQ + 0.5*pxdF + 0.5*(c1x-c2x)*Q')
         gQy = ne.evaluate('gQ + 0.5*pydF + 0.5*(c1y-c2y)*Q')
         # divide by the metric tensor at centers
-        Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
+        #Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
 
     elif simulation.opsplit_name=='SP-PL07':
         # PL07 - equations 17 and 18
@@ -67,6 +67,10 @@ def divergence(cs_grid, simulation):
         c1y, c2y = cs_grid.metric_tensor_pv[:,1:,:]*simulation.cy[:,1:,:], cs_grid.metric_tensor_pv[:,:N+ng,:]*simulation.cy[:,:N+ng,:]
         Qx = ne.evaluate('0.5*(Q + (Q + pxdF)/(1.0-(c1x-c2x)))')
         Qy = ne.evaluate('0.5*(Q + (Q + pydF)/(1.0-(c1y-c2y)))')
+
+    # Metric tensor treatment
+    if simulation.mt_name=='MT-0':
+        Qx, Qy = gQx/metric_tensor, gQy/metric_tensor
 
     # applies edge treatment if needed
     if simulation.et_name=='ET-S72' or simulation.et_name=='ET-PL07':
