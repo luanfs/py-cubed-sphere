@@ -30,7 +30,7 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
     tc = simulation.tc
 
     # Number of tests
-    Ntest  = 4
+    Ntest = 6
 
     # run simulation? if false, load the error file from data (must already exist)
     run = True
@@ -168,11 +168,12 @@ def error_analysis_adv(simulation, map_projection, plot, transformation, \
         CRmin, CRmax = np.amin(CR), np.amax(CR)
         errors = []
         fname = []
+        snames = ['PL07-RK1','PL07-RK1-DG-PR','AVLT-RK2-DG-AF','ALVT-RK2-DG-PR']
         for d in range(0, len(deps)):
             errors.append(error[:,d])
             #fname.append(sp_names[split[d]-1]+'/'+recon_names[recons[d]-1]+'/'+et_names[ets[d]-1]+'/'+mt_names[mts[d]-1]+'/'\
             #+dp_names[deps[d]-1]+'/'+mf_names[mts[d]-1])
-            fname.append('Scheme '+str(d+1))
+            fname.append(snames[d])
 
         title = simulation.title + '- ic=' + str(simulation.ic)+', vf='+ str(simulation.vf)+', norm='+norm_title[e]
         filename = graphdir+'cs_adv_tc'+str(tc)+'_ic'+str(ic)+'_vf'+str(vf)+'_norm'+norm_list[e]+'_parabola_errors.pdf'
